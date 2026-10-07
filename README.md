@@ -2,7 +2,7 @@
 
 Interactive 3D explorer of joints and the muscles that move them, for patients and physiotherapy learners.
 
-**v1: the elbow and forearm.** Bend and straighten the arm, or turn the palm up and down (supination and pronation), and watch the muscles shorten, lengthen and bulge. Muscles are coloured by contraction type (concentric, eccentric, isometric). You can switch forearm position (palm up, thumb up, palm down) and load (weight or band), and each muscle has an info card with Patient and Learner levels.
+**v1: the elbow and forearm.** Three exercises (biceps curl, overhead triceps extension, triceps kickback) shown on an upper-body outline, plus turning the palm up and down (supination and pronation), and watch the muscles shorten, lengthen and bulge. Muscles are coloured by contraction type (concentric, eccentric, isometric). You can switch forearm position (palm up, thumb up, palm down) and load (weight or band), and each muscle has an info card with Patient and Learner levels.
 
 ## Run it
 
@@ -20,6 +20,7 @@ Clinical content is a draft and is being reviewed by a physiotherapist.
 
 ## Roadmap
 
+- MMT section (grades and test positions for elbow flexors and extensors)
 - Wrist and finger muscles
 - Quiz mode
 - Dark mode polish
