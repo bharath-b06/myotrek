@@ -130,9 +130,17 @@ input[type=range]{width:100%; accent-color:var(--accent); margin:6px 0 2px}
 .tag{pointer-events:auto; cursor:pointer; border:1px solid var(--line); background:var(--panel); color:var(--fg); font:700 11.5px/1 var(--font-body); padding:5px 8px; border-radius:999px; white-space:nowrap; box-shadow:var(--shadow); backdrop-filter:blur(8px)}
 .tag:hover,.tag.on{border-color:var(--accent); color:var(--accent)}
 .tag.dim{opacity:.35}
+.tag.clash{opacity:0; pointer-events:none}
 .deglabel{font:500 12px/1 var(--font-mono); color:var(--accent); background:var(--panel); padding:3px 6px; border-radius:6px; border:1px solid var(--line)}
 .ticklabel{font:500 10.5px/1 var(--font-mono); color:var(--fg-3)}
 
+.zoom{position:absolute; right:382px; top:72px; display:flex; flex-direction:column; gap:6px; z-index:4}
+.zoom .iconbtn{width:40px; height:40px; box-shadow:var(--shadow)}
+.readout.sm .num{font-size:28px}
+.readout.sm .deg{font-size:16px; margin-left:-6px}
+.rotlbl{font-size:13px; color:var(--fg-2); font-weight:700; white-space:nowrap}
+.readout{flex-wrap:wrap}
+.pill{white-space:nowrap}
 .loading{position:absolute; inset:0; display:grid; place-items:center; color:var(--fg-3); font-size:14px; pointer-events:none}
 
 @media (max-width: 900px){
@@ -145,18 +153,24 @@ input[type=range]{width:100%; accent-color:var(--accent); margin:6px 0 2px}
   .info{overflow:visible}
   .caption{position:static; margin:0 16px 12px}
   .caption .panel{width:100%}
+  .zoom{right:12px; top:auto; bottom:12px}
 }
 @media (prefers-reduced-motion: reduce){ *{transition:none!important} }
 </style>
 
 <div class="app">
-  <div id="stage"><div class="loading" id="loading">Loading 3D model…</div></div>
+  <div id="stage"><div class="loading" id="loading">Loading 3D model…</div>
+    <div class="zoom" role="group" aria-label="Zoom">
+      <button class="iconbtn" id="zoomIn" aria-label="Zoom in" title="Zoom in (+)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
+      <button class="iconbtn" id="zoomOut" aria-label="Zoom out" title="Zoom out (−)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M5 12h14"/></svg></button>
+    </div>
+  </div>
 
   <header class="top">
     <div class="brand">
       <svg viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="15" fill="var(--accent)"/><path d="M11 6v10a5 5 0 0 0 5 5h9" stroke="var(--accent-fg)" stroke-width="3.2" fill="none" stroke-linecap="round"/><circle cx="11" cy="16" r="2.6" fill="var(--accent-fg)"/></svg>
       <b>Myotrek</b>
-      <span class="crumb">Upper limb / <strong>Elbow</strong></span>
+      <span class="crumb">Upper limb / <strong>Elbow &amp; forearm</strong></span>
     </div>
     <div class="top-right">
       <div class="seg" role="group" aria-label="Explanation level">
@@ -171,30 +185,52 @@ input[type=range]{width:100%; accent-color:var(--accent); margin:6px 0 2px}
 
   <aside class="controls panel" aria-label="Controls">
     <section>
+      <h3>Movement</h3>
+      <div class="seg block" role="group" aria-label="Movement">
+        <button id="mvElbow" aria-pressed="true">Bend &amp; straighten<small data-l="Flexion / extension">the elbow</small></button>
+        <button id="mvRotate" aria-pressed="false">Turn the palm<small data-l="Pronation / supination">the forearm</small></button>
+      </div>
+    </section>
+    <section>
       <h3>Elbow angle</h3>
       <div class="readout"><span class="num" id="angleVal">0</span><span class="deg">°</span><span class="pill" id="phasePill"><i></i><span>Resting</span></span></div>
       <input type="range" id="angle" min="0" max="145" step="1" value="0" aria-label="Elbow angle in degrees">
       <div class="scale"><span id="scaleL">0° straight</span><span id="scaleR">145° fully bent</span></div>
-      <div class="btnrow">
+      <div class="btnrow" id="elbowBtns">
         <button class="btn" id="btnFlex"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 4l7 9h-5v7h-4v-7H5z"/></svg><span id="flexTxt">Bend</span></button>
         <button class="btn" id="btnExt"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 20l-7-9h5V4h4v7h5z"/></svg><span id="extTxt">Straighten</span></button>
         <button class="btn" id="btnLoop" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M4 12a8 8 0 0 1 14-5.3M20 12a8 8 0 0 1-14 5.3"/><path d="M18 3v4h-4M6 21v-4h4"/></svg>Repeat</button>
       </div>
-      <p class="hint">You can also drag the forearm or hand in the 3D view.</p>
+      <p class="hint" id="elbowHint">You can also drag the forearm or hand in the 3D view.</p>
     </section>
     <section>
       <h3>Palm facing</h3>
-      <div class="seg block" role="group" aria-label="Forearm position">
+      <div class="readout sm"><span class="num" id="rotVal">0</span><span class="deg">°</span><span class="rotlbl" id="rotLbl">palm up</span><span class="pill" id="rotPill" hidden><i></i><span></span></span></div>
+      <input type="range" id="rot" min="-85" max="80" step="1" value="-85" aria-label="Forearm rotation in degrees">
+      <div class="scale"><span id="rotScaleL">palm up</span><span id="rotScaleR">palm down</span></div>
+      <div class="seg block" role="group" aria-label="Forearm position" style="margin-top:8px">
         <button id="posSup" aria-pressed="true">Up<small data-l="Supinated">palm up</small></button>
         <button id="posNeu" aria-pressed="false">Thumb up<small data-l="Mid-prone">like a hammer</small></button>
         <button id="posPro" aria-pressed="false">Down<small data-l="Pronated">palm down</small></button>
       </div>
+      <div class="btnrow" id="rotBtns" hidden>
+        <button class="btn" id="btnSup"><span id="supTxt">Turn up</span></button>
+        <button class="btn" id="btnPro"><span id="proTxt">Turn down</span></button>
+        <button class="btn" id="btnRotLoop" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M4 12a8 8 0 0 1 14-5.3M20 12a8 8 0 0 1-14 5.3"/><path d="M18 3v4h-4M6 21v-4h4"/></svg>Repeat</button>
+      </div>
     </section>
-    <section>
+    <section id="loadElbow">
       <h3>What's the load?</h3>
       <div class="seg block" role="group" aria-label="Load">
         <button id="loadWeight" aria-pressed="true">Weight in hand<small data-l="Gravity">like a cup</small></button>
         <button id="loadBand" aria-pressed="false">Band pulling up<small data-l="Resistance">push it down</small></button>
+      </div>
+    </section>
+    <section id="loadRotate" hidden>
+      <h3>How hard is the turn?</h3>
+      <div class="seg block" role="group" aria-label="Resistance">
+        <button id="rLight" aria-pressed="true">Easy<small data-l="Unresisted">turning a page</small></button>
+        <button id="rHard" aria-pressed="false">Hard<small data-l="Resisted">tightening a screw</small></button>
       </div>
     </section>
     <section>
@@ -259,6 +295,7 @@ const MUSCLES = [
     tubes:[
       { pts:[['H',.0,3.42,-.42],['H',.2,3.18,-.08],['H',.44,2.45,-.02],['H',.52,1.55,0],['H',.43,.82,-.02],['W',1,.36,.05,-.02],['R',.08,-.42,.1,1]], r:.19, t0:.2, t1:.8, peak:.55, rt:.035 },
       { pts:[['H',.38,3.33,-.45],['H',.44,2.9,-.2],['H',.52,2.2,-.1],['H',.55,1.5,-.04],['H',.43,.82,-.02],['W',1,.36,.05,-.02],['R',.08,-.42,.1,1]], r:.17, t0:.14, t1:.8, peak:.55, rt:.035 } ],
+    palmNote:'Strongest with your palm up. It also turns your palm up, most strongly with your elbow bent.',
     label:.5 },
   { id:'brachialis', name:'Brachialis', short:'Brachialis', group:'flexor', pos:{sup:1, neu:1, pro:1},
     plain:'The hidden workhorse under the biceps. It bends your elbow whichever way your palm faces.',
@@ -270,6 +307,7 @@ const MUSCLES = [
     nerve:'Musculocutaneous nerve (small lateral part: radial nerve)', roots:'C5–C6 (C7)', blood:'Brachial artery, radial recurrent artery',
     actions:['Elbow flexion in every forearm position'],
     position:'Inserts on the ulna, which does not rotate, so pronation and supination do not change its pull. It is the main flexor in pronation.',
+    palmNote:'Works the same whichever way your palm faces.',
     palpation:'Medial and lateral to the distal biceps tendon, with the elbow flexed against resistance.',
     clinical:['Myositis ossificans after elbow trauma (e.g. supracondylar fracture). Avoid aggressive passive stretching early.'],
     tubes:[ { pts:[['H',.1,1.75,0],['H',.27,1.1,0],['H',.31,.5,0],['W',1,.27,0,-.06],['F',.14,-.33,-.12]], r:.2, t0:.02, t1:.84, peak:.5, rt:.05 } ],
@@ -285,6 +323,7 @@ const MUSCLES = [
     actions:['Elbow flexion, strongest in mid-prone','Brings the forearm toward mid-prone from full pronation or supination'],
     position:'Best leverage with the forearm mid-prone (thumb up). A flexor supplied by the radial nerve, which is unusual.',
     palpation:'Lateral forearm during resisted elbow flexion in mid-prone.',
+    palmNote:'Strongest with your thumb up. It also helps bring your forearm back to thumb-up from either extreme.',
     clinical:['Brachioradialis reflex: C6 (C5).','Often still working when the musculocutaneous nerve is injured.'],
     tubes:[ { pts:[['H',.04,1.15,.22],['H',.2,.72,.33],['H',.34,.28,.35],['W',1,.42,0,.33],['R',.32,-.75,.3,.25],['R',.17,-1.6,.3,.7],['R',.07,-2.4,.31,1]], r:.15, t0:.02, t1:.66, peak:.38, rt:.035 } ],
     label:.4 },
@@ -319,6 +358,51 @@ const MUSCLES = [
     clinical:['Can contribute to posterolateral elbow pain.','Surgical landmark: the Kocher approach runs between anconeus and ECU.'],
     tubes:[ { pts:[['H',-.04,.14,.35],['F',-.16,-.22,.14],['F',-.2,-.58,-.04]], r:.09, t0:0, t1:1, peak:.35, rt:.03 } ],
     label:.5 },
+  { id:'pronTeres', name:'Pronator teres', short:'Pronator teres', group:'rotator', pos:{sup:0, neu:0, pro:0}, flexAssist:.22,
+    plain:'A diagonal muscle across the front of your upper forearm. It turns your palm down, especially when the turn is quick or hard.',
+    where:'Front of the forearm, just below the elbow crease. It runs from the inner elbow bump diagonally to the middle of the thumb-side forearm bone.',
+    everyday:'Pouring from a jug, turning a key to lock, typing with palms down, a forehand in tennis.',
+    feel:'Put your fingers just below the inner side of your elbow crease and turn your palm down hard against your other hand.',
+    origin:['Humeral head: medial epicondyle (common flexor origin) and medial supracondylar ridge','Ulnar head: medial side of the coronoid process'],
+    insertion:['Pronator tuberosity: middle of the lateral surface of the radius'],
+    nerve:'Median nerve', roots:'C6–C7', blood:'Ulnar artery (anterior ulnar recurrent), radial artery',
+    actions:['Forearm pronation, recruited for fast or resisted pronation','Weak elbow flexion'],
+    position:'Pulls best when the elbow is extended. With the elbow fully flexed it is slack, which is why pronator quadratus is tested in full flexion.',
+    palpation:'Medial border of the cubital fossa during resisted pronation.',
+    clinical:['Pronator syndrome: median nerve compressed between its two heads.','Part of the common flexor origin, so involved in medial epicondylalgia ("golfer\'s elbow").'],
+    palmNote:'It is what turns your palm down when the turn is quick or hard.',
+    tubes:[ { pts:[['H',.04,.24,-.44],['W',1,.14,.02,-.36],['F',.25,-.5,-.12],['R',.2,-.95,.22,.5],['R',.12,-1.18,.33,1]], r:.11, t0:.04, t1:.82, peak:.42, rt:.03 } ],
+    label:.7 },
+  { id:'supinator', name:'Supinator', short:'Supinator', group:'rotator', pos:{sup:0, neu:0, pro:0},
+    plain:'A deep muscle that wraps around the top of the thumb-side forearm bone. It turns your palm up.',
+    where:'Deep in the outer, upper forearm, just below the elbow. It wraps around the radius like a sling.',
+    everyday:'Turning a doorknob or key to open, turning your palm up to receive change, using a screwdriver.',
+    feel:'Too deep to feel clearly. With your elbow straight, turn your palm up slowly. The supinator does most of that work.',
+    origin:['Lateral epicondyle of the humerus','Radial collateral and annular ligaments','Supinator crest and fossa of the ulna'],
+    insertion:['Lateral, posterior and anterior surfaces of the proximal third of the radius'],
+    nerve:'Deep branch of the radial nerve (posterior interosseous nerve)', roots:'C5–C6', blood:'Radial recurrent artery, recurrent interosseous artery',
+    actions:['Forearm supination in every elbow position','Main supinator in slow, unresisted supination and with the elbow extended'],
+    position:'Works in any elbow position. Biceps takes over most of the load in resisted supination with the elbow near 90°.',
+    palpation:'Deep. Felt vaguely distal to the radial head on the posterolateral forearm during supination.',
+    clinical:['The posterior interosseous nerve passes through it (arcade of Frohse): PIN compression or radial tunnel syndrome.','PIN palsy: weak finger and thumb extension without sensory loss.','A differential for lateral elbow pain.'],
+    palmNote:'It turns your palm up, and works alone when the turn is easy or your elbow is straight.',
+    tubes:[ { pts:[['F',-.11,-.34,-.05],['F',-.13,-.48,.17],['R',-.03,-.62,.31,.7],['R',.1,-.78,.3,1],['R',.15,-.92,.21,1]], r:.1, t0:.04, t1:.9, peak:.5, rt:.04 } ],
+    label:.55 },
+  { id:'pronQuad', name:'Pronator quadratus', short:'Pronator quadratus', group:'rotator', pos:{sup:0, neu:0, pro:0},
+    plain:'A small square muscle just above the wrist. It starts every palm-down turn.',
+    where:'Deep at the front of the forearm, just above the wrist, joining the two forearm bones.',
+    everyday:'Any palm-down turn: pouring, typing, turning a page face down.',
+    feel:'It sits under the wrist tendons, so you cannot feel it directly.',
+    origin:['Distal quarter of the anterior surface of the ulna'],
+    insertion:['Distal quarter of the anterior surface of the radius'],
+    nerve:'Anterior interosseous nerve (median nerve)', roots:'C8–T1 (C7)', blood:'Anterior interosseous artery',
+    actions:['Forearm pronation: the main pronator in every position','Deep head helps hold the radius and ulna together at the distal radioulnar joint'],
+    position:'Active in all pronation regardless of elbow angle or speed.',
+    palpation:'Not palpable: deep to the flexor tendons.',
+    clinical:['Isolate it by testing pronation with the elbow fully flexed (pronator teres slackened).','Weak in anterior interosseous nerve syndrome, along with FPL and the index FDP.'],
+    palmNote:'It does every palm-down turn, easy or hard.',
+    tubes:[ { pts:[['F',.07,-2.3,-.17],['F',.13,-2.28,-.06],['R',.14,-2.25,.1,.6],['R',.1,-2.22,.24,1]], r:.075, t0:.08, t1:.92, peak:.5, rt:.05 } ],
+    label:.5 },
 ];
 
 const JOINT = {
@@ -344,17 +428,41 @@ const JOINT = {
   ],
 };
 
+const FOREARM = {
+  patient: [
+    ['A pivot, not a hinge','Turning your palm up and down happens between your two forearm bones. The radius (thumb side) rolls over the ulna, which stays still.'],
+    ['How far it turns','From thumb-up, most people turn about 80–90° each way: palm up (supination) and palm down (pronation).'],
+    ['Check it fairly','Keep your elbow bent at your side. If the elbow drifts away from your body, your shoulder is doing some of the turning.'],
+    ['Why your elbow angle matters','The biceps helps turn the palm up much more when your elbow is bent. With your elbow straight, that turn is weaker.'],
+  ],
+  learner: [
+    ['Articulations','Proximal radioulnar joint (radial head in the annular ligament) and distal radioulnar joint, linked by the interosseous membrane'],
+    ['Classification','Synovial pivot (trochoid), 1 degree of freedom. Axis runs from the radial head to the ulnar head'],
+    ['Normal ROM','Supination 0–80/90°. Pronation 0–80/90° (from mid-prone)'],
+    ['End feel','Firm in both directions (ligamentous, interosseous membrane). Pronation can be hard (radius on ulna)'],
+    ['Capsular pattern','Equal limitation of pronation and supination'],
+    ['Close-packed position','PRUJ and DRUJ: ~5° supination'],
+    ['Testing','Elbow at 90° and tucked to the side to remove shoulder rotation'],
+    ['Muscle recruitment','Supinator leads unresisted supination; biceps joins with resistance, mostly near 90° flexion. Pronator quadratus leads pronation; pronator teres joins with speed or resistance'],
+    ['Common conditions','Distal radius fracture (stiff rotation), DRUJ/TFCC injury, radial head fracture, "pulled elbow" in children'],
+  ],
+};
+
 const WORDS = {
-  patient:{ prime:'Main mover', syn:'Helper', ant:'Opposite side', con:'Shortening', ecc:'Lengthening to control', iso:'Holding', rel:'Resting',
-    flexor:'Front of arm', extensor:'Back of arm', flex:'Bending', extend:'Straightening', hold:'Holding', rest:'Resting' },
-  learner:{ prime:'Prime mover', syn:'Synergist', ant:'Antagonist', con:'Concentric', ecc:'Eccentric', iso:'Isometric', rel:'Relaxed',
-    flexor:'Elbow flexors', extensor:'Elbow extensors', flex:'Flexion', extend:'Extension', hold:'Isometric hold', rest:'At rest' },
+  patient:{ prime:'Main mover', syn:'Helper', ant:'Opposite side', stab:'Steadying', con:'Shortening', ecc:'Lengthening to control', iso:'Holding', rel:'Resting',
+    coact:'Lightly on, steadying', flexor:'Front of arm', extensor:'Back of arm', rotator:'Forearm turners',
+    flex:'Bending', extend:'Straightening', hold:'Holding', rest:'Resting', sup:'Turning palm up', pro:'Turning palm down',
+    palmUp:'palm up', palmDown:'palm down', thumbUp:'thumb up' },
+  learner:{ prime:'Prime mover', syn:'Synergist', ant:'Antagonist', stab:'Stabiliser', con:'Concentric', ecc:'Eccentric', iso:'Isometric', rel:'Relaxed',
+    coact:'Low-level co-activation', flexor:'Elbow flexors', extensor:'Elbow extensors', rotator:'Pronators & supinators',
+    flex:'Flexion', extend:'Extension', hold:'Isometric hold', rest:'At rest', sup:'Supination', pro:'Pronation',
+    palmUp:'supination', palmDown:'pronation', thumbUp:'mid-prone' },
 };
 
 const CAPTIONS = {
   weight:{
     rest:['Arm resting by your side. The muscles are switched off.','Arm at rest in extension: almost no gravitational torque about the elbow, so the muscles are quiet.'],
-    flex:['Lifting the weight: the muscles at the front of the arm shorten to pull it up.','Flexion against gravity: the elbow flexors contract concentrically.'],
+    flex:['Lifting the weight: the muscles at the front of the arm shorten to pull it up. The triceps stays only lightly on.','Flexion against gravity: the elbow flexors contract concentrically. Triceps shows only low-level co-activation.'],
     extend:['Lowering the weight: the front muscles are still working. They lengthen slowly to control it, and the triceps stays quiet.','Extension with gravity: the flexors control the descent eccentrically. The triceps is not needed, since gravity does the extending.'],
     hold:['Holding still: the front muscles work without moving. It is hardest around 90°, where the weight pulls the most.','Isometric flexor contraction. Gravitational torque peaks at 90°, when the forearm is horizontal.'],
   },
@@ -363,6 +471,15 @@ const CAPTIONS = {
     flex:['Letting the band bend your elbow: the triceps lengthens to control it.','Flexion driven by the external load: the triceps contracts eccentrically.'],
     extend:['Pushing down against the band: the triceps shortens to straighten the elbow.','Extension against resistance: the triceps, helped by anconeus, contracts concentrically.'],
     hold:['Holding against the band: the triceps works without moving.','Isometric extensor contraction against the band.'],
+  },
+  rot:{
+    rest:['Forearm still. Turn your palm up or down to see which muscles do it.','Forearm at rest. Pronate or supinate to see recruitment.'],
+    sup:['Turning your palm up: the supinator does this.','Supination: the supinator is the prime mover.'],
+    supEasy:['Make it hard, like tightening a screw, and the biceps joins in.','Biceps is recruited for fast or resisted supination.'],
+    supHard:['Because it is hard and your elbow is bent, the biceps joins in strongly.','Resisted with the elbow near 90°: the biceps becomes the main supinator.'],
+    pro:['Turning your palm down: the pronator quadratus near the wrist starts it. The pronator teres joins in when it gets harder.','Pronation: pronator quadratus is the prime mover. Pronator teres is recruited for fast or resisted pronation.'],
+    straight:['With your elbow straight, the biceps can barely help, so this turn is weaker.','With the elbow extended the biceps has poor leverage for supination, so the supinator works largely alone.'],
+    stab:['The triceps tightens to stop the biceps from bending your elbow.','Triceps and anconeus contract isometrically to neutralise the flexion moment of the biceps.'],
   },
   pos:{
     sup:['With your palm up, the biceps is at its strongest.','Supinated: biceps has its best line of pull.'],
@@ -373,8 +490,8 @@ const CAPTIONS = {
 
 /* ------------------------------------------------------------------ state */
 const state = {
-  theta:0, goal:0, vel:0, phi:0, pos:'sup', load:'weight', mode:'patient',
-  anim:null, loop:false, hold:0, loopDir:1,
+  theta:0, goal:0, vel:0, phi:0, phiGoal:0, phiVel:0, pos:'sup', load:'weight', rload:'light', mode:'patient', move:'elbow',
+  anim:null, loop:false, hold:0, loopDir:1, rotAnim:null, rotLoop:false, rotHold:0, rotDir:1,
   phase:'rest', demand:0, selected:null, hovered:null,
 };
 
@@ -637,26 +754,69 @@ updateTransforms();
 for (const m of MUSCLES) for (const o of m.tubeObjs){ o.t.pts.forEach((p,i) => resolve(p, o.pts[i])); o.L0 = new THREE.CatmullRomCurve3(o.pts,false,'centripetal').getLength(); }
 
 /* ------------------------------------------------------------------ physiology model (simplified, for teaching) */
-const PHI = { sup:0, neu:85, pro:165 };
-function updatePhysiology(dt){
+const PHI = { sup:0, neu:85, pro:165 };   // radius rotation; 0 = full supination, 165 = full pronation
+const OPPOSITE = { con:'ecc', ecc:'con', iso:'iso' };
+const byId = id => MUSCLES.find(m => m.id === id);
+// muscle's leverage for elbow flexion at the current forearm rotation (interpolates the three presets)
+function posFactor(m){
+  const p = state.phi, { sup, neu, pro } = m.pos;
+  return p <= PHI.neu ? THREE.MathUtils.lerp(sup, neu, p / PHI.neu) : THREE.MathUtils.lerp(neu, pro, (p - PHI.neu) / (PHI.pro - PHI.neu));
+}
+// each returns Map muscle → [target activation, contraction type, role]; muscles not in it rest
+function elbowPlan(){
   const v = state.vel, moving = Math.abs(v) > 4;
   let phase = moving ? (v > 0 ? 'flex' : 'extend') : 'hold';
   if (state.load === 'weight' && phase === 'hold' && state.theta < 5) phase = 'rest';
   state.phase = phase;
+  const plan = new Map();
+  if (phase === 'rest') return [plan, 0];
   const workGroup = state.load === 'weight' ? 'flexor' : 'extensor';
   let type = 'iso';
   if (state.load === 'weight') type = phase === 'flex' ? 'con' : phase === 'extend' ? 'ecc' : 'iso';
   else type = phase === 'extend' ? 'con' : phase === 'flex' ? 'ecc' : 'iso';
-  let demand = phase === 'rest' ? 0 : state.load === 'weight' ? .18 + .82*Math.sin(state.theta*DEG) : .8;
+  let demand = state.load === 'weight' ? .18 + .82*Math.sin(state.theta*DEG) : .8;
   if (type === 'ecc') demand *= .72;           // eccentric work needs fewer motor units for the same load
+  // antagonists are not silent: low-level co-activation stiffens the joint, a little more with speed
+  const coact = .06 + .06*Math.min(1, Math.abs(v)/150) + .04*demand;
+  for (const m of MUSCLES){
+    if (m.group === workGroup){ const f = posFactor(m); plan.set(m, [demand*f, type, f >= .95 ? 'prime' : 'syn']); }
+    else if (m.group === 'flexor' || m.group === 'extensor') plan.set(m, [coact, OPPOSITE[type], 'ant']);
+    else if (m.flexAssist && workGroup === 'flexor') plan.set(m, [demand*m.flexAssist, type, 'syn']);
+  }
+  return [plan, demand];
+}
+function rotatePlan(){
+  const v = state.phiVel, moving = Math.abs(v) > 6;
+  const phase = moving ? (v > 0 ? 'pro' : 'sup') : 'rest';
+  state.phase = phase;
+  const plan = new Map();
+  if (phase === 'rest') return [plan, 0];
+  const hard = state.rload === 'hard', demand = hard ? .85 : .4;
+  const flexLever = .2 + .8*Math.sin(state.theta*DEG);   // biceps supinates best near 90° elbow flexion
+  const towardNeutral = phase === 'sup' ? state.phi > PHI.neu : state.phi < PHI.neu;
+  const coact = .05;
+  const set = (id, a, type, role) => plan.set(byId(id), [a, type, role]);
+  if (phase === 'sup'){
+    set('supinator', hard ? .9 : .6, 'con', 'prime');
+    const b = (hard ? 1 : .15) * flexLever;
+    set('biceps', b, 'con', b > .6 ? 'prime' : 'syn');
+    if (hard){ set('triceps', .32*flexLever, 'iso', 'stab'); set('anconeus', .3*flexLever, 'iso', 'stab'); }
+    set('pronTeres', coact, 'ecc', 'ant'); set('pronQuad', coact, 'ecc', 'ant');
+  } else {
+    set('pronQuad', hard ? .9 : .65, 'con', 'prime');
+    set('pronTeres', hard ? .85 : .2, 'con', hard ? 'prime' : 'syn');
+    set('supinator', coact, 'ecc', 'ant'); set('biceps', coact*.6, 'ecc', 'ant');
+  }
+  if (towardNeutral) set('brachioradialis', hard ? .45 : .22, 'con', 'syn');
+  return [plan, demand];
+}
+function updatePhysiology(dt){
+  const [plan, demand] = state.move === 'rotate' ? rotatePlan() : elbowPlan();
   state.demand += (demand - state.demand) * (1 - Math.exp(-dt*8));
   for (const m of MUSCLES){
-    const working = m.group === workGroup && phase !== 'rest';
-    const f = m.pos[state.pos];
-    const target = working ? demand * f : .02;
+    const [target, type, role] = plan.get(m) || [.02, 'rel', null];
     m.act += (target - m.act) * (1 - Math.exp(-dt*8));
-    m.contraction = working ? type : 'rel';
-    m.role = phase === 'rest' ? null : working ? (f >= .95 ? 'prime' : 'syn') : 'ant';
+    m.contraction = type; m.role = role;
   }
 }
 
@@ -680,7 +840,8 @@ function updateAppearance(time){
     m.labelEl.classList.toggle('on', sel === m);
   }
   const weight = state.load === 'weight';
-  dumbbell.visible = weight && showHand;
+  dumbbell.visible = weight && showHand && state.move === 'elbow';
+  loadArrow.visible = state.move === 'elbow';
   arm.updateMatrixWorld(true);
   if (weight){
     dumbbell.getWorldPosition(_tmp);
@@ -696,6 +857,8 @@ function updateAppearance(time){
 /* ------------------------------------------------------------------ motion: playback + smoothing */
 function stopAnim(){ state.anim = null; state.loop = false; syncButtons(); }
 function playTo(to){ state.anim = { to }; state.hold = 0; }
+function stopRot(){ state.rotAnim = null; state.rotLoop = false; syncButtons(); }
+function rotTo(to){ state.rotAnim = { to }; state.rotHold = 0; }
 function stepMotion(dt){
   if (state.hold > 0){ state.hold -= dt; }
   else if (state.anim){
@@ -712,7 +875,20 @@ function stepMotion(dt){
   state.theta += (state.goal - state.theta) * (1 - Math.exp(-dt*14));
   const raw = (state.theta - prev) / Math.max(dt, 1e-3);
   state.vel += (raw - state.vel) * (1 - Math.exp(-dt*12));
-  state.phi += (PHI[state.pos] - state.phi) * (1 - Math.exp(-dt*5));
+  if (state.rotHold > 0){ state.rotHold -= dt; }
+  else if (state.rotAnim){
+    const d = state.rotAnim.to - state.phiGoal;
+    const s = 75 * THREE.MathUtils.clamp(.3 + Math.abs(d)/40, .3, 1) * dt;
+    if (Math.abs(d) <= s){
+      state.phiGoal = state.rotAnim.to;
+      if (state.rotLoop){ state.rotDir *= -1; state.rotAnim = { to: state.rotDir > 0 ? PHI.pro - 5 : PHI.sup + 5 }; state.rotHold = .8; }
+      else { state.rotAnim = null; syncButtons(); }
+    } else state.phiGoal += Math.sign(d) * s;
+  }
+  const prevPhi = state.phi;
+  state.phi += (state.phiGoal - state.phi) * (1 - Math.exp(-dt*10));
+  const rawPhi = (state.phi - prevPhi) / Math.max(dt, 1e-3);
+  state.phiVel += (rawPhi - state.phiVel) * (1 - Math.exp(-dt*12));
 }
 
 /* ------------------------------------------------------------------ picking + dragging the forearm */
@@ -762,13 +938,20 @@ renderer.domElement.addEventListener('pointerup', e => {
 
 /* ------------------------------------------------------------------ camera tween (fly-to) */
 let tween = null;
-function flyTo(target, dist){
-  tween = { t:0, t0:controls.target.clone(), t1:target.clone(), dir:camera.position.clone().sub(controls.target).normalize(), d0:camera.position.distanceTo(controls.target), d1:dist };
+function flyTo(target, dist, dur=.9){
+  tween = { t:0, dur, t0:controls.target.clone(), t1:target.clone(), dir:camera.position.clone().sub(controls.target).normalize(), d0:camera.position.distanceTo(controls.target), d1:dist };
 }
+function zoom(f){
+  const d = THREE.MathUtils.clamp((tween ? tween.d1 : camera.position.distanceTo(controls.target)) * f, controls.minDistance, controls.maxDistance);
+  flyTo(tween ? tween.t1 : controls.target, d, .35);
+}
+// forearm close-up for pronation/supination: from above and in front, so the radius can be seen crossing the ulna
+const FOREARM_TARGET = new V3(1.6, -.1, 0), FOREARM_DIR = new V3(.15, .8, .6).normalize();
+function flyForearm(){ tween = { t:0, t0:controls.target.clone(), t1:FOREARM_TARGET.clone(), dir:camera.position.clone().sub(controls.target).normalize(), dir1:FOREARM_DIR.clone(), d0:camera.position.distanceTo(controls.target), d1:Math.min(homeDist*.5, 9) }; }
 function flyHome(){ tween = { t:0, t0:controls.target.clone(), t1:HOME_TARGET.clone(), dir:camera.position.clone().sub(controls.target).normalize(), dir1:HOME_DIR.clone(), d0:camera.position.distanceTo(controls.target), d1:homeDist }; }
 function stepTween(dt){
   if (!tween) return;
-  tween.t = Math.min(1, tween.t + dt/.9);
+  tween.t = Math.min(1, tween.t + dt/(tween.dur || .9));
   const e = tween.t < .5 ? 4*tween.t**3 : 1 - Math.pow(-2*tween.t + 2, 3)/2;
   controls.target.lerpVectors(tween.t0, tween.t1, e);
   const dir = tween.dir1 ? tween.dir.clone().lerp(tween.dir1, e).normalize() : tween.dir;
@@ -804,7 +987,7 @@ function stateColorVar(m){ return m.contraction === 'rel' ? 'var(--rest)' : `var
 function statusText(m){
   const w = words();
   if (!m.role) return w.rel;
-  if (m.role === 'ant') return w.rel;
+  if (m.role === 'ant') return m.act > .04 ? w.coact : w.rel;
   return w[m.contraction];
 }
 
@@ -822,7 +1005,7 @@ function renderMuscleList(){
       <h3 style="margin-bottom:4px">Working right now</h3>
       <p class="note">${state.mode === 'patient' ? 'Tap a muscle to learn about it.' : 'Select a muscle for attachments, innervation and clinical notes.'}</p>
     </div>
-    ${grp('flexor')}${grp('extensor')}
+    ${grp('flexor')}${grp('extensor')}${grp('rotator')}
     <div class="legend" aria-label="Colour key">
       <span><i style="background:var(--con)"></i>${w.con}</span>
       <span><i style="background:var(--ecc)"></i>${w.ecc}</span>
@@ -871,7 +1054,7 @@ function renderDetail(){
       <div><dt>Where it is</dt><dd>${m.where}</dd></div>
       <div><dt>You use it for</dt><dd>${m.everyday}</dd></div>
       <div><dt>Feel it yourself</dt><dd>${m.feel}</dd></div>
-      <div><dt>Palm direction</dt><dd>${m.id === 'biceps' ? 'Strongest with your palm up.' : m.id === 'brachioradialis' ? 'Strongest with your thumb up.' : m.id === 'brachialis' ? 'Works the same whichever way your palm faces.' : 'Palm direction makes little difference.'}</dd></div>`}
+      <div><dt>Palm direction</dt><dd>${m.palmNote || 'Palm direction makes little difference.'}</dd></div>`}
     </dl>
     <p class="note">Draft content for physiotherapist review.</p>`;
   $('backBtn').onclick = () => select(null);
@@ -892,34 +1075,72 @@ function renderJoint(){
       <p class="lede">${L ? 'Hinge joint between the humerus, ulna and radius.' : 'Where your upper arm bone meets the two bones of your forearm.'}</p>
     </div>
     <dl class="kv">${JOINT[L ? 'learner' : 'patient'].map(([k,v]) => `<div><dt>${k}</dt><dd>${v}</dd></div>`).join('')}</dl>
+    <div class="detail" style="display:grid;gap:6px;border-top:1px solid var(--line);padding-top:14px">
+      <h2>${L ? 'Radioulnar joints' : 'Turning the forearm'}</h2>
+      <p class="lede">${L ? 'Pronation and supination of the forearm.' : 'How your palm turns up and down.'}</p>
+    </div>
+    <dl class="kv">${FOREARM[L ? 'learner' : 'patient'].map(([k,v]) => `<div><dt>${k}</dt><dd>${v}</dd></div>`).join('')}</dl>
     <div style="border-top:1px solid var(--line);padding-top:12px">
       <h3>Coming next</h3>
       <ul class="note" style="padding-left:18px;margin:0;display:grid;gap:3px">
-        <li>Pronation and supination as movements</li><li>Pronator teres and the wrist muscles</li>
-        <li>Ligament and nerve layers</li><li>Quiz mode</li></ul>
+        <li>Wrist and finger muscles</li><li>Ligament and nerve layers</li><li>Quiz mode</li></ul>
     </div>
     <p class="note">Draft content for physiotherapist review.</p>`;
 }
 
+// hide labels that collide with a more important one (selected first, then the most active muscle)
+function declutterLabels(){
+  const placed = [];
+  const order = [...MUSCLES].sort((a,b) => (b === state.selected) - (a === state.selected) || b.act - a.act);
+  for (const m of order){
+    const el = m.labelEl;
+    if (!m.label3d.visible || el.style.display === 'none'){ continue; }
+    const r = el.getBoundingClientRect();
+    const hit = placed.some(q => r.left < q.right + 2 && r.right > q.left - 2 && r.top < q.bottom + 2 && r.bottom > q.top - 2);
+    el.classList.toggle('clash', hit);
+    if (!hit) placed.push(r);
+  }
+}
 function updateHUD(){
   const w = words(), L = state.mode === 'learner' ? 1 : 0;
   $('angleVal').textContent = Math.round(state.theta);
   if (document.activeElement !== $('angle')) $('angle').value = Math.round(state.goal);
-  const pill = $('phasePill');
-  const pc = state.phase === 'rest' ? 'var(--rest)' : state.load === 'weight'
+  const rotate = state.move === 'rotate';
+  const pill = $(rotate ? 'rotPill' : 'phasePill');
+  $('phasePill').hidden = rotate; $('rotPill').hidden = !rotate;
+  const pc = state.phase === 'rest' ? 'var(--rest)' : rotate ? 'var(--con)' : state.load === 'weight'
       ? (state.phase === 'flex' ? 'var(--con)' : state.phase === 'extend' ? 'var(--ecc)' : 'var(--iso)')
       : (state.phase === 'extend' ? 'var(--con)' : state.phase === 'flex' ? 'var(--ecc)' : 'var(--iso)');
   pill.querySelector('i').style.background = pc;
   pill.querySelector('span').textContent = w[state.phase];
-  let cap = CAPTIONS[state.load][state.phase][L];
-  if (state.load === 'weight' && state.phase !== 'rest' && state.phase !== 'extend') cap += ' ' + CAPTIONS.pos[state.pos][L];
+  // forearm rotation readout: degrees from thumb-up
+  const r = Math.round(state.phi - PHI.neu);
+  $('rotVal').textContent = Math.abs(r);
+  $('rotLbl').textContent = Math.abs(r) < 3 ? w.thumbUp : r < 0 ? w.palmUp : w.palmDown;
+  if (document.activeElement !== $('rot')) $('rot').value = Math.round(state.phiGoal - PHI.neu);
+  state.pos = state.phi < 42 ? 'sup' : state.phi < 125 ? 'neu' : 'pro';
+  for (const [k,id] of Object.entries(POS_IDS)) $(id).setAttribute('aria-pressed', Math.abs(state.phiGoal - PHI[k]) < 6);
+  let cap;
+  if (rotate){
+    cap = CAPTIONS.rot[state.phase][L];
+    if (state.phase === 'sup'){
+      const R = CAPTIONS.rot;
+      if (state.rload === 'light') cap += ' ' + R.supEasy[L];
+      else if (state.theta < 35) cap += ' ' + R.straight[L];
+      else cap += ' ' + R.supHard[L] + ' ' + R.stab[L];
+    }
+  } else {
+    cap = CAPTIONS[state.load][state.phase][L];
+    if (state.load === 'weight' && state.phase !== 'rest' && state.phase !== 'extend') cap += ' ' + CAPTIONS.pos[state.pos][L];
+  }
   if ($('captionTxt').textContent !== cap) $('captionTxt').textContent = cap;
   $('effortBar').style.width = Math.round(Math.min(1, state.demand) * 100) + '%';
-  updateMuscleList(); updateDetailStatus();
+  updateMuscleList(); updateDetailStatus(); declutterLabels();
 }
 
 function syncButtons(){
   $('btnLoop').setAttribute('aria-pressed', state.loop);
+  $('btnRotLoop').setAttribute('aria-pressed', state.rotLoop);
 }
 function setPressed(ids, on){ ids.forEach(id => $(id).setAttribute('aria-pressed', id === on)); }
 
@@ -931,7 +1152,42 @@ $('btnLoop').onclick = () => {
   state.loop = true; state.loopDir = state.goal > 70 ? -1 : 1; playTo(state.loopDir > 0 ? 140 : 4); syncButtons();
 };
 const POS_IDS = { sup:'posSup', neu:'posNeu', pro:'posPro' };
-for (const [k,id] of Object.entries(POS_IDS)) $(id).onclick = () => { state.pos = k; setPressed(Object.values(POS_IDS), id); };
+for (const [k,id] of Object.entries(POS_IDS)) $(id).onclick = () => { stopRot(); state.phiGoal = PHI[k]; };
+$('rot').addEventListener('input', e => { stopRot(); state.phiGoal = +e.target.value + PHI.neu; });
+$('btnSup').onclick = () => { state.rotLoop = false; syncButtons(); rotTo(PHI.sup); };
+$('btnPro').onclick = () => { state.rotLoop = false; syncButtons(); rotTo(PHI.pro); };
+$('btnRotLoop').onclick = () => {
+  if (state.rotLoop) return stopRot();
+  state.rotLoop = true; state.rotDir = state.phiGoal > PHI.neu ? -1 : 1; rotTo(state.rotDir > 0 ? PHI.pro - 5 : PHI.sup + 5); syncButtons();
+};
+function setMove(mv){
+  state.move = mv;
+  setPressed(['mvElbow','mvRotate'], mv === 'elbow' ? 'mvElbow' : 'mvRotate');
+  const rotate = mv === 'rotate';
+  $('elbowBtns').hidden = rotate; $('rotBtns').hidden = !rotate;
+  $('loadElbow').hidden = rotate; $('loadRotate').hidden = !rotate;
+  updateHints();
+  if (rotate){ stopAnim(); playTo(90); select(null); flyForearm(); state.rotLoop = true; state.rotDir = state.phiGoal > PHI.neu ? -1 : 1; rotTo(state.rotDir > 0 ? PHI.pro - 5 : PHI.sup + 5); }
+  else { stopRot(); flyHome(); }
+  syncButtons();
+}
+function updateHints(){
+  const L = state.mode === 'learner';
+  $('elbowHint').textContent = state.move === 'rotate'
+    ? (L ? 'Compare resisted supination at 90° and at 0°: the biceps contribution drops with the elbow extended.' : 'Try a hard turn with your elbow bent, then straight. Watch the biceps.')
+    : 'You can also drag the forearm or hand in the 3D view.';
+}
+$('mvElbow').onclick = () => setMove('elbow');
+$('mvRotate').onclick = () => setMove('rotate');
+$('rLight').onclick = () => { state.rload = 'light'; setPressed(['rLight','rHard'], 'rLight'); };
+$('rHard').onclick = () => { state.rload = 'hard'; setPressed(['rLight','rHard'], 'rHard'); };
+$('zoomIn').onclick = () => zoom(.8);
+$('zoomOut').onclick = () => zoom(1.25);
+addEventListener('keydown', e => {
+  if (e.target.closest('input')) return;
+  if (e.key === '+' || e.key === '=') zoom(.8);
+  else if (e.key === '-' || e.key === '_') zoom(1.25);
+});
 $('loadWeight').onclick = () => { state.load = 'weight'; setPressed(['loadWeight','loadBand'], 'loadWeight'); };
 $('loadBand').onclick = () => { state.load = 'band'; setPressed(['loadWeight','loadBand'], 'loadBand'); };
 $('tLabels').onchange = e => MUSCLES.forEach(m => m.label3d.visible = e.target.checked);
@@ -949,6 +1205,11 @@ function setMode(mode){
   $('extTxt').textContent = L ? 'Extend' : 'Straighten';
   $('scaleL').textContent = L ? '0° extension' : '0° straight';
   $('scaleR').textContent = L ? '145° flexion' : '145° fully bent';
+  $('rotScaleL').textContent = L ? 'Supination 85°' : 'palm up';
+  $('rotScaleR').textContent = L ? 'Pronation 80°' : 'palm down';
+  $('supTxt').textContent = L ? 'Supinate' : 'Turn up';
+  $('proTxt').textContent = L ? 'Pronate' : 'Turn down';
+  updateHints();
   renderMuscleList(); renderDetail(); renderJoint();
 }
 $('modePatient').onclick = () => setMode('patient');
@@ -980,6 +1241,8 @@ setMode('patient');
 if (reduceMotion){ state.goal = state.theta = 90; }
 else { state.goal = state.theta = 4; state.loop = true; state.loopDir = 1; playTo(140); syncButtons(); }
 
+// handle for automated rendering checks
+window.myotrek = { state, MUSCLES, camera, controls };
 const clock = new THREE.Clock();
 let hudT = 0;
 renderer.setAnimationLoop(() => {
