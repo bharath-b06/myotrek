@@ -134,6 +134,16 @@ input[type=range]{width:100%; accent-color:var(--accent); margin:6px 0 2px}
 .deglabel{font:500 12px/1 var(--font-mono); color:var(--accent); background:var(--panel); padding:3px 6px; border-radius:6px; border:1px solid var(--line)}
 .ticklabel{font:500 10.5px/1 var(--font-mono); color:var(--fg-3)}
 
+.seg.block.sub{margin-top:6px; background:transparent}
+.viewbar{position:absolute; left:322px; top:72px; right:440px; display:flex; flex-wrap:wrap; gap:6px; z-index:4; pointer-events:none}
+.viewbar .chk{pointer-events:auto; background:var(--panel); backdrop-filter:blur(12px); box-shadow:var(--shadow)}
+.slider90{position:relative}
+.slider90 input{position:relative; z-index:1}
+/* centre of the range thumb at 90/145 of the track (thumb ≈ 16px) */
+.mark90{position:absolute; left:calc(8px + (100% - 16px) * 90 / 145); top:100%; transform:translate(-50%, 2px); z-index:2;
+  border:1px solid var(--accent); background:var(--panel-solid); color:var(--accent); font:700 11px/1 var(--font-mono); padding:3px 6px; border-radius:999px; cursor:pointer}
+.mark90::before{content:""; position:absolute; left:50%; bottom:100%; width:1px; height:9px; background:var(--accent); transform:translateX(-50%)}
+.mark90:hover{background:var(--accent); color:var(--accent-fg)}
 .zoom{position:absolute; right:382px; top:72px; display:flex; flex-direction:column; gap:6px; z-index:4}
 .zoom .iconbtn{width:40px; height:40px; box-shadow:var(--shadow)}
 .readout.sm .num{font-size:28px}
@@ -173,15 +183,25 @@ input[type=range]{width:100%; accent-color:var(--accent); margin:6px 0 2px}
   .caption{position:static; margin:0 16px 12px}
   .caption .panel{width:100%}
   .zoom{right:12px; top:auto; bottom:12px}
+  .viewbar{left:0; right:0; top:60px; padding:0 12px 4px; flex-wrap:nowrap; overflow-x:auto; pointer-events:auto; scrollbar-width:none}
+  .viewbar .chk{flex:none; font-size:12px; padding:4px 9px}
 }
 @media (prefers-reduced-motion: reduce){ *{transition:none!important} }
 </style>
 
 <div class="app">
   <div id="stage"><div class="loading" id="loading">Loading 3D model…</div>
+    <div class="viewbar" role="group" aria-label="Show in 3D view">
+      <label class="chk"><input type="checkbox" id="tLabels" checked> Labels</label>
+      <label class="chk"><input type="checkbox" id="tBones" checked> Bones</label>
+      <label class="chk"><input type="checkbox" id="tHand" checked> Hand</label>
+      <label class="chk"><input type="checkbox" id="tArc" checked> Angle arc</label>
+      <label class="chk"><input type="checkbox" id="tBody" checked> Body</label>
+    </div>
     <div class="zoom" role="group" aria-label="Zoom">
       <button class="iconbtn" id="zoomIn" aria-label="Zoom in" title="Zoom in (+)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
       <button class="iconbtn" id="zoomOut" aria-label="Zoom out" title="Zoom out (−)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M5 12h14"/></svg></button>
+      <button class="iconbtn" id="resetView" aria-label="Reset view" title="Reset view"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></svg></button>
     </div>
   </div>
 
@@ -193,8 +213,8 @@ input[type=range]{width:100%; accent-color:var(--accent); margin:6px 0 2px}
     </div>
     <div class="top-right">
       <div class="seg" role="group" aria-label="Explanation level">
-        <button id="modePatient" aria-pressed="true">Patient</button>
-        <button id="modeLearner" aria-pressed="false">Learner</button>
+        <button id="modePatient" aria-pressed="true">Simple</button>
+        <button id="modeLearner" aria-pressed="false">Clinical</button>
       </div>
       <button class="iconbtn" id="themeBtn" aria-label="Switch light or dark theme" title="Light / dark">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v3M12 20v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M1 12h3M20 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/></svg>
@@ -212,16 +232,27 @@ input[type=range]{width:100%; accent-color:var(--accent); margin:6px 0 2px}
     </section>
     <section id="exSection">
       <h3>Exercise</h3>
-      <div class="seg block" role="group" aria-label="Exercise">
-        <button id="exCurl" aria-pressed="false">Biceps curl<small data-l="Flexors, arm at side">arm by your side</small></button>
-        <button id="exOver" aria-pressed="true">Overhead<small data-l="Triceps, shoulder flexed">triceps, arm up</small></button>
-        <button id="exKick" aria-pressed="false">Kickback<small data-l="Triceps, shoulder extended">triceps, leaning</small></button>
+      <div class="seg block" role="group" aria-label="Muscle group">
+        <button id="grpBi" aria-pressed="false">Biceps<small data-l="Elbow flexors">front of arm</small></button>
+        <button id="grpTri" aria-pressed="true">Triceps<small data-l="Elbow extensors">back of arm</small></button>
+      </div>
+      <div class="seg block sub" role="group" aria-label="Biceps exercises" id="subBi" hidden>
+        <button id="exCurl">Curl<small data-l="Supinated">palm up</small></button>
+        <button id="exHammer">Hammer<small data-l="Mid-prone">thumb up</small></button>
+        <button id="exReverse">Reverse<small data-l="Pronated">palm down</small></button>
+      </div>
+      <div class="seg block sub" role="group" aria-label="Triceps exercises" id="subTri">
+        <button id="exOver" aria-pressed="true">Overhead<small data-l="Shoulder flexed">arm up</small></button>
+        <button id="exKick" aria-pressed="false">Kickback<small data-l="Shoulder extended">leaning forward</small></button>
       </div>
     </section>
     <section>
       <h3>Elbow angle</h3>
       <div class="readout"><span class="num" id="angleVal">0</span><span class="deg">°</span><span class="pill" id="phasePill"><i></i><span>Resting</span></span></div>
-      <input type="range" id="angle" min="0" max="145" step="1" value="0" aria-label="Elbow angle in degrees">
+      <div class="slider90">
+        <input type="range" id="angle" min="0" max="145" step="1" value="0" aria-label="Elbow angle in degrees">
+        <button class="mark90" id="go90" title="Go to 90°" aria-label="Go to 90 degrees">90°</button>
+      </div>
       <div class="scale"><span id="scaleL">0° straight</span><span id="scaleR">145° fully bent</span></div>
       <figure class="echart" id="echart" hidden>
         <figcaption>Load on the elbow by angle</figcaption>
@@ -241,7 +272,7 @@ input[type=range]{width:100%; accent-color:var(--accent); margin:6px 0 2px}
       <div class="readout sm"><span class="num" id="rotVal">0</span><span class="deg">°</span><span class="rotlbl" id="rotLbl">palm up</span><span class="pill" id="rotPill" hidden><i></i><span></span></span></div>
       <input type="range" id="rot" min="-85" max="80" step="1" value="-85" aria-label="Forearm rotation in degrees">
       <div class="scale"><span id="rotScaleL">palm up</span><span id="rotScaleR">palm down</span></div>
-      <div class="seg block" role="group" aria-label="Forearm position" style="margin-top:8px">
+      <div class="seg block" role="group" aria-label="Forearm position" id="posPresets" style="margin-top:8px">
         <button id="posSup" aria-pressed="true">Up<small data-l="Supinated">palm up</small></button>
         <button id="posNeu" aria-pressed="false">Thumb up<small data-l="Mid-prone">like a hammer</small></button>
         <button id="posPro" aria-pressed="false">Down<small data-l="Pronated">palm down</small></button>
@@ -265,17 +296,6 @@ input[type=range]{width:100%; accent-color:var(--accent); margin:6px 0 2px}
         <button id="rLight" aria-pressed="true">Easy<small data-l="Unresisted">turning a page</small></button>
         <button id="rHard" aria-pressed="false">Hard<small data-l="Resisted">tightening a screw</small></button>
       </div>
-    </section>
-    <section>
-      <h3>Show</h3>
-      <div class="toggles">
-        <label class="chk"><input type="checkbox" id="tLabels" checked> Labels</label>
-        <label class="chk"><input type="checkbox" id="tBones" checked> Bones</label>
-        <label class="chk"><input type="checkbox" id="tHand" checked> Hand</label>
-        <label class="chk"><input type="checkbox" id="tArc" checked> Angle arc</label>
-        <label class="chk"><input type="checkbox" id="tBody" checked> Body</label>
-      </div>
-      <button class="linkbtn" id="resetView">Reset view</button>
     </section>
   </aside>
 
@@ -854,8 +874,8 @@ function posFactor(m){
 // exercise postures: trunk tilt (forward lean), shoulder angle (+ = flexion), other arm, bench, repeat range
 const POSTURES = {
   curl:     { tilt:0,  sh:0,   left:0,  bench:null,    loop:[4,140], target:new V3(.9,-.3,0),    zoom:1,    dir:new V3(.34,.12,1) },
-  overhead: { tilt:0,  sh:170, left:0,  bench:'seat',  loop:[10,140], target:new V3(-.3,5.5,-.8), zoom:1.35,  dir:new V3(.85,.18,.6) },
-  kickback: { tilt:75, sh:-15, left:75, bench:'kneel', loop:[5,95],  target:new V3(2.2,-2.6,0),  zoom:1.1,  dir:new V3(.3,.3,1) },
+  overhead: { tilt:0,  sh:170, left:0,  bench:'seat',  loop:[10,140], target:new V3(-.6,5.9,0),   zoom:1.35,   dir:new V3(0,.1,1) },
+  kickback: { tilt:75, sh:-15, left:75, bench:'kneel', loop:[5,95],  target:new V3(2.2,-2.6,0),  zoom:1.1,  dir:new V3(0,.1,1) },
 };
 const posture = () => state.move === 'rotate' ? 'curl' : state.ex;
 const loadKind = () => posture() === 'curl' ? state.load : 'weight';
@@ -1299,6 +1319,7 @@ function updateHUD(){
   if (document.activeElement !== $('rot')) $('rot').value = Math.round(state.phiGoal - PHI.neu);
   state.pos = state.phi < 42 ? 'sup' : state.phi < 125 ? 'neu' : 'pro';
   for (const [k,id] of Object.entries(POS_IDS)) $(id).setAttribute('aria-pressed', Math.abs(state.phiGoal - PHI[k]) < 6);
+  for (const [k,id] of Object.entries(CURL_IDS)) $(id).setAttribute('aria-pressed', Math.abs(state.phiGoal - PHI[k]) < 6);
   let cap;
   if (rotate){
     cap = CAPTIONS.rot[state.phase][L];
@@ -1363,22 +1384,33 @@ function setMove(mv){
 function syncSections(){
   const rotate = state.move === 'rotate', curl = state.ex === 'curl';
   $('exSection').hidden = rotate;
+  $('subBi').hidden = !curl; $('subTri').hidden = curl;
   $('palmSection').hidden = !rotate && !curl;
+  $('posPresets').hidden = !rotate;          // in the curl, the Curl / Hammer / Reverse buttons set the palm
   $('loadElbow').hidden = rotate || !curl; $('loadRotate').hidden = !rotate;
   $('echart').hidden = rotate || state.mode !== 'learner';
   drawChart();
 }
-const EX_IDS = { curl:'exCurl', overhead:'exOver', kickback:'exKick' };
-function setExercise(ex){
+const CURL_IDS = { sup:'exCurl', neu:'exHammer', pro:'exReverse' };
+function setExercise(ex, phi){
   if (state.ex === 'curl') state.curlPhi = state.phiGoal;
+  if (ex !== 'curl') state.lastTri = ex;
   state.ex = ex;
-  setPressed(Object.values(EX_IDS), EX_IDS[ex]);
+  setPressed(['grpBi','grpTri'], ex === 'curl' ? 'grpBi' : 'grpTri');
+  setPressed(['exOver','exKick'], ex === 'overhead' ? 'exOver' : ex === 'kickback' ? 'exKick' : null);
   stopRot();
-  state.phiGoal = ex === 'curl' ? state.curlPhi : PHI.neu;    // triceps exercises: thumb-up grip
+  state.phiGoal = ex === 'curl' ? (phi ?? state.curlPhi) : PHI.neu;    // triceps exercises: thumb-up grip
   select(null); syncSections(); flyHome();
   state.loop = true; state.loopDir = -1; playTo(POSTURES[ex].loop[0]); syncButtons();
 }
-for (const [k,id] of Object.entries(EX_IDS)) $(id).onclick = () => setExercise(k);
+$('grpBi').onclick = () => { if (state.ex !== 'curl') setExercise('curl'); };
+$('grpTri').onclick = () => { if (state.ex === 'curl') setExercise(state.lastTri || 'overhead'); };
+$('exOver').onclick = () => setExercise('overhead');
+$('exKick').onclick = () => setExercise('kickback');
+for (const [k,id] of Object.entries(CURL_IDS)) $(id).onclick = () => {
+  if (state.ex === 'curl'){ stopRot(); state.phiGoal = PHI[k]; } else setExercise('curl', PHI[k]);
+};
+$('go90').onclick = () => { state.loop = false; syncButtons(); playTo(90); };
 function updateHints(){
   const L = state.mode === 'learner';
   $('elbowHint').textContent = state.move === 'rotate'
@@ -1402,7 +1434,7 @@ $('tBody').onchange = e => { showBody = e.target.checked; silhouette.visible = s
 $('tLabels').onchange = e => MUSCLES.forEach(m => m.label3d.visible = e.target.checked);
 $('tBones').onchange = e => { showBones = e.target.checked; boneParts.forEach(b => b.visible = showBones); scap.forEach(b => b.visible = showBones); };
 $('tHand').onchange = e => { showHand = e.target.checked; handParts.forEach(b => { if (!dumbbell.children.includes(b)) b.visible = showHand; }); };
-$('tArc').onchange = e => arcGroup.visible = e.target.checked;
+$('tArc').onchange = e => arcGroup.traverse(o => { if (o === arcGroup || o.isCSS2DObject) o.visible = e.target.checked; });
 $('resetView').onclick = () => { select(null); flyHome(); };
 
 function setMode(mode){

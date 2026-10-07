@@ -2,7 +2,7 @@
 
 Interactive 3D explorer of joints and the muscles that move them, for patients and physiotherapy learners.
 
-**v1: the elbow and forearm.** Three exercises (biceps curl, overhead triceps extension, triceps kickback) shown on an upper-body outline, plus turning the palm up and down (supination and pronation), and watch the muscles shorten, lengthen and bulge. Muscles are coloured by contraction type (concentric, eccentric, isometric). You can switch forearm position (palm up, thumb up, palm down) and load (weight or band), and each muscle has an info card with Patient and Learner levels.
+**v1: the elbow and forearm.** Three exercises (biceps curl, overhead triceps extension, triceps kickback) shown on an upper-body outline, plus turning the palm up and down (supination and pronation), and watch the muscles shorten, lengthen and bulge. Muscles are coloured by contraction type (concentric, eccentric, isometric). You can switch forearm position (palm up, thumb up, palm down) and load (weight or band), and each muscle has an info card with Simple and Clinical levels.
 
 ## Run it
 
