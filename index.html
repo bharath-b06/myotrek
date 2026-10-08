@@ -1003,6 +1003,7 @@ function updateAppearance(time){
     }
     m.labelEl.classList.toggle('dim', !!faded);
     m.labelEl.classList.toggle('on', sel === m);
+    m.label3d.visible = showLabels || sel === m;     // the selected muscle keeps its label even with labels switched off
   }
   const weight = loadKind() === 'weight';
   dumbbell.visible = weight && showHand && state.move === 'elbow';
@@ -1139,7 +1140,7 @@ function stepTween(dt){
 /* ------------------------------------------------------------------ UI */
 const $ = id => document.getElementById(id);
 const words = () => WORDS[state.mode];
-let showBones = true, showHand = true, showBody = true;
+let showBones = true, showHand = true, showBody = true, showLabels = true;
 
 function select(m){
   state.selected = m;
@@ -1528,7 +1529,7 @@ $('loadWeight').onclick = () => { state.load = 'weight'; setPressed(['loadWeight
 $('loadBand').onclick = () => { state.load = 'band'; setPressed(['loadWeight','loadBand'], 'loadBand'); drawChart(); };
 // view toggles; both preview options (chip row, layers menu) drive the same switches and stay in sync
 const TOGGLES = {
-  labels: on => MUSCLES.forEach(m => m.label3d.visible = on),
+  labels: on => { showLabels = on; },
   bones:  on => { showBones = on; boneParts.forEach(b => b.visible = on); scap.forEach(b => b.visible = on); },
   hand:   on => { showHand = on; handParts.forEach(b => { if (!dumbbell.children.includes(b)) b.visible = on; }); },
   arc:    on => arcGroup.traverse(o => { if (o === arcGroup || o.isCSS2DObject) o.visible = on; }),   // CSS2D labels ignore a hidden parent
