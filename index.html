@@ -141,8 +141,8 @@ input[type=range]{width:100%; accent-color:var(--accent); margin:6px 0 2px}
 .viewtools > *{pointer-events:auto}
 .viewtools .opt{margin-right:2px}
 .viewmenu{position:relative; display:flex; align-items:center; gap:6px}
-.viewmenu .iconbtn{width:32px; height:32px}
-.viewpop{position:absolute; left:24px; top:calc(100% + 6px); padding:8px; display:grid; gap:2px; min-width:150px}
+.viewmenu .iconbtn{width:40px; height:40px; box-shadow:var(--shadow)}
+.viewpop{position:absolute; left:0; top:calc(100% + 6px); padding:8px; display:grid; gap:2px; min-width:150px}
 .vrow{display:flex; align-items:center; gap:8px; font-size:13px; padding:5px 6px; border-radius:6px; cursor:pointer}
 .vrow:hover{background:var(--accent-soft)}
 .vrow input{accent-color:var(--accent); margin:0}
@@ -151,7 +151,19 @@ input[type=range]{width:100%; accent-color:var(--accent); margin:6px 0 2px}
 .grouptabs button{flex:1; border:0; background:none; padding:6px 4px 8px; cursor:pointer; color:var(--fg-3); font-weight:700; font-size:14px; border-bottom:2px solid transparent; margin-bottom:-1px}
 .grouptabs button small{display:block; font-size:11px; font-weight:400}
 .grouptabs button[aria-selected="true"]{color:var(--fg); border-color:var(--accent)}
-.exchips{display:flex; gap:6px}
+.exvar{border:1px dashed var(--line); border-radius:12px; padding:8px 10px 10px; margin-bottom:10px}
+.exvar-h{display:flex; align-items:center; gap:6px; margin:0 0 6px; font-size:11.5px; color:var(--fg-3)}
+.exgrp + .exgrp{margin-top:8px}
+.exgrp h4{margin:0 0 4px; font-size:12px; font-weight:700; color:var(--fg-2)}
+.exgrid{display:grid; grid-template-columns:repeat(3, 1fr); gap:6px}
+.exlist{display:grid; gap:4px}
+.exrow{display:grid; grid-template-columns:26px 1fr auto; align-items:center; gap:8px; padding:4px 8px; border:1px solid var(--line); border-radius:9px; background:transparent; cursor:pointer; color:var(--fg-2); text-align:left}
+.exrow svg{width:24px; height:24px}
+.exrow b{font-size:13px; color:var(--fg)}
+.exrow small{font-size:11px; color:var(--fg-3)}
+.exrow:hover{border-color:var(--accent)}
+.exrow[aria-pressed="true"]{border-color:var(--accent); background:var(--accent-soft); color:var(--accent)}
+.exselect{width:100%; padding:8px 10px; border-radius:10px; border:1px solid var(--line); background:var(--panel-solid); color:var(--fg); font:inherit; font-size:14px}
 .exchip{flex:1; display:flex; flex-direction:column; align-items:center; gap:2px; padding:6px 4px 7px; border:1px dashed var(--line); border-radius:10px; background:transparent; cursor:pointer; color:var(--fg-2)}
 .exchip svg{width:30px; height:30px}
 .exchip b{font-size:12.5px; color:var(--fg)}
@@ -233,16 +245,7 @@ input[type=range]{width:100%; accent-color:var(--accent); margin:6px 0 2px}
 <div class="app">
   <div id="stage"><div class="loading" id="loading">Loading 3D model…</div>
     <div class="viewtools">
-      <div class="viewbar" role="group" aria-label="Show in 3D view">
-        <span class="opt">A</span>
-        <label class="chk"><input type="checkbox" data-t="labels" checked> Labels</label>
-        <label class="chk"><input type="checkbox" data-t="bones" checked> Bones</label>
-        <label class="chk"><input type="checkbox" data-t="hand" checked> Hand</label>
-        <label class="chk"><input type="checkbox" data-t="arc" checked> Angle arc</label>
-        <label class="chk"><input type="checkbox" data-t="body" checked> Body</label>
-      </div>
       <div class="viewmenu">
-        <span class="opt">B</span>
         <button class="iconbtn" id="viewMenuBtn" aria-expanded="false" aria-controls="viewMenu" title="Show / hide"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 3 2 8l10 5 10-5-10-5z"/><path d="m2 13 10 5 10-5"/></svg></button>
         <div class="panel viewpop" id="viewMenu" hidden>
           <label class="vrow"><input type="checkbox" data-t="labels" checked> Labels</label>
@@ -287,18 +290,48 @@ input[type=range]{width:100%; accent-color:var(--accent); margin:6px 0 2px}
     </section>
     <section id="exSection">
       <h3>Exercise</h3>
-      <div class="grouptabs" role="tablist" aria-label="Muscle group">
-        <button role="tab" id="grpBi" aria-selected="false">Biceps <small data-l="Elbow flexors">front of arm</small></button>
-        <button role="tab" id="grpTri" aria-selected="true">Triceps <small data-l="Elbow extensors">back of arm</small></button>
+      <div class="exvar">
+        <p class="exvar-h"><span class="opt">B</span> Two rows</p>
+        <div class="exgrp"><h4>Biceps</h4>
+          <div class="exgrid">
+            <button class="exchip" data-ex="curl-sup"><svg viewBox="0 0 32 32" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="2.6"/><path d="M12 8v11M12 19l-3 9M12 19l3 9M12 10l1 6 6-5"/><circle cx="19.6" cy="10.4" r="1.7"/><path d="M17.6 13.2q2 1.4 4 0"/></svg><b>Curl</b><small data-l="Supinated">palm up</small></button>
+            <button class="exchip" data-ex="curl-neu"><svg viewBox="0 0 32 32" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="2.6"/><path d="M12 8v11M12 19l-3 9M12 19l3 9M12 10l1 6 6-5"/><path d="M19.4 7.2v6.4M17.9 7.2h3M17.9 13.6h3"/></svg><b>Hammer</b><small data-l="Mid-prone">thumb up</small></button>
+            <button class="exchip" data-ex="curl-pro"><svg viewBox="0 0 32 32" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="2.6"/><path d="M12 8v11M12 19l-3 9M12 19l3 9M12 10l1 6 6-5"/><circle cx="19.6" cy="11" r="1.7"/><path d="M17.6 8.2q2-1.4 4 0"/></svg><b>Reverse</b><small data-l="Pronated">palm down</small></button>
+          </div></div>
+        <div class="exgrp"><h4>Triceps</h4>
+          <div class="exgrid">
+            <button class="exchip" data-ex="overhead"><svg viewBox="0 0 32 32" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="10" r="2.6"/><path d="M10 13v9h6v7M5 22h14M10 14l2.5-10.5L7.5 7"/><circle cx="6.6" cy="7.6" r="1.7"/></svg><b>Overhead</b><small data-l="Shoulder flexed">arm up</small></button>
+            <button class="exchip" data-ex="kickback"><svg viewBox="0 0 32 32" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="23.5" cy="10.5" r="2.4"/><path d="M6 15l14-3M20 12v10M6 15v7M6 15l-2 13M3 22h20M19 12.5l-7 0.2-7.5 0"/><circle cx="3.6" cy="12.7" r="1.7"/></svg><b>Kickback</b><small data-l="Shoulder extended">leaning forward</small></button>
+          </div></div>
       </div>
-      <div class="exchips" role="group" aria-label="Biceps exercises" id="subBi" hidden>
-        <button class="exchip" id="exCurl" aria-pressed="false"><svg viewBox="0 0 32 32" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="2.6"/><path d="M12 8v11M12 19l-3 9M12 19l3 9M12 10l1 6 6-5"/><circle cx="19.6" cy="10.4" r="1.7"/><path d="M17.6 13.2q2 1.4 4 0"/></svg><b>Curl</b><small data-l="Supinated">palm up</small></button>
-        <button class="exchip" id="exHammer" aria-pressed="false"><svg viewBox="0 0 32 32" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="2.6"/><path d="M12 8v11M12 19l-3 9M12 19l3 9M12 10l1 6 6-5"/><path d="M19.4 7.2v6.4M17.9 7.2h3M17.9 13.6h3"/></svg><b>Hammer</b><small data-l="Mid-prone">thumb up</small></button>
-        <button class="exchip" id="exReverse" aria-pressed="false"><svg viewBox="0 0 32 32" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="2.6"/><path d="M12 8v11M12 19l-3 9M12 19l3 9M12 10l1 6 6-5"/><circle cx="19.6" cy="11" r="1.7"/><path d="M17.6 8.2q2-1.4 4 0"/></svg><b>Reverse</b><small data-l="Pronated">palm down</small></button>
+      <div class="exvar">
+        <p class="exvar-h"><span class="opt">C</span> List</p>
+        <div class="exgrp"><h4>Biceps</h4>
+          <div class="exlist">
+            <button class="exrow" data-ex="curl-sup"><svg viewBox="0 0 32 32" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="2.6"/><path d="M12 8v11M12 19l-3 9M12 19l3 9M12 10l1 6 6-5"/><circle cx="19.6" cy="10.4" r="1.7"/><path d="M17.6 13.2q2 1.4 4 0"/></svg><b>Curl</b><small data-l="Supinated">palm up</small></button>
+            <button class="exrow" data-ex="curl-neu"><svg viewBox="0 0 32 32" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="2.6"/><path d="M12 8v11M12 19l-3 9M12 19l3 9M12 10l1 6 6-5"/><path d="M19.4 7.2v6.4M17.9 7.2h3M17.9 13.6h3"/></svg><b>Hammer</b><small data-l="Mid-prone">thumb up</small></button>
+            <button class="exrow" data-ex="curl-pro"><svg viewBox="0 0 32 32" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="2.6"/><path d="M12 8v11M12 19l-3 9M12 19l3 9M12 10l1 6 6-5"/><circle cx="19.6" cy="11" r="1.7"/><path d="M17.6 8.2q2-1.4 4 0"/></svg><b>Reverse</b><small data-l="Pronated">palm down</small></button>
+          </div></div>
+        <div class="exgrp"><h4>Triceps</h4>
+          <div class="exlist">
+            <button class="exrow" data-ex="overhead"><svg viewBox="0 0 32 32" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="10" r="2.6"/><path d="M10 13v9h6v7M5 22h14M10 14l2.5-10.5L7.5 7"/><circle cx="6.6" cy="7.6" r="1.7"/></svg><b>Overhead</b><small data-l="Shoulder flexed">arm up</small></button>
+            <button class="exrow" data-ex="kickback"><svg viewBox="0 0 32 32" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="23.5" cy="10.5" r="2.4"/><path d="M6 15l14-3M20 12v10M6 15v7M6 15l-2 13M3 22h20M19 12.5l-7 0.2-7.5 0"/><circle cx="3.6" cy="12.7" r="1.7"/></svg><b>Kickback</b><small data-l="Shoulder extended">leaning forward</small></button>
+          </div></div>
       </div>
-      <div class="exchips" role="group" aria-label="Triceps exercises" id="subTri">
-        <button class="exchip" id="exOver" aria-pressed="true"><svg viewBox="0 0 32 32" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="10" r="2.6"/><path d="M10 13v9h6v7M5 22h14M10 14l2.5-10.5L7.5 7"/><circle cx="6.6" cy="7.6" r="1.7"/></svg><b>Overhead</b><small data-l="Shoulder flexed">arm up</small></button>
-        <button class="exchip" id="exKick" aria-pressed="false"><svg viewBox="0 0 32 32" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="23.5" cy="10.5" r="2.4"/><path d="M6 15l14-3M20 12v10M6 15v7M6 15l-2 13M3 22h20M19 12.5l-7 0.2-7.5 0"/><circle cx="3.6" cy="12.7" r="1.7"/></svg><b>Kickback</b><small data-l="Shoulder extended">leaning forward</small></button>
+      <div class="exvar">
+        <p class="exvar-h"><span class="opt">D</span> Dropdown</p>
+        <select id="exSelect" class="exselect" aria-label="Exercise">
+          <optgroup label="Biceps">
+            <option value="curl-sup" data-p="Curl (palm up)" data-l="Curl (supinated)">Curl (palm up)</option>
+            <option value="curl-neu" data-p="Hammer (thumb up)" data-l="Hammer (mid-prone)">Hammer (thumb up)</option>
+            <option value="curl-pro" data-p="Reverse (palm down)" data-l="Reverse (pronated)">Reverse (palm down)</option>
+            <option value="curl-other" hidden>Curl (custom palm angle)</option>
+          </optgroup>
+          <optgroup label="Triceps">
+            <option value="overhead" data-p="Overhead (arm up)" data-l="Overhead (shoulder flexed)">Overhead (arm up)</option>
+            <option value="kickback" data-p="Kickback (leaning forward)" data-l="Kickback (shoulder extended)">Kickback (leaning forward)</option>
+          </optgroup>
+        </select>
       </div>
     </section>
     <section>
@@ -365,19 +398,10 @@ input[type=range]{width:100%; accent-color:var(--accent); margin:6px 0 2px}
   </aside>
 
   <div class="caption">
-    <div class="panel capA">
-      <span class="opt">A</span>
-      <div class="capA-main">
-        <div class="pcards" id="pcards"></div>
-        <p class="why" id="whyTxt"></p>
-      </div>
-      <div class="effort"><small>Effort</small><div class="bar"><span id="effortBar"></span></div></div>
-    </div>
     <div class="panel capB">
-      <span class="opt">B</span>
       <p class="headline" id="headTxt"></p>
       <button class="linkbtn" id="moreBtn" aria-expanded="false" aria-controls="moreBox">More</button>
-      <div class="effort"><small>Effort</small><div class="bar"><span id="effortBar2"></span></div></div>
+      <div class="effort"><small>Effort</small><div class="bar"><span id="effortBar"></span></div></div>
       <div class="morebox" id="moreBox" hidden>
         <p id="moreTxt"></p>
         <p class="why" id="moreWhy"></p>
@@ -1392,19 +1416,9 @@ function whyText(){
   if (ex === 'overhead') return CAPTIONS.longHead[L] + (L ? ' Torque peaks with the forearm horizontal.' : ' It is hardest when your forearm is level with the floor.');
   return L ? 'Torque is greatest near full extension and near zero with the forearm vertical.' : 'It is hardest with your arm straight back, and easiest with your forearm hanging down.';
 }
-let cardsKey = '';
 function updateCaptionOptions(){
   const cards = phaseCards(), w = words();
-  const key = cards.map(c => c.k + c.t + c.d).join('|');
-  if (key !== cardsKey){
-    cardsKey = key;
-    $('pcards').style.setProperty('--n', cards.length);
-    $('pcards').innerHTML = cards.map(c => `<div class="pcard" data-k="${c.k}"><b><i style="background:var(--${c.type})"></i>${c.t}</b><span>${c.d}</span></div>`).join('');
-  }
   const takeover = state.move === 'elbow' && posture() !== 'curl' && state.workGroup === 'flexor' && state.phase !== 'rest';
-  $('pcards').querySelectorAll('.pcard').forEach(el => el.classList.toggle('on', !takeover && el.dataset.k === state.phase));
-  const why = takeover ? CAPTIONS.takeover[state.mode === 'learner' ? 1 : 0] : whyText();
-  if ($('whyTxt').textContent !== why) $('whyTxt').textContent = why;
   // B: one short live line
   let head = w.rest;
   if (state.phase !== 'rest'){
@@ -1451,7 +1465,7 @@ function updateHUD(){
   if (document.activeElement !== $('rot')) $('rot').value = Math.round(state.phiGoal - PHI.neu);
   state.pos = state.phi < 42 ? 'sup' : state.phi < 125 ? 'neu' : 'pro';
   for (const [k,id] of Object.entries(POS_IDS)) $(id).setAttribute('aria-pressed', Math.abs(state.phiGoal - PHI[k]) < 6);
-  for (const [k,id] of Object.entries(CURL_IDS)) $(id).setAttribute('aria-pressed', Math.abs(state.phiGoal - PHI[k]) < 6);
+  syncExPickers();
   let cap;
   if (rotate){
     cap = CAPTIONS.rot[state.phase][L];
@@ -1474,7 +1488,7 @@ function updateHUD(){
   }
   state.caption = cap;
   updateCaptionOptions();
-  $('effortBar').style.width = $('effortBar2').style.width = Math.round(Math.min(1, state.demand) * 100) + '%';
+  $('effortBar').style.width = Math.round(Math.min(1, state.demand) * 100) + '%';
   updateMuscleList(); updateDetailStatus(); declutterLabels(); updateChartDot();
 }
 
@@ -1517,32 +1531,41 @@ function setMove(mv){
 function syncSections(){
   const rotate = state.move === 'rotate', curl = state.ex === 'curl';
   $('exSection').hidden = rotate;
-  $('subBi').hidden = !curl; $('subTri').hidden = curl;
   $('palmSection').hidden = !rotate && !curl;
   $('posPresets').hidden = !rotate;          // in the curl, the Curl / Hammer / Reverse buttons set the palm
   $('loadElbow').hidden = rotate || !curl; $('loadRotate').hidden = !rotate;
   $('echart').hidden = rotate || state.mode !== 'learner';
   drawChart();
 }
-const CURL_IDS = { sup:'exCurl', neu:'exHammer', pro:'exReverse' };
+// all exercise pickers (preview B/C/D) share these values: curl-sup | curl-neu | curl-pro | overhead | kickback
+function currentExValue(){
+  if (state.ex !== 'curl') return state.ex;
+  const k = Object.keys(PHI).find(k => Math.abs(state.phiGoal - PHI[k]) < 6);
+  return k ? 'curl-' + k : 'curl-other';
+}
+function pickExercise(v){
+  if (v.startsWith('curl-')){
+    const k = v.slice(5); if (!PHI[k]) return;
+    if (state.ex === 'curl'){ stopRot(); state.phiGoal = PHI[k]; } else setExercise('curl', PHI[k]);
+  } else setExercise(v);
+  syncExPickers();
+}
+function syncExPickers(){
+  const cur = currentExValue();
+  document.querySelectorAll('[data-ex]').forEach(b => b.setAttribute('aria-pressed', b.dataset.ex === cur));
+  if ($('exSelect').value !== cur) $('exSelect').value = cur;
+}
+document.querySelectorAll('[data-ex]').forEach(b => b.onclick = () => pickExercise(b.dataset.ex));
+$('exSelect').onchange = e => pickExercise(e.target.value);
 function setExercise(ex, phi){
   if (state.ex === 'curl') state.curlPhi = state.phiGoal;
   if (ex !== 'curl') state.lastTri = ex;
   state.ex = ex;
-  $('grpBi').setAttribute('aria-selected', ex === 'curl'); $('grpTri').setAttribute('aria-selected', ex !== 'curl');
-  setPressed(['exOver','exKick'], ex === 'overhead' ? 'exOver' : ex === 'kickback' ? 'exKick' : null);
   stopRot();
   state.phiGoal = ex === 'curl' ? (phi ?? state.curlPhi) : PHI.neu;    // triceps exercises: thumb-up grip
   select(null); syncSections(); flyHome();
   state.loop = true; state.loopDir = -1; playTo(POSTURES[ex].loop[0]); syncButtons();
 }
-$('grpBi').onclick = () => { if (state.ex !== 'curl') setExercise('curl'); };
-$('grpTri').onclick = () => { if (state.ex === 'curl') setExercise(state.lastTri || 'overhead'); };
-$('exOver').onclick = () => setExercise('overhead');
-$('exKick').onclick = () => setExercise('kickback');
-for (const [k,id] of Object.entries(CURL_IDS)) $(id).onclick = () => {
-  if (state.ex === 'curl'){ stopRot(); state.phiGoal = PHI[k]; } else setExercise('curl', PHI[k]);
-};
 $('go90').onclick = () => { state.loop = false; syncButtons(); playTo(90); };
 function updateHints(){
   const L = state.mode === 'learner';
@@ -1586,6 +1609,7 @@ function setMode(mode){
   setPressed(['modePatient','modeLearner'], mode === 'patient' ? 'modePatient' : 'modeLearner');
   const L = mode === 'learner';
   document.querySelectorAll('small[data-l]').forEach(s => { s.dataset.p ??= s.textContent; s.textContent = L ? s.dataset.l : s.dataset.p; });
+  document.querySelectorAll('option[data-l]').forEach(o => o.textContent = L ? o.dataset.l : o.dataset.p);
   $('flexTxt').textContent = L ? 'Flex' : 'Bend';
   $('extTxt').textContent = L ? 'Extend' : 'Straighten';
   $('scaleL').textContent = L ? '0° extension' : '0° straight';
@@ -1625,6 +1649,7 @@ camera.position.copy(homeTarget()).addScaledVector(homeDir(), homeDistance());
 controls.target.copy(homeTarget());
 
 setMode('patient');
+syncExPickers();
 if (reduceMotion){ state.goal = state.theta = 90; }
 else { const [lo, hi] = POSTURES[state.ex].loop; state.goal = state.theta = lo; state.loop = true; state.loopDir = 1; playTo(hi); syncButtons(); }
 
