@@ -1,0 +1,536 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Myotrek Knee (preview)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+/* Rough first draft of a second joint, to show how the elbow template carries over. */
+:root{
+  --bg:#E9EEF1; --bg-2:#F7FAFB; --panel:rgba(255,255,255,.88); --panel-solid:#FFFFFF;
+  --line:rgba(22,44,60,.11); --fg:#16222C; --fg-2:#4C5B68; --fg-3:#7C8994;
+  --accent:#0B6B70; --accent-soft:#D6EBEB; --accent-fg:#FFFFFF;
+  --con:#D9472B; --ecc:#4F55D0; --iso:#C88A10; --rest:#C49590;
+  --bone:#ECE5D5; --skin:#E6C2AC; --shadow:0 10px 30px -12px rgba(20,40,60,.25), 0 1px 2px rgba(20,40,60,.06);
+  --font-display:"Bricolage Grotesque", ui-sans-serif, system-ui, sans-serif;
+  --font-body:"Atkinson Hyperlegible", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono:"JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#0E1318; --bg-2:#1A222B; --panel:rgba(22,29,37,.9); --panel-solid:#18202A;
+  --line:rgba(255,255,255,.09); --fg:#E6ECF1; --fg-2:#A7B3BE; --fg-3:#76838F;
+  --accent:#4FC2C3; --accent-soft:rgba(79,194,195,.15); --accent-fg:#06272A;
+  --con:#FF6A4D; --ecc:#8C90FF; --iso:#F0B43C; --rest:#A97F7B;
+  --bone:#D6CEBD; --skin:#C9A28C; --shadow:0 14px 34px -14px rgba(0,0,0,.6); color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#0E1318; --bg-2:#1A222B; --panel:rgba(22,29,37,.9); --panel-solid:#18202A;
+  --line:rgba(255,255,255,.09); --fg:#E6ECF1; --fg-2:#A7B3BE; --fg-3:#76838F;
+  --accent:#4FC2C3; --accent-soft:rgba(79,194,195,.15); --accent-fg:#06272A;
+  --con:#FF6A4D; --ecc:#8C90FF; --iso:#F0B43C; --rest:#A97F7B;
+  --bone:#D6CEBD; --skin:#C9A28C; --shadow:0 14px 34px -14px rgba(0,0,0,.6); color-scheme:dark }
+
+html,body{height:100%; margin:0}
+body{background:var(--bg); color:var(--fg); font:15px/1.5 var(--font-body); overflow:hidden}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+button,input{font:inherit; color:inherit}
+:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
+.app{position:relative; height:100%; background:radial-gradient(ellipse 60% 70% at 52% 46%, var(--bg-2), var(--bg) 75%)}
+#stage{position:absolute; inset:0}
+#stage canvas{display:block; width:100%; height:100%; touch-action:none}
+.labels{position:absolute; inset:0; pointer-events:none; z-index:1}
+
+.top{position:absolute; top:16px; left:16px; right:16px; display:flex; align-items:center; justify-content:space-between; gap:12px; pointer-events:none; z-index:5}
+.top > *{pointer-events:auto}
+.brand{display:flex; align-items:center; gap:10px}
+.brand b{font:700 21px/1 var(--font-display)}
+.crumb{color:var(--fg-3); font-size:13px}
+.crumb strong{color:var(--fg-2)}
+.backlink{display:inline-flex; align-items:center; gap:4px; padding:6px 11px; border-radius:999px; border:1px solid var(--line); background:var(--panel); color:var(--fg); font-weight:700; font-size:13px; text-decoration:none}
+.backlink:hover{border-color:var(--accent); color:var(--accent)}
+.draft{font:700 11px/1 var(--font-body); letter-spacing:.06em; text-transform:uppercase; color:var(--fg-3); background:var(--accent-soft); padding:4px 8px; border-radius:999px}
+.top-right{display:flex; gap:8px; align-items:center}
+.seg{display:inline-flex; background:var(--panel); border:1px solid var(--line); border-radius:999px; padding:3px}
+.seg button{border:0; background:transparent; padding:6px 12px; border-radius:999px; cursor:pointer; font-size:13px; color:var(--fg-2)}
+.seg button[aria-pressed="true"]{background:var(--accent); color:var(--accent-fg); font-weight:700}
+.seg.block{display:flex; border-radius:10px}
+.seg.block button{flex:1; border-radius:8px; padding:7px 6px; display:flex; flex-direction:column; align-items:center; gap:1px}
+.seg.block small{font-size:11px; opacity:.8}
+.iconbtn{width:36px; height:36px; display:grid; place-items:center; border-radius:999px; border:1px solid var(--line); background:var(--panel); cursor:pointer}
+.iconbtn svg{width:18px; height:18px}
+
+.panel{background:var(--panel); border:1px solid var(--line); border-radius:16px; box-shadow:var(--shadow)}
+.controls{position:absolute; left:16px; top:72px; width:290px; max-height:calc(100% - 88px); overflow:auto; padding:16px; display:flex; flex-direction:column; gap:18px; z-index:4}
+.info{position:absolute; right:16px; top:72px; bottom:16px; width:340px; overflow:auto; padding:14px 16px; z-index:4; display:flex; flex-direction:column; gap:12px}
+h3{margin:0 0 8px; font:700 11px/1.2 var(--font-body); letter-spacing:.09em; text-transform:uppercase; color:var(--fg-3)}
+.readout{display:flex; align-items:baseline; gap:8px; margin-bottom:6px; flex-wrap:wrap}
+.readout .num{font:500 40px/1 var(--font-mono); font-variant-numeric:tabular-nums}
+.readout .deg{font:500 22px/1 var(--font-mono); color:var(--fg-3); margin-left:-6px}
+.pill{display:inline-flex; align-items:center; gap:6px; padding:3px 9px; border-radius:999px; font-size:12px; font-weight:700; background:var(--accent-soft); white-space:nowrap}
+.pill i{width:8px; height:8px; border-radius:50%; background:var(--fg-3)}
+input[type=range]{width:100%; accent-color:var(--accent); margin:6px 0 2px}
+.scale{display:flex; justify-content:space-between; font-size:11.5px; color:var(--fg-3)}
+.btnrow{display:flex; gap:6px; margin-top:10px}
+.btn{flex:1; border:1px solid var(--line); background:var(--panel-solid); padding:8px 6px; border-radius:10px; cursor:pointer; font-size:13.5px; font-weight:700}
+.btn:hover{border-color:var(--accent)}
+.btn[aria-pressed="true"]{background:var(--accent); color:var(--accent-fg); border-color:transparent}
+.note{font-size:12.5px; color:var(--fg-3); margin:0}
+
+.mrow{display:grid; grid-template-columns:12px 1fr auto; gap:4px 10px; align-items:center; text-align:left; padding:9px 10px; border:1px solid var(--line); border-radius:11px; background:var(--panel-solid); cursor:pointer; width:100%; margin-bottom:6px}
+.mrow:hover{border-color:var(--accent)}
+.mrow .dot{width:12px; height:12px; border-radius:50%; background:var(--rest); grid-row:span 2}
+.mrow .nm{font-weight:700; font-size:14px}
+.mrow .role{font-size:11.5px; color:var(--fg-2)}
+.mrow .st{font-size:12.5px; color:var(--fg-2)}
+.mrow .bar{grid-column:2 / 4; height:4px; border-radius:2px; background:var(--line); overflow:hidden}
+.mrow .bar span{display:block; height:100%; width:0; border-radius:2px}
+.detail h2{font:700 22px/1.15 var(--font-display); margin:0}
+.kv{display:grid; gap:8px; margin:0}
+.kv dt{font:700 11px/1.3 var(--font-body); letter-spacing:.08em; text-transform:uppercase; color:var(--fg-3)}
+.kv dd{margin:0; font-size:14px}
+.linkbtn{border:0; background:none; color:var(--accent); font-weight:700; cursor:pointer; padding:0; font-size:13px; align-self:flex-start}
+.legend{display:grid; grid-template-columns:1fr 1fr; gap:6px 12px; font-size:12.5px; color:var(--fg-2); padding-top:10px; border-top:1px solid var(--line)}
+.legend span{display:flex; align-items:center; gap:7px}
+.legend i{width:10px; height:10px; border-radius:50%}
+
+.caption{position:absolute; left:322px; right:372px; bottom:16px; display:flex; justify-content:center; z-index:6; pointer-events:none}
+.caption .panel{pointer-events:auto; height:52px; width:100%; max-width:600px; padding:0 16px; display:flex; align-items:center}
+.caption p{margin:0; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+.tag{pointer-events:auto; cursor:pointer; border:1px solid var(--line); background:var(--panel-solid); color:var(--fg); font:700 11.5px/1 var(--font-body); padding:5px 8px; border-radius:999px; white-space:nowrap; box-shadow:var(--shadow)}
+.tag.on{border-color:var(--accent); color:var(--accent)}
+.tag.dim{opacity:.35}
+
+@media (max-width: 900px){
+  body{overflow:auto}
+  .app{height:auto; min-height:100%}
+  #stage{position:relative; height:58vh; min-height:340px}
+  .crumb{display:none}
+  .controls,.info{position:static; width:auto; max-height:none; margin:0 16px 12px}
+  .caption{position:static; margin:0 16px 12px}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <div id="stage"></div>
+  <header class="top">
+    <div class="brand">
+      <a class="backlink" href="./">← Body</a>
+      <b>Myotrek</b>
+      <span class="crumb">Lower limb / <strong>Knee</strong> <span id="sideTxt"></span></span>
+      <span class="draft">Rough draft</span>
+    </div>
+    <div class="top-right">
+      <div class="seg" role="group" aria-label="Explanation level">
+        <button id="modeSimple" aria-pressed="false">Simple</button>
+        <button id="modeClinical" aria-pressed="true">Clinical</button>
+      </div>
+      <button class="iconbtn" id="themeBtn" aria-label="Switch light or dark theme" title="Light / dark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v3M12 20v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M1 12h3M20 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/></svg></button>
+    </div>
+  </header>
+
+  <aside class="controls panel" aria-label="Controls">
+    <section>
+      <h3>Exercise</h3>
+      <div class="seg block" role="group" aria-label="Exercise">
+        <button id="exExt" aria-pressed="true">Knee extension<small>quadriceps · seated</small></button>
+        <button id="exCurl" aria-pressed="false">Hamstring curl<small>hamstrings · standing</small></button>
+      </div>
+    </section>
+    <section>
+      <h3>Knee angle</h3>
+      <div class="readout"><span class="num" id="angleVal">0</span><span class="deg">°</span><span class="pill" id="pill"><i></i><span>Resting</span></span></div>
+      <input type="range" id="angle" min="0" max="135" step="1" value="90" aria-label="Knee flexion in degrees">
+      <div class="scale"><span>0° straight</span><span>135° fully bent</span></div>
+      <div class="btnrow">
+        <button class="btn" id="btnFlex">Bend</button>
+        <button class="btn" id="btnExt">Straighten</button>
+        <button class="btn" id="btnLoop" aria-pressed="true">Repeat</button>
+      </div>
+    </section>
+    <p class="note">Rough first draft to show how each joint will follow the elbow's layout. Content not yet reviewed.</p>
+  </aside>
+
+  <aside class="info panel" aria-label="Muscles">
+    <div id="paneList"></div>
+    <div id="paneDetail" hidden></div>
+  </aside>
+
+  <div class="caption"><div class="panel"><p id="headTxt"></p></div></div>
+</div>
+
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+}}
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
+
+const V3 = THREE.Vector3, DEG = Math.PI / 180, MAXF = 135;
+const $ = id => document.getElementById(id);
+const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const SIDE = new URLSearchParams(location.search).get('side') === 'left' ? 'left' : 'right';
+$('sideTxt').textContent = `(${SIDE})`;
+
+/* ------------------------------------------------------------------ content (draft, unreviewed)
+   Leg frame: knee axis at the origin along z. Thigh runs from the knee toward -x (hip at x = -4.3),
+   front of the thigh is +y, outer side is +z. The shank starts along +x and rotates down as the knee bends.
+   Point types: T = thigh, S = shank, W = wraps the front of the knee (turns half as far as the shank). */
+const MUSCLES = [
+  { id:'quads', name:'Quadriceps femoris', short:'Quadriceps', group:'ext',
+    plain:'The big muscle group at the front of your thigh. It straightens your knee.',
+    origin:'Rectus femoris: anterior inferior iliac spine. Vasti: femoral shaft (greater trochanter, linea aspera, intertrochanteric line)',
+    insertion:'Patella, then tibial tuberosity via the patellar ligament', nerve:'Femoral nerve (L2–L4)',
+    action:'Knee extension. Rectus femoris also flexes the hip.',
+    tubes:[
+      { pts:[['T',-4.3,.55,-.25],['T',-2.6,.62,0],['T',-1,.55,0],['W',.12,.48,0],['S',.75,.28,0]], r:.3,  head:'Rectus femoris' },
+      { pts:[['T',-3.9,.2,.3],['T',-2.2,.48,.35],['T',-.7,.45,.22],['W',.12,.46,.06],['S',.75,.28,.02]], r:.3, head:'Vastus lateralis' },
+      { pts:[['T',-2.9,.15,-.3],['T',-1.3,.42,-.32],['T',-.45,.42,-.2],['W',.12,.46,-.06],['S',.75,.28,-.02]], r:.27, head:'Vastus medialis' } ],
+    label:.35 },
+  { id:'hams', name:'Hamstrings', short:'Hamstrings', group:'flex',
+    plain:'The muscles at the back of your thigh. They bend your knee.',
+    origin:'Ischial tuberosity (biceps femoris short head: linea aspera)',
+    insertion:'Biceps femoris: fibular head. Semitendinosus: pes anserinus. Semimembranosus: posteromedial tibial condyle',
+    nerve:'Sciatic nerve: tibial part (L5–S2); biceps femoris short head: common fibular part',
+    action:'Knee flexion, hip extension; rotation of the bent knee.',
+    tubes:[
+      { pts:[['T',-4.4,-.42,-.35],['T',-2.6,-.48,.12],['T',-.8,-.4,.32],['S',.55,-.08,.36]], r:.25, head:'Biceps femoris' },
+      { pts:[['T',-4.4,-.45,-.45],['T',-2.6,-.52,-.22],['T',-.8,-.44,-.36],['S',.85,.06,-.3]], r:.22, head:'Semitendinosus' },
+      { pts:[['T',-4.3,-.38,-.4],['T',-2.4,-.4,-.32],['T',-.7,-.36,-.3],['S',.42,-.16,-.28]], r:.22, head:'Semimembranosus' } ],
+    label:.45 },
+  { id:'gastroc', name:'Gastrocnemius', short:'Calf', group:'calf', flexAssist:.35,
+    plain:'The calf muscle. It points your foot and helps bend your knee.',
+    origin:'Medial and lateral femoral condyles', insertion:'Calcaneus via the Achilles tendon', nerve:'Tibial nerve (S1–S2)',
+    action:'Ankle plantarflexion; assists knee flexion.',
+    tubes:[
+      { pts:[['T',-.3,-.3,.24],['S',1.2,-.5,.2],['S',2.6,-.36,.05],['S',3.95,-.28,0]], r:.24, head:'Lateral head' },
+      { pts:[['T',-.3,-.3,-.24],['S',1.2,-.5,-.2],['S',2.6,-.36,-.05],['S',3.95,-.28,0]], r:.26, head:'Medial head' } ],
+    label:.3 },
+];
+const WORDS = {
+  simple:{ con:'Shortening', ecc:'Lengthening to control', iso:'Holding', rel:'Resting', prime:'Main mover', syn:'Helper', ant:'Opposite side',
+    ext:'Front of thigh', flex:'Back of thigh', calf:'Calf', bend:'Bending', straighten:'Straightening', hold:'Holding', rest:'Resting' },
+  clinical:{ con:'Concentric', ecc:'Eccentric', iso:'Isometric', rel:'Relaxed', prime:'Prime mover', syn:'Synergist', ant:'Antagonist',
+    ext:'Knee extensors', flex:'Knee flexors', calf:'Calf', bend:'Flexion', straighten:'Extension', hold:'Isometric hold', rest:'At rest' },
+};
+// exercises: how the leg sits in space. legRot turns the whole leg; 0 = thigh level (seated), -90 = thigh vertical (standing)
+const EX = {
+  ext:  { legRot:0,   loop:[90, 4],  target:new V3(-.4,-1.4,0), dist:19 },
+  curl: { legRot:-90, loop:[4, 100], target:new V3(-.6,-.4,0),  dist:19 },
+};
+
+/* ------------------------------------------------------------------ state + scene */
+const state = { theta:90, goal:90, vel:0, anim:null, loop:true, loopDir:-1, hold:0, ex:'ext', legRot:0, mode:'clinical',
+  phase:'rest', workGroup:'ext', workType:'con', demand:0, selected:null };
+const stage = $('stage');
+const renderer = new THREE.WebGLRenderer({ antialias:true, alpha:true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+stage.appendChild(renderer.domElement);
+const labelRenderer = new CSS2DRenderer(); labelRenderer.domElement.className = 'labels'; stage.appendChild(labelRenderer.domElement);
+const scene = new THREE.Scene();
+scene.environment = new THREE.PMREMGenerator(renderer).fromScene(new RoomEnvironment(renderer), .04).texture;
+scene.add(new THREE.HemisphereLight(0xffffff, 0x9aa8b2, .9));
+const zs = SIDE === 'left' ? -1 : 1;
+const key = new THREE.DirectionalLight(0xffffff, 1.5); key.position.set(5, 7, 9*zs); scene.add(key);
+const camera = new THREE.PerspectiveCamera(32, 1, .1, 100);
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true; controls.minDistance = 6; controls.maxDistance = 30;
+
+const mirror = new THREE.Group(); mirror.scale.z = zs; scene.add(mirror);      // left knee = mirror image of the right
+const leg = new THREE.Group(); mirror.add(leg);
+const thigh = new THREE.Group(); leg.add(thigh);
+const shank = new THREE.Group(); leg.add(shank);
+
+const boneMat = new THREE.MeshPhysicalMaterial({ roughness:.55, clearcoat:.15, envMapIntensity:.6, side:THREE.DoubleSide });
+const ghostMat = new THREE.MeshPhysicalMaterial({ roughness:.6, transparent:true, opacity:.2, depthWrite:false });
+function capsule(a, b, r, mat){
+  const A = new V3(...a), B = new V3(...b);
+  const m = new THREE.Mesh(new THREE.CapsuleGeometry(r, A.distanceTo(B), 8, 18), mat);
+  m.position.copy(A).add(B).multiplyScalar(.5);
+  m.quaternion.setFromUnitVectors(new V3(0,1,0), B.clone().sub(A).normalize());
+  return m;
+}
+function ellip(c, s, mat){ const m = new THREE.Mesh(new THREE.SphereGeometry(1, 32, 24), mat); m.position.set(...c); m.scale.set(...s); return m; }
+// femur, pelvis hint
+thigh.add(capsule([-4.1,.05,-.15],[-.35,0,0], .17, boneMat));
+thigh.add(ellip([-4.35,.1,-.45],[.28,.28,.28], boneMat));
+thigh.add(ellip([-.05,-.05,.2],[.34,.3,.22], boneMat));
+thigh.add(ellip([-.05,-.05,-.2],[.34,.3,.22], boneMat));
+thigh.add(ellip([-4.7,.5,-1.2],[.9,1.1,.5], ghostMat));
+// tibia, fibula, foot
+shank.add(ellip([.32,0,0],[.2,.34,.48], boneMat));
+shank.add(capsule([.45,.02,0],[4.0,.02,-.02], .14, boneMat));
+shank.add(capsule([.65,-.08,.36],[3.95,-.06,.3], .06, boneMat));
+shank.add(ellip([4.2,0,-.12],[.12,.12,.12], boneMat));
+const foot = ellip([4.3,.5,0],[.22,.7,.32], ghostMat); shank.add(foot);
+// patella slides with the front of the knee
+const patella = ellip([0,0,0],[.12,.2,.2], boneMat); leg.add(patella);
+// ankle weight
+const cuff = new THREE.Mesh(new THREE.TorusGeometry(.3, .12, 12, 28), new THREE.MeshStandardMaterial({ color:0x3b434c, roughness:.4, metalness:.3 }));
+cuff.position.set(3.7, 0, 0); cuff.rotation.y = Math.PI/2; shank.add(cuff);
+const loadArrow = new THREE.ArrowHelper(new V3(0,-1,0), new V3(), 1, 0x888888, .22, .14); scene.add(loadArrow);
+// seat for the seated exercise
+const seatMat = new THREE.MeshStandardMaterial({ transparent:true, opacity:.2, depthWrite:false, roughness:.8 });
+const seat = new THREE.Mesh(new THREE.BoxGeometry(4.8, .35, 3), seatMat); seat.position.set(-2.4, -.55, -.3); mirror.add(seat);
+
+/* ------------------------------------------------------------------ muscles (same tube + stripe technique as the elbow) */
+function muscleMaterial(){
+  const m = new THREE.MeshPhysicalMaterial({ roughness:.42, clearcoat:.35, sheen:.4, envMapIntensity:.55, transparent:true });
+  m.userData.u = { uTime:{value:0}, uFlow:{value:0}, uActive:{value:0}, uStripe:{value:new THREE.Color()} };
+  m.onBeforeCompile = sh => {
+    Object.assign(sh.uniforms, m.userData.u);
+    sh.vertexShader = sh.vertexShader.replace('#include <common>', 'attribute float along;\nvarying float vAlong;\n#include <common>')
+      .replace('#include <begin_vertex>', '#include <begin_vertex>\nvAlong = along;');
+    sh.fragmentShader = sh.fragmentShader.replace('#include <common>', 'uniform float uTime; uniform float uFlow; uniform float uActive; uniform vec3 uStripe;\nvarying float vAlong;\n#include <common>')
+      .replace('#include <emissivemap_fragment>', `#include <emissivemap_fragment>
+        float stripe = smoothstep(0.35, 0.95, 0.5 + 0.5 * sin(abs(vAlong - 0.5) * 46.0 + uTime * uFlow * 5.0));
+        float glow = (abs(uFlow) < 0.5) ? (0.18 + 0.22 * (0.5 + 0.5 * sin(uTime * 3.5))) : (0.12 + 0.5 * stripe);
+        totalEmissiveRadiance += uStripe * uActive * glow;`);
+  };
+  return m;
+}
+const SEGS = 56, RAD = 18;
+function makeTube(){
+  const g = new THREE.BufferGeometry(), n = (SEGS+1)*(RAD+1), along = new Float32Array(n), idx = [];
+  g.setAttribute('position', new THREE.BufferAttribute(new Float32Array(n*3), 3));
+  g.setAttribute('normal', new THREE.BufferAttribute(new Float32Array(n*3), 3));
+  for (let i=0;i<=SEGS;i++) for (let j=0;j<=RAD;j++) along[i*(RAD+1)+j] = i/SEGS;
+  for (let i=0;i<SEGS;i++) for (let j=0;j<RAD;j++){ const a=i*(RAD+1)+j, b=a+RAD+1; idx.push(a,a+1,b, a+1,b+1,b); }
+  g.setAttribute('along', new THREE.BufferAttribute(along, 1)); g.setIndex(idx); return g;
+}
+const _T = new V3(), _N = new V3(), _B = new V3(), _ref = new V3(0,0,1);
+function updateTube(g, curve, rFn){
+  const pos = g.attributes.position.array, nor = g.attributes.normal.array, pts = curve.getSpacedPoints(SEGS); let k = 0;
+  for (let i=0;i<=SEGS;i++){
+    curve.getTangentAt(i/SEGS, _T); _N.crossVectors(_ref, _T); if (_N.lengthSq() < 1e-6) _N.set(1,0,0); _N.normalize(); _B.crossVectors(_T, _N);
+    const r = rFn(i/SEGS), P = pts[i];
+    for (let j=0;j<=RAD;j++){ const a = j/RAD*Math.PI*2, c = Math.cos(a), s = Math.sin(a);
+      const nx = c*_N.x+s*_B.x, ny = c*_N.y+s*_B.y, nz = c*_N.z+s*_B.z;
+      pos[k*3]=P.x+r*nx; pos[k*3+1]=P.y+r*ny; pos[k*3+2]=P.z+r*nz; nor[k*3]=nx; nor[k*3+1]=ny; nor[k*3+2]=nz; k++; }
+  }
+  g.attributes.position.needsUpdate = g.attributes.normal.needsUpdate = true; g.computeBoundingSphere();
+}
+const belly = (u, r) => .05 + (r - .05) * Math.pow(Math.sin(Math.PI * Math.min(1, Math.max(0, (u - .05) / .85))), .8);
+const mS = new THREE.Matrix4();
+function resolve(p, out){
+  if (p[0] === 'T') return out.set(p[1], p[2], p[3]);
+  if (p[0] === 'S') return out.set(p[1], p[2], p[3]).applyMatrix4(mS);
+  const a = -state.theta*DEG/2;                            // W: wraps over the front of the knee
+  return out.set(p[1]*Math.cos(a) - p[2]*Math.sin(a), p[1]*Math.sin(a) + p[2]*Math.cos(a), p[3]);
+}
+const muscleMeshes = [];
+for (const m of MUSCLES){
+  m.act = 0; m.contraction = 'rel'; m.role = null;
+  m.tubeObjs = m.tubes.map(t => { const mat = muscleMaterial(), geo = makeTube(), mesh = new THREE.Mesh(geo, mat);
+    mesh.userData.muscle = m; leg.add(mesh); muscleMeshes.push(mesh); return { t, mat, geo, pts:t.pts.map(() => new V3()), L0:1, curve:null }; });
+  const el = document.createElement('button'); el.className = 'tag'; el.textContent = m.short;
+  el.onclick = e => { e.stopPropagation(); select(m); };
+  m.labelEl = el; m.label3d = new CSS2DObject(el); leg.add(m.label3d);
+}
+function updateTransforms(){
+  leg.rotation.z = state.legRot*DEG;
+  shank.rotation.z = -state.theta*DEG; shank.updateMatrix(); mS.copy(shank.matrix);
+  const a = -state.theta*DEG/2; patella.position.set(.12*Math.cos(a) - .5*Math.sin(a), .12*Math.sin(a) + .5*Math.cos(a), 0); patella.rotation.z = a;
+}
+function updateMuscles(){
+  for (const m of MUSCLES){
+    for (const o of m.tubeObjs){
+      o.t.pts.forEach((p, i) => resolve(p, o.pts[i]));
+      o.curve = new THREE.CatmullRomCurve3(o.pts, false, 'centripetal');
+      const L = o.curve.getLength();
+      const r = o.t.r * THREE.MathUtils.clamp(Math.pow(o.L0 / L, .8), .75, 1.5) * (1 + .15 * m.act * (m.contraction === 'rel' ? 0 : 1));
+      updateTube(o.geo, o.curve, u => belly(u, r));
+    }
+    m.label3d.position.copy(m.tubeObjs[0].curve.getPointAt(m.label));
+  }
+}
+// rest lengths with the knee straight
+state.theta = 0; updateTransforms();
+for (const m of MUSCLES) for (const o of m.tubeObjs){ o.t.pts.forEach((p, i) => resolve(p, o.pts[i])); o.L0 = new THREE.CatmullRomCurve3(o.pts, false, 'centripetal').getLength(); }
+state.theta = state.goal = 90;
+
+/* ------------------------------------------------------------------ physiology: gravity on the ankle weight decides which group works */
+const OPPOSITE = { con:'ecc', ecc:'con', iso:'iso' };
+function updatePhysiology(dt){
+  const v = state.vel, moving = Math.abs(v) > 4;
+  let phase = moving ? (v > 0 ? 'bend' : 'straighten') : 'hold';
+  // shank direction in the world; > 0 here means gravity is pulling the knee into flexion, so the extensors must work
+  const ang = (state.legRot - state.theta) * DEG, flexPull = Math.cos(ang);
+  const workGroup = flexPull > 0 ? 'ext' : 'flex';
+  if (phase === 'hold' && Math.abs(flexPull) < .12) phase = 'rest';
+  const type = phase === 'hold' ? 'iso' : (phase === 'bend') === (workGroup === 'flex') ? 'con' : 'ecc';
+  let demand = phase === 'rest' ? 0 : (.18 + .82*Math.abs(flexPull)) * (type === 'ecc' ? .72 : 1);
+  Object.assign(state, { phase, workGroup, workType:type });
+  state.demand += (demand - state.demand) * (1 - Math.exp(-dt*8));
+  const coact = .06 + .04*demand;
+  for (const m of MUSCLES){
+    let target = .02, c = 'rel', role = null;
+    if (phase !== 'rest'){
+      if (m.group === workGroup){ target = demand; c = type; role = 'prime'; }
+      else if (m.flexAssist && workGroup === 'flex'){ target = demand*m.flexAssist; c = type; role = 'syn'; }
+      else { target = coact; c = OPPOSITE[type]; role = 'ant'; }
+    }
+    m.act += (target - m.act) * (1 - Math.exp(-dt*8)); m.contraction = c; m.role = role;
+  }
+}
+
+/* ------------------------------------------------------------------ appearance, motion */
+const C = {}, _col = new THREE.Color();
+function readTokens(){
+  const cs = getComputedStyle(document.documentElement);
+  for (const k of ['con','ecc','iso','rest','bone','skin','fg-3']) C[k] = new THREE.Color(cs.getPropertyValue('--'+k).trim());
+  boneMat.color.copy(C.bone); ghostMat.color.copy(C.skin); seatMat.color.copy(C['fg-3']); loadArrow.setColor(C['fg-3']);
+}
+function updateAppearance(time){
+  for (const m of MUSCLES){
+    const sc = m.contraction === 'rel' ? C.rest : C[m.contraction], faded = state.selected && state.selected !== m;
+    for (const o of m.tubeObjs){
+      const u = o.mat.userData.u;
+      o.mat.color.copy(_col.copy(C.rest).lerp(sc, Math.min(1, m.act*1.25) * .9));
+      u.uTime.value = reduceMotion ? 0 : time; u.uFlow.value = m.contraction === 'con' ? 1 : m.contraction === 'ecc' ? -1 : 0;
+      u.uActive.value = m.contraction === 'rel' ? 0 : Math.min(1, m.act*1.2); u.uStripe.value.copy(sc);
+      o.mat.opacity = faded ? .16 : 1; o.mat.depthWrite = !faded;
+    }
+    m.labelEl.classList.toggle('dim', !!faded); m.labelEl.classList.toggle('on', state.selected === m);
+  }
+  seat.visible = state.ex === 'ext';
+  scene.updateMatrixWorld(true);
+  cuff.getWorldPosition(_v); loadArrow.position.copy(_v).add(new V3(0,-.45,0)); loadArrow.setLength(.8 + .5*state.demand, .22, .14);
+}
+const _v = new V3();
+function playTo(to){ state.anim = { to }; state.hold = 0; }
+function stepMotion(dt){
+  if (state.hold > 0) state.hold -= dt;
+  else if (state.anim){
+    const d = state.anim.to - state.goal, s = 55 * THREE.MathUtils.clamp(.3 + Math.abs(d)/35, .3, 1) * dt;
+    if (Math.abs(d) <= s){
+      state.goal = state.anim.to;
+      if (state.loop){ const [a, b] = EX[state.ex].loop; state.loopDir *= -1; state.anim = { to: state.loopDir > 0 ? b : a }; state.hold = .8; }
+      else { state.anim = null; syncButtons(); }
+    } else state.goal += Math.sign(d) * s;
+  }
+  const prev = state.theta;
+  state.theta += (state.goal - state.theta) * (1 - Math.exp(-dt*14));
+  state.vel += ((state.theta - prev) / Math.max(dt, 1e-3) - state.vel) * (1 - Math.exp(-dt*12));
+  state.legRot += (EX[state.ex].legRot - state.legRot) * (1 - Math.exp(-dt*3.2));
+}
+
+/* ------------------------------------------------------------------ camera */
+let tween = null;
+const viewDir = new V3(.3, .15, 1 * zs).normalize();
+function homeTarget(){ return EX[state.ex].target.clone().setZ(0); }
+function flyHome(){ tween = { t:0, t0:controls.target.clone(), t1:homeTarget(), p0:camera.position.clone() }; tween.p1 = tween.t1.clone().addScaledVector(viewDir, EX[state.ex].dist * camScale); }
+function stepTween(dt){
+  if (!tween) return;
+  tween.t = Math.min(1, tween.t + dt/.9); const e = tween.t < .5 ? 4*tween.t**3 : 1 - Math.pow(-2*tween.t + 2, 3)/2;
+  controls.target.lerpVectors(tween.t0, tween.t1, e); camera.position.lerpVectors(tween.p0, tween.p1, e);
+  if (tween.t >= 1) tween = null;
+}
+
+/* ------------------------------------------------------------------ UI */
+const W = () => WORDS[state.mode];
+function select(m){ state.selected = m; renderDetail(); }
+renderer.domElement.addEventListener('click', e => {
+  const r = renderer.domElement.getBoundingClientRect(), ray = new THREE.Raycaster();
+  ray.setFromCamera(new THREE.Vector2(((e.clientX-r.left)/r.width)*2-1, -((e.clientY-r.top)/r.height)*2+1), camera);
+  const hit = ray.intersectObjects(muscleMeshes, false)[0]; select(hit ? hit.object.userData.muscle : null);
+});
+function statusText(m){ const w = W(); if (!m.role) return w.rel; if (m.role === 'ant') return m.act > .04 ? (state.mode === 'simple' ? 'Lightly on, steadying' : 'Low-level co-activation') : w.rel; return w[m.contraction]; }
+const colorVar = m => m.contraction === 'rel' || (m.role === 'ant' && m.act <= .04) ? 'var(--rest)' : `var(--${m.contraction})`;
+function renderList(){
+  const w = W();
+  $('paneList').innerHTML = ['ext','flex','calf'].map(g => `<h3>${w[g]}</h3>` + MUSCLES.filter(m => m.group === g).map(m => `
+    <button class="mrow" data-id="${m.id}"><i class="dot"></i><span class="nm">${m.name}</span><span class="role"></span><span class="st"></span><span class="bar"><span></span></span></button>`).join('')).join('') + `
+    <div class="legend"><span><i style="background:var(--con)"></i>${w.con}</span><span><i style="background:var(--ecc)"></i>${w.ecc}</span>
+    <span><i style="background:var(--iso)"></i>${w.iso}</span><span><i style="background:var(--rest)"></i>${w.rel}</span></div>`;
+  document.querySelectorAll('.mrow').forEach(b => b.onclick = () => select(MUSCLES.find(m => m.id === b.dataset.id)));
+}
+function renderDetail(){
+  const m = state.selected; $('paneDetail').hidden = !m; $('paneList').hidden = !!m;
+  if (!m) return;
+  const clin = state.mode === 'clinical';
+  $('paneDetail').innerHTML = `<button class="linkbtn" id="back">← All muscles</button>
+    <div class="detail"><h2>${m.name}</h2></div><p style="margin:0">${m.plain}</p>
+    ${clin ? `<dl class="kv"><dt>Origin</dt><dd>${m.origin}</dd><dt>Insertion</dt><dd>${m.insertion}</dd><dt>Innervation</dt><dd>${m.nerve}</dd><dt>Action</dt><dd>${m.action}</dd>
+      <dt>Parts</dt><dd>${m.tubes.map(t => t.head).join(', ')}</dd></dl>` : ''}
+    <p class="note">Draft content, not yet reviewed.</p>`;
+  $('back').onclick = () => select(null);
+}
+function updateHUD(){
+  const w = W();
+  $('angleVal').textContent = Math.round(state.theta);
+  if (document.activeElement !== $('angle')) $('angle').value = Math.round(state.goal);
+  $('pill').querySelector('i').style.background = state.phase === 'rest' ? 'var(--rest)' : `var(--${state.workType})`;
+  $('pill').querySelector('span').textContent = w[state.phase];
+  for (const m of MUSCLES){
+    const row = document.querySelector(`.mrow[data-id="${m.id}"]`); if (!row) continue;
+    row.querySelector('.dot').style.background = colorVar(m);
+    row.querySelector('.role').textContent = m.role ? w[m.role] : '';
+    row.querySelector('.st').textContent = statusText(m);
+    const bar = row.querySelector('.bar span'); bar.style.width = Math.round(Math.min(1, m.act)*100) + '%'; bar.style.background = colorVar(m);
+  }
+  const who = state.workGroup === 'ext' ? (state.mode === 'simple' ? 'front of thigh' : 'quadriceps') : (state.mode === 'simple' ? 'back of thigh' : 'hamstrings');
+  const head = state.phase === 'rest' ? w.rest : `${w[state.phase]} · ${who} ${w[state.workType].toLowerCase()}`;
+  if ($('headTxt').textContent !== head) $('headTxt').textContent = head;
+}
+function syncButtons(){ $('btnLoop').setAttribute('aria-pressed', state.loop); }
+function stopAnim(){ state.anim = null; state.loop = false; syncButtons(); }
+$('angle').addEventListener('input', e => { stopAnim(); state.goal = +e.target.value; });
+$('btnFlex').onclick = () => { state.loop = false; syncButtons(); playTo(MAXF); };
+$('btnExt').onclick = () => { state.loop = false; syncButtons(); playTo(0); };
+$('btnLoop').onclick = () => {
+  if (state.loop) return stopAnim();
+  const [a, b] = EX[state.ex].loop; state.loop = true; state.loopDir = 1; playTo(b); syncButtons(); void a;
+};
+function setExercise(ex){
+  state.ex = ex;
+  $('exExt').setAttribute('aria-pressed', ex === 'ext'); $('exCurl').setAttribute('aria-pressed', ex === 'curl');
+  const [a] = EX[ex].loop; state.loop = true; state.loopDir = -1; playTo(a); syncButtons(); flyHome();
+}
+$('exExt').onclick = () => setExercise('ext');
+$('exCurl').onclick = () => setExercise('curl');
+function setMode(mode){
+  state.mode = mode;
+  $('modeSimple').setAttribute('aria-pressed', mode === 'simple'); $('modeClinical').setAttribute('aria-pressed', mode === 'clinical');
+  renderList(); renderDetail();
+}
+$('modeSimple').onclick = () => setMode('simple');
+$('modeClinical').onclick = () => setMode('clinical');
+function applyTheme(t){ document.documentElement.dataset.theme = t; try { localStorage.setItem('myotrek-theme', t); } catch {} readTokens(); }
+$('themeBtn').onclick = () => applyTheme(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark');
+let saved = null; try { saved = localStorage.getItem('myotrek-theme'); } catch {}
+applyTheme(saved || 'light');
+
+let camScale = 1;
+function resize(){
+  const w = stage.clientWidth, h = stage.clientHeight;
+  renderer.setSize(w, h, false); labelRenderer.setSize(w, h);
+  camera.aspect = w / h; camera.updateProjectionMatrix();
+  camScale = Math.max(1, (innerWidth > 900 ? 1.1 : .85) / camera.aspect);
+}
+new ResizeObserver(resize).observe(stage); resize();
+controls.target.copy(homeTarget()); camera.position.copy(homeTarget()).addScaledVector(viewDir, EX[state.ex].dist * camScale);
+setMode('clinical');
+if (reduceMotion){ state.loop = false; syncButtons(); } else { state.loopDir = -1; playTo(EX.ext.loop[1]); }
+
+const clock = new THREE.Clock(); let hudT = 0;
+renderer.setAnimationLoop(() => {
+  const dt = Math.min(clock.getDelta(), .05), t = clock.elapsedTime;
+  stepMotion(dt); updateTransforms(); updatePhysiology(dt); updateMuscles(); updateAppearance(t);
+  stepTween(dt); controls.update();
+  renderer.render(scene, camera); labelRenderer.render(scene, camera);
+  if ((hudT += dt) > .08){ hudT = 0; updateHUD(); }
+});
+window.myotrekKnee = { state, MUSCLES };
+</script>
+</body>
+</html>

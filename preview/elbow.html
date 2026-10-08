@@ -1,0 +1,1624 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Myotrek Elbow (preview)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+/* Layout: full-bleed 3D stage, floating control panel left, info panel right, live caption bottom. Clinical light-box feel. */
+:root{
+  --bg:#E9EEF1; --bg-2:#F7FAFB; --panel:rgba(255,255,255,.82); --panel-solid:#FFFFFF;
+  --line:rgba(22,44,60,.11); --fg:#16222C; --fg-2:#4C5B68; --fg-3:#7C8994;
+  --accent:#0B6B70; --accent-soft:#D6EBEB; --accent-fg:#FFFFFF;
+  --con:#D9472B; --ecc:#4F55D0; --iso:#C88A10; --rest:#C49590;
+  --bone:#ECE5D5; --skin:#E6C2AC; --shadow:0 10px 30px -12px rgba(20,40,60,.25), 0 1px 2px rgba(20,40,60,.06);
+  --font-display:"Bricolage Grotesque", ui-sans-serif, system-ui, sans-serif;
+  --font-body:"Atkinson Hyperlegible", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono:"JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#0E1318; --bg-2:#1A222B; --panel:rgba(22,29,37,.84); --panel-solid:#18202A;
+  --line:rgba(255,255,255,.09); --fg:#E6ECF1; --fg-2:#A7B3BE; --fg-3:#76838F;
+  --accent:#4FC2C3; --accent-soft:rgba(79,194,195,.15); --accent-fg:#06272A;
+  --con:#FF6A4D; --ecc:#8C90FF; --iso:#F0B43C; --rest:#A97F7B;
+  --bone:#D6CEBD; --skin:#C9A28C; --shadow:0 14px 34px -14px rgba(0,0,0,.6); color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#0E1318; --bg-2:#1A222B; --panel:rgba(22,29,37,.84); --panel-solid:#18202A;
+  --line:rgba(255,255,255,.09); --fg:#E6ECF1; --fg-2:#A7B3BE; --fg-3:#76838F;
+  --accent:#4FC2C3; --accent-soft:rgba(79,194,195,.15); --accent-fg:#06272A;
+  --con:#FF6A4D; --ecc:#8C90FF; --iso:#F0B43C; --rest:#A97F7B;
+  --bone:#D6CEBD; --skin:#C9A28C; --shadow:0 14px 34px -14px rgba(0,0,0,.6); color-scheme:dark }
+
+html,body{height:100%}
+body{background:var(--bg); color:var(--fg); font:15px/1.5 var(--font-body); overflow:hidden}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+button,input{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
+
+.app{position:relative; height:100%; background:radial-gradient(ellipse 60% 70% at 52% 46%, var(--bg-2), var(--bg) 75%)}
+#stage{position:absolute; inset:0}
+#stage canvas{display:block; width:100%; height:100%; touch-action:none}
+.labels{position:absolute; inset:0; pointer-events:none; z-index:1}   /* own stacking layer: the 3D library gives each label its own z-index */
+
+/* header */
+.top{position:absolute; top:16px; left:16px; right:16px; display:flex; align-items:center; justify-content:space-between; gap:12px; pointer-events:none; z-index:5}
+.top > *{pointer-events:auto}
+.brand{display:flex; align-items:center; gap:10px}
+.brand svg{width:30px; height:30px}
+.brand b{font:700 21px/1 var(--font-display); letter-spacing:-.01em}
+.backlink{display:inline-flex; align-items:center; gap:4px; padding:6px 11px; border-radius:999px; border:1px solid var(--line); background:var(--panel); color:var(--fg); font-weight:700; font-size:13px; text-decoration:none}
+.backlink:hover{border-color:var(--accent); color:var(--accent)}
+.crumb{color:var(--fg-3); font-size:13px; margin-left:4px}
+.crumb strong{color:var(--fg-2); font-weight:700}
+.top-right{display:flex; gap:8px; align-items:center}
+
+.seg{display:inline-flex; background:var(--panel); border:1px solid var(--line); border-radius:999px; padding:3px; backdrop-filter:blur(12px)}
+.seg button{border:0; background:transparent; padding:6px 12px; border-radius:999px; cursor:pointer; font-size:13px; color:var(--fg-2); line-height:1.2}
+.seg button[aria-pressed="true"]{background:var(--accent); color:var(--accent-fg); font-weight:700}
+.seg.block{display:flex; border-radius:10px}
+.seg.block button{flex:1; border-radius:8px; padding:7px 6px; display:flex; flex-direction:column; align-items:center; gap:1px}
+.seg.block small{font-size:11px; opacity:.8; font-weight:400}
+.iconbtn{width:36px; height:36px; display:grid; place-items:center; border-radius:999px; border:1px solid var(--line); background:var(--panel); cursor:pointer; backdrop-filter:blur(12px)}
+.iconbtn svg{width:18px; height:18px}
+
+/* panels */
+.panel{background:var(--panel); border:1px solid var(--line); border-radius:16px; box-shadow:var(--shadow); backdrop-filter:blur(16px) saturate(1.15); -webkit-backdrop-filter:blur(16px) saturate(1.15)}
+.controls{position:absolute; left:16px; top:72px; width:290px; max-height:calc(100% - 88px); overflow:auto; padding:16px; display:flex; flex-direction:column; gap:18px; z-index:4}
+.info{position:absolute; right:16px; top:72px; bottom:16px; width:350px; overflow:auto; padding:0; z-index:4; display:flex; flex-direction:column}
+h3{margin:0 0 8px; font:700 11px/1.2 var(--font-body); letter-spacing:.09em; text-transform:uppercase; color:var(--fg-3)}
+
+.readout{display:flex; align-items:baseline; gap:8px; margin-bottom:6px}
+.readout .num{font:500 40px/1 var(--font-mono); letter-spacing:-.03em; font-variant-numeric:tabular-nums}
+.readout .deg{font:500 22px/1 var(--font-mono); color:var(--fg-3); margin-left:-6px}
+.pill{display:inline-flex; align-items:center; gap:6px; padding:3px 9px; border-radius:999px; font-size:12px; font-weight:700; background:var(--accent-soft); color:var(--fg)}
+.pill i{width:8px; height:8px; border-radius:50%; background:var(--fg-3); display:block}
+
+input[type=range]{width:100%; accent-color:var(--accent); margin:6px 0 2px}
+.scale{display:flex; justify-content:space-between; font-size:11.5px; color:var(--fg-3)}
+.btnrow{display:flex; gap:6px; margin-top:10px}
+.btn{flex:1; border:1px solid var(--line); background:var(--panel-solid); padding:8px 6px; border-radius:10px; cursor:pointer; font-size:13.5px; font-weight:700; display:flex; align-items:center; justify-content:center; gap:6px}
+.btn:hover{border-color:var(--accent)}
+.btn[aria-pressed="true"]{background:var(--accent); color:var(--accent-fg); border-color:transparent}
+.btn svg{width:14px; height:14px}
+.hint{margin:8px 0 0; font-size:12.5px; color:var(--fg-3)}
+.toggles{display:flex; flex-wrap:wrap; gap:6px}
+.chk{display:inline-flex; align-items:center; gap:6px; font-size:13px; padding:5px 10px; border:1px solid var(--line); border-radius:999px; cursor:pointer; background:var(--panel-solid)}
+.chk input{accent-color:var(--accent); margin:0}
+.linkbtn{border:0; background:none; color:var(--accent); font-weight:700; cursor:pointer; padding:4px 0; font-size:13px}
+
+/* info panel */
+.tabs{display:flex; gap:4px; padding:12px 12px 0; position:sticky; top:0; background:var(--panel); backdrop-filter:blur(16px); z-index:1; border-bottom:1px solid var(--line)}
+.tabs button{border:0; background:none; padding:8px 10px 10px; cursor:pointer; color:var(--fg-3); font-weight:700; font-size:14px; border-bottom:2px solid transparent; margin-bottom:-1px}
+.tabs button[aria-selected="true"]{color:var(--fg); border-color:var(--accent)}
+.pane{padding:14px 16px 18px; display:flex; flex-direction:column; gap:14px}
+.group-h{display:flex; justify-content:space-between; align-items:baseline; margin-top:2px}
+.mlist{display:flex; flex-direction:column; gap:6px}
+.mrow{display:grid; grid-template-columns:12px 1fr auto; gap:4px 10px; align-items:center; text-align:left; padding:9px 10px; border:1px solid var(--line); border-radius:11px; background:var(--panel-solid); cursor:pointer; width:100%}
+.mrow:hover{border-color:var(--accent)}
+.mrow .dot{width:12px; height:12px; border-radius:50%; background:var(--rest); grid-row:span 2; transition:background .2s}
+.mrow .nm{font-weight:700; font-size:14px}
+.mrow .role{font-size:11.5px; color:var(--fg-2); justify-self:end; white-space:nowrap}
+.mrow .st{font-size:12.5px; color:var(--fg-2)}
+.mrow .bar{grid-column:2 / 4; height:4px; border-radius:2px; background:var(--line); overflow:hidden}
+.mrow .bar span{display:block; height:100%; width:0; background:var(--fg-3); border-radius:2px; transition:width .12s linear, background .2s}
+.legend{display:grid; grid-template-columns:1fr 1fr; gap:6px 12px; font-size:12.5px; color:var(--fg-2); padding-top:12px; border-top:1px solid var(--line)}
+.legend span{display:flex; align-items:center; gap:7px}
+.legend i{width:10px; height:10px; border-radius:50%; flex:none}
+.note{font-size:12.5px; color:var(--fg-3); margin:0}
+
+.detail h2{font:700 24px/1.15 var(--font-display); margin:0; letter-spacing:-.01em; text-wrap:balance}
+.detail .lede{margin:0; font-size:15.5px}
+.kv{display:grid; gap:10px}
+.kv div{display:grid; gap:2px}
+.kv dt{font:700 11px/1.3 var(--font-body); letter-spacing:.08em; text-transform:uppercase; color:var(--fg-3)}
+.kv dd{margin:0; font-size:14px}
+.kv ul{margin:0; padding-left:18px}
+.kv li{margin:2px 0}
+.roots{font-family:var(--font-mono); font-size:12.5px; background:var(--accent-soft); padding:1px 6px; border-radius:6px; margin-left:4px; white-space:nowrap}
+.statusbox{display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:12px; background:var(--accent-soft); font-size:13.5px}
+.statusbox i{width:12px; height:12px; border-radius:50%; flex:none}
+.back{align-self:flex-start}
+
+/* caption */
+.caption{position:absolute; left:322px; right:382px; bottom:16px; display:flex; flex-direction:column; align-items:center; gap:8px; z-index:6; pointer-events:none}
+.caption .panel{pointer-events:auto; padding:10px 14px; display:flex; gap:14px; align-items:center; width:100%; max-width:640px; position:relative}
+.caption p{margin:0; font-size:14px; line-height:1.4; text-wrap:pretty}
+.why{font-size:12.5px!important; color:var(--fg-2)}
+.capB .headline{flex:1; font-weight:700; font-size:15px!important}
+/* caption: one fixed-size line; "More" lists every phase of the exercise and highlights the live one */
+.capB{height:52px}
+.capB .headline{flex:1; min-width:0; font-weight:700; font-size:15px!important; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+.why{font-size:12.5px!important; color:var(--fg-2)}
+.more-h{display:flex; justify-content:space-between; align-items:center}
+.phases{list-style:none; margin:0; padding:0; display:grid; gap:4px}
+.phases li{padding:6px 10px; border-radius:9px; border:1px solid transparent; font-size:13.5px; line-height:1.4}
+.phases li b{display:flex; align-items:center; gap:6px; font-size:12px; text-transform:uppercase; letter-spacing:.06em; color:var(--fg-3)}
+.phases li b i{width:8px; height:8px; border-radius:50%}
+.phases li.on{border-color:var(--accent); background:var(--accent-soft)}
+.phases li.on b{color:var(--fg)}
+.morebox{max-height:min(60vh, 460px); overflow:auto; position:absolute; left:0; right:0; bottom:calc(100% + 8px); padding:12px 14px; border-radius:14px; background:var(--panel-solid); border:1px solid var(--line); box-shadow:var(--shadow); display:grid; gap:6px}
+/* view toggles */
+.viewtools{position:absolute; left:322px; top:72px; right:440px; display:flex; flex-direction:column; align-items:flex-start; gap:8px; z-index:4; pointer-events:none}
+.viewtools > *{pointer-events:auto}
+.viewmenu{position:relative; display:flex; align-items:center; gap:6px}
+.viewmenu .iconbtn{width:40px; height:40px; box-shadow:var(--shadow)}
+.viewpop{position:absolute; left:0; top:calc(100% + 6px); padding:8px; display:grid; gap:2px; min-width:150px}
+.vrow{display:flex; align-items:center; gap:8px; font-size:13px; padding:5px 6px; border-radius:6px; cursor:pointer}
+.vrow:hover{background:var(--accent-soft)}
+.vrow input{accent-color:var(--accent); margin:0}
+.effort{flex:none; width:96px; display:grid; gap:4px}
+.effort small{font-size:11px; color:var(--fg-3); letter-spacing:.06em; text-transform:uppercase; font-weight:700}
+.effort .bar{height:6px; border-radius:3px; background:var(--line); overflow:hidden}
+.effort .bar span{display:block; height:100%; width:0; background:var(--accent); transition:width .15s}
+
+/* 3D labels */
+.tag{pointer-events:auto; cursor:pointer; border:1px solid var(--line); background:var(--panel); color:var(--fg); font:700 11.5px/1 var(--font-body); padding:5px 8px; border-radius:999px; white-space:nowrap; box-shadow:var(--shadow); backdrop-filter:blur(8px)}
+.tag:hover,.tag.on{border-color:var(--accent); color:var(--accent)}
+.tag.dim{opacity:.35}
+.tag.clash{opacity:0; pointer-events:none}
+.deglabel{font:500 12px/1 var(--font-mono); color:var(--accent); background:var(--panel); padding:3px 6px; border-radius:6px; border:1px solid var(--line)}
+.ticklabel{font:500 10.5px/1 var(--font-mono); color:var(--fg-3)}
+
+.seg.block.sub{margin-top:6px; background:transparent; border-style:dashed}
+.seg.block.sub button{font-size:12px; padding:5px 4px}
+.seg.block.sub small{font-size:10px}
+.seg.block.sub button[aria-pressed="true"]{background:var(--accent-soft); color:var(--accent)}
+.slider90{position:relative}
+.slider90 input{position:relative; z-index:1}
+/* centre of the range thumb at 90/145 of the track (thumb ≈ 16px) */
+.mark90{position:absolute; left:calc(8px + (100% - 16px) * 90 / 145); top:100%; transform:translate(-50%, 2px); z-index:2;
+  border:1px solid var(--accent); background:var(--panel-solid); color:var(--accent); font:700 11px/1 var(--font-mono); padding:3px 6px; border-radius:999px; cursor:pointer}
+.mark90::before{content:""; position:absolute; left:50%; bottom:100%; width:1px; height:9px; background:var(--accent); transform:translateX(-50%)}
+.mark90:hover{background:var(--accent); color:var(--accent-fg)}
+.zoom{position:absolute; right:382px; top:72px; display:flex; flex-direction:column; gap:6px; z-index:4}
+.zoom .iconbtn{width:40px; height:40px; box-shadow:var(--shadow)}
+.readout.sm .num{font-size:28px}
+.readout.sm .deg{font-size:16px; margin-left:-6px}
+.echart{margin:12px 0 0; padding:10px 10px 8px; border:1px solid var(--line); border-radius:12px; background:var(--panel-solid)}
+.echart figcaption{font:700 11px/1.2 var(--font-body); letter-spacing:.08em; text-transform:uppercase; color:var(--fg-3); margin-bottom:4px}
+.echart svg{display:block; width:100%; height:auto; touch-action:none; cursor:crosshair}
+.echart .grid{stroke:var(--line); stroke-width:1}
+.echart .zero{stroke:var(--fg-3); stroke-width:1}
+.echart .tick{font:500 10px var(--font-mono); fill:var(--fg-3)}
+.echart .ser{fill:none; stroke:var(--fg-3); stroke-width:1.5; opacity:.45; stroke-linecap:round; stroke-linejoin:round}
+.echart .ser.on{stroke:var(--accent); stroke-width:2.5; opacity:1}
+.echart .lbl{font:700 10.5px var(--font-body); fill:var(--fg-3)}
+.echart .lbl.on{fill:var(--fg)}
+.echart .dot{fill:var(--accent); stroke:var(--panel-solid); stroke-width:2}
+.echart .guide{stroke:var(--fg-3); stroke-width:1; stroke-dasharray:2 3}
+.echart-key{display:flex; justify-content:space-between; gap:6px; font-size:10.5px; color:var(--fg-3); margin-top:2px}
+.echart-read{font-size:12px; line-height:1.4; color:var(--fg-2); height:2.8em; overflow:hidden; margin-top:4px}   /* always two lines tall, so the chart never resizes */
+.heads{display:grid; gap:6px; padding:8px 10px 2px 32px}
+.hrow{display:grid; grid-template-columns:1fr auto; gap:3px 8px; font-size:12px; color:var(--fg-2); align-items:center}
+.hrow .hl{font-family:var(--font-mono); font-size:11px; color:var(--fg-3)}
+.hrow .bar{grid-column:1 / 3; height:3px; border-radius:2px; background:var(--line); overflow:hidden}
+.hrow .bar span{display:block; height:100%; width:0; border-radius:2px; transition:width .12s linear}
+.rotlbl{font-size:13px; color:var(--fg-2); font-weight:700; white-space:nowrap}
+.readout{flex-wrap:wrap}
+.pill{white-space:nowrap}
+.loading{position:absolute; inset:0; display:grid; place-items:center; color:var(--fg-3); font-size:14px; pointer-events:none}
+
+@media (max-width: 900px){
+  body{overflow:auto}
+  .app{height:auto; min-height:100%}
+  #stage{position:relative; height:58vh; min-height:340px}
+  .top{position:absolute}
+  .crumb{display:none}
+  .controls,.info{position:static; width:auto; max-height:none; margin:0 16px 12px}
+  .info{overflow:visible}
+  .caption{position:static; margin:0 16px 12px}
+  .caption .panel{width:100%}
+  .zoom{right:12px; top:auto; bottom:12px}
+  .viewtools{left:12px; right:12px; top:60px}
+  .caption{gap:12px}
+}
+@media (prefers-reduced-motion: reduce){ *{transition:none!important} }
+</style>
+
+<div class="app">
+  <div id="stage"><div class="loading" id="loading">Loading 3D model…</div>
+    <div class="viewtools">
+      <div class="viewmenu">
+        <button class="iconbtn" id="viewMenuBtn" aria-expanded="false" aria-controls="viewMenu" title="Show / hide"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 3 2 8l10 5 10-5-10-5z"/><path d="m2 13 10 5 10-5"/></svg></button>
+        <div class="panel viewpop" id="viewMenu" hidden>
+          <label class="vrow"><input type="checkbox" data-t="labels" checked> Labels</label>
+          <label class="vrow"><input type="checkbox" data-t="bones" checked> Bones</label>
+          <label class="vrow"><input type="checkbox" data-t="hand" checked> Hand</label>
+          <label class="vrow"><input type="checkbox" data-t="arc" checked> Angle arc</label>
+          <label class="vrow"><input type="checkbox" data-t="body" checked> Body</label>
+        </div>
+      </div>
+    </div>
+    <div class="zoom" role="group" aria-label="Zoom">
+      <button class="iconbtn" id="zoomIn" aria-label="Zoom in" title="Zoom in (+)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
+      <button class="iconbtn" id="zoomOut" aria-label="Zoom out" title="Zoom out (−)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M5 12h14"/></svg></button>
+      <button class="iconbtn" id="resetView" aria-label="Reset view" title="Reset view"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></svg></button>
+    </div>
+  </div>
+
+  <header class="top">
+    <div class="brand">
+      <svg viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="15" fill="var(--accent)"/><path d="M11 6v10a5 5 0 0 0 5 5h9" stroke="var(--accent-fg)" stroke-width="3.2" fill="none" stroke-linecap="round"/><circle cx="11" cy="16" r="2.6" fill="var(--accent-fg)"/></svg>
+      <a class="backlink" href="./">← Body</a>
+      <b>Myotrek</b>
+      <span class="crumb">Upper limb / <strong>Elbow &amp; forearm</strong> <span id="sideTxt"></span></span>
+    </div>
+    <div class="top-right">
+      <div class="seg" role="group" aria-label="Explanation level">
+        <button id="modePatient" aria-pressed="true">Simple</button>
+        <button id="modeLearner" aria-pressed="false">Clinical</button>
+      </div>
+      <button class="iconbtn" id="themeBtn" aria-label="Switch light or dark theme" title="Light / dark">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v3M12 20v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M1 12h3M20 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <aside class="controls panel" aria-label="Controls">
+    <section>
+      <h3>Movement</h3>
+      <div class="seg block" role="group" aria-label="Movement">
+        <button id="mvElbow" aria-pressed="true">Bend &amp; straighten<small data-l="Flexion / extension">the elbow</small></button>
+        <button id="mvRotate" aria-pressed="false">Turn the palm<small data-l="Pronation / supination">the forearm</small></button>
+      </div>
+    </section>
+    <section id="exSection">
+      <h3>Exercise</h3>
+      <div class="seg block" role="group" aria-label="Muscle group">
+        <button id="grpBi" aria-pressed="false">Biceps<small data-l="Elbow flexors">front of arm</small></button>
+        <button id="grpTri" aria-pressed="true">Triceps<small data-l="Elbow extensors">back of arm</small></button>
+      </div>
+      <div class="seg block sub" role="group" aria-label="Biceps exercises" id="subBi" hidden>
+        <button data-ex="curl-sup">Curl<small data-l="Supinated">palm up</small></button>
+        <button data-ex="curl-neu">Hammer<small data-l="Mid-prone">thumb up</small></button>
+        <button data-ex="curl-pro">Reverse<small data-l="Pronated">palm down</small></button>
+      </div>
+      <div class="seg block sub" role="group" aria-label="Triceps exercises" id="subTri">
+        <button data-ex="overhead">Overhead<small data-l="Shoulder flexed">arm up</small></button>
+        <button data-ex="kickback">Kickback<small data-l="Shoulder extended">leaning forward</small></button>
+      </div>
+    </section>
+    <section>
+      <h3>Elbow angle</h3>
+      <div class="readout"><span class="num" id="angleVal">0</span><span class="deg">°</span><span class="pill" id="phasePill"><i></i><span>Resting</span></span></div>
+      <div class="slider90">
+        <input type="range" id="angle" min="0" max="145" step="1" value="0" aria-label="Elbow angle in degrees">
+        <button class="mark90" id="go90" title="Go to 90°" aria-label="Go to 90 degrees">90°</button>
+      </div>
+      <div class="scale"><span id="scaleL">0° straight</span><span id="scaleR">145° fully bent</span></div>
+      <figure class="echart" id="echart" hidden>
+        <figcaption>Load on the elbow by angle</figcaption>
+        <svg id="echartSvg" viewBox="0 0 258 132" role="img" aria-label="Gravity torque about the elbow across the range of motion for each exercise"></svg>
+        <div class="echart-key"><span>Above the line: triceps working</span><span>Below: elbow flexors working</span></div>
+        <div class="echart-read" id="echartRead" aria-live="polite"></div>
+      </figure>
+      <div class="btnrow" id="elbowBtns">
+        <button class="btn" id="btnFlex"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 4l7 9h-5v7h-4v-7H5z"/></svg><span id="flexTxt">Bend</span></button>
+        <button class="btn" id="btnExt"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 20l-7-9h5V4h4v7h5z"/></svg><span id="extTxt">Straighten</span></button>
+        <button class="btn" id="btnLoop" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M4 12a8 8 0 0 1 14-5.3M20 12a8 8 0 0 1-14 5.3"/><path d="M18 3v4h-4M6 21v-4h4"/></svg>Repeat</button>
+      </div>
+      <p class="hint" id="elbowHint">You can also drag the forearm or hand in the 3D view.</p>
+    </section>
+    <section id="palmSection">
+      <h3>Palm facing</h3>
+      <div class="readout sm"><span class="num" id="rotVal">0</span><span class="deg">°</span><span class="rotlbl" id="rotLbl">palm up</span><span class="pill" id="rotPill" hidden><i></i><span></span></span></div>
+      <input type="range" id="rot" min="-85" max="80" step="1" value="-85" aria-label="Forearm rotation in degrees">
+      <div class="scale"><span id="rotScaleL">palm up</span><span id="rotScaleR">palm down</span></div>
+      <div class="seg block" role="group" aria-label="Forearm position" id="posPresets" style="margin-top:8px">
+        <button id="posSup" aria-pressed="true">Up<small data-l="Supinated">palm up</small></button>
+        <button id="posNeu" aria-pressed="false">Thumb up<small data-l="Mid-prone">like a hammer</small></button>
+        <button id="posPro" aria-pressed="false">Down<small data-l="Pronated">palm down</small></button>
+      </div>
+      <div class="btnrow" id="rotBtns" hidden>
+        <button class="btn" id="btnSup"><span id="supTxt">Turn up</span></button>
+        <button class="btn" id="btnPro"><span id="proTxt">Turn down</span></button>
+        <button class="btn" id="btnRotLoop" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M4 12a8 8 0 0 1 14-5.3M20 12a8 8 0 0 1-14 5.3"/><path d="M18 3v4h-4M6 21v-4h4"/></svg>Repeat</button>
+      </div>
+    </section>
+    <section id="loadElbow">
+      <h3>What's the load?</h3>
+      <div class="seg block" role="group" aria-label="Load">
+        <button id="loadWeight" aria-pressed="true">Weight in hand<small data-l="Gravity">like a cup</small></button>
+        <button id="loadBand" aria-pressed="false">Band pulling up<small data-l="Resistance">push it down</small></button>
+      </div>
+    </section>
+    <section id="loadRotate" hidden>
+      <h3>How hard is the turn?</h3>
+      <div class="seg block" role="group" aria-label="Resistance">
+        <button id="rLight" aria-pressed="true">Easy<small data-l="Unresisted">turning a page</small></button>
+        <button id="rHard" aria-pressed="false">Hard<small data-l="Resisted">tightening a screw</small></button>
+      </div>
+    </section>
+  </aside>
+
+  <aside class="info panel" aria-label="Information">
+    <div class="tabs" role="tablist">
+      <button role="tab" id="tabMuscles" aria-selected="true">Muscles</button>
+      <button role="tab" id="tabJoint" aria-selected="false">Elbow joint</button>
+    </div>
+    <div class="pane" id="paneMuscles"></div>
+    <div class="pane" id="paneDetail" hidden></div>
+    <div class="pane" id="paneJoint" hidden></div>
+  </aside>
+
+  <div class="caption">
+    <div class="panel capB">
+      <p class="headline" id="headTxt"></p>
+      <button class="linkbtn" id="moreBtn" aria-expanded="false" aria-controls="moreBox">More</button>
+      <div class="effort"><small>Effort</small><div class="bar"><span id="effortBar"></span></div></div>
+      <div class="morebox" id="moreBox" hidden>
+        <div class="more-h"><b id="moreTitle"></b><button class="linkbtn" id="moreClose">Close</button></div>
+        <ol class="phases" id="morePhases"></ol>
+        <p class="why" id="moreWhy"></p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+}}
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
+import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
+
+const V3 = THREE.Vector3, DEG = Math.PI / 180, MAXF = 145;
+const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* ------------------------------------------------------------------ content
+   Draft clinical content, to be reviewed by a physiotherapist.            */
+const MUSCLES = [
+  { id:'biceps', name:'Biceps brachii', short:'Biceps', group:'flexor', pos:{sup:1, neu:.75, pro:.45},
+    plain:'The well-known muscle at the front of your upper arm. It bends your elbow and turns your palm up.',
+    where:'Front of the upper arm. It starts at the shoulder blade and attaches just below the elbow on the thumb-side forearm bone.',
+    everyday:'Carrying shopping bags, lifting a child, turning a screwdriver or doorknob.',
+    feel:'Bend your elbow with your palm up and squeeze. The bump at the front of your arm is your biceps.',
+    origin:['Long head: supraglenoid tubercle of the scapula','Short head: tip of the coracoid process'],
+    insertion:['Radial tuberosity','Bicipital aponeurosis into the deep fascia of the medial forearm'],
+    nerve:'Musculocutaneous nerve', roots:'C5–C6', blood:'Muscular branches of the brachial artery',
+    actions:['Elbow flexion','Forearm supination (most powerful with the elbow at ~90°)','Weak shoulder flexion (long head)'],
+    position:'Strongest elbow flexor with the forearm supinated. In pronation its tendon wraps around the radius, so it contributes less to flexion.',
+    palpation:'Anterior arm. The distal tendon is easy to feel in the cubital fossa during resisted flexion with supination.',
+    clinical:['Biceps reflex: C5 (C6).','Distal tendon rupture: supination weakness more than flexion weakness; hook test.','Proximal long-head rupture: "Popeye" deformity.'],
+    tubes:[
+      { pts:[['S',.0,3.42,-.42],['H',.2,3.18,-.08],['H',.44,2.45,-.02],['H',.52,1.55,0],['H',.43,.82,-.02],['W',1,.36,.05,-.02],['R',.08,-.42,.1,1]], r:.19, t0:.2, t1:.8, peak:.55, rt:.035 },
+      { pts:[['S',.38,3.33,-.45],['H',.44,2.9,-.2],['H',.52,2.2,-.1],['H',.55,1.5,-.04],['H',.43,.82,-.02],['W',1,.36,.05,-.02],['R',.08,-.42,.1,1]], r:.17, t0:.14, t1:.8, peak:.55, rt:.035 } ],
+    palmNote:'Strongest with your palm up. It also turns your palm up, most strongly with your elbow bent.',
+    label:.5 },
+  { id:'brachialis', name:'Brachialis', short:'Brachialis', group:'flexor', pos:{sup:1, neu:1, pro:1},
+    plain:'The hidden workhorse under the biceps. It bends your elbow whichever way your palm faces.',
+    where:'Deep to the biceps, on the lower front of the upper arm bone. It attaches to the forearm bone on the little-finger side.',
+    everyday:'Every time you bend your elbow: lifting a mug, brushing your hair, carrying a bag in a palm-down grip.',
+    feel:'Hard to feel on its own. With your elbow bent, press on either side of the biceps tendon just above the crease.',
+    origin:['Distal half of the anterior surface of the humerus'],
+    insertion:['Coronoid process and tuberosity of the ulna'],
+    nerve:'Musculocutaneous nerve (small lateral part: radial nerve)', roots:'C5–C6 (C7)', blood:'Brachial artery, radial recurrent artery',
+    actions:['Elbow flexion in every forearm position'],
+    position:'Inserts on the ulna, which does not rotate, so pronation and supination do not change its pull. It is the main flexor in pronation.',
+    palmNote:'Works the same whichever way your palm faces.',
+    palpation:'Medial and lateral to the distal biceps tendon, with the elbow flexed against resistance.',
+    clinical:['Myositis ossificans after elbow trauma (e.g. supracondylar fracture). Avoid aggressive passive stretching early.'],
+    tubes:[ { pts:[['H',.1,1.75,0],['H',.27,1.1,0],['H',.31,.5,0],['W',1,.27,0,-.06],['F',.14,-.33,-.12]], r:.2, t0:.02, t1:.84, peak:.5, rt:.05 } ],
+    label:.35 },
+  { id:'brachioradialis', name:'Brachioradialis', short:'Brachioradialis', group:'flexor', pos:{sup:.55, neu:1, pro:.65},
+    plain:'The muscle on the thumb side of your forearm. It is strongest when your thumb points up, like lifting a hammer or a mug.',
+    where:'Thumb side of the forearm. It starts just above the elbow on the outside and runs to the wrist.',
+    everyday:'Hammering, lifting a mug by the handle, pulling a drawer open.',
+    feel:'Make a fist with your thumb up and bend your elbow against your other hand. It pops up on the outside of your forearm.',
+    origin:['Proximal two-thirds of the lateral supracondylar ridge of the humerus'],
+    insertion:['Lateral distal radius, just above the styloid process'],
+    nerve:'Radial nerve', roots:'C5–C6', blood:'Radial recurrent artery',
+    actions:['Elbow flexion, strongest in mid-prone','Brings the forearm toward mid-prone from full pronation or supination'],
+    position:'Best leverage with the forearm mid-prone (thumb up). A flexor supplied by the radial nerve, which is unusual.',
+    palpation:'Lateral forearm during resisted elbow flexion in mid-prone.',
+    palmNote:'Strongest with your thumb up. It also helps bring your forearm back to thumb-up from either extreme.',
+    clinical:['Brachioradialis reflex: C6 (C5).','Often still working when the musculocutaneous nerve is injured.'],
+    tubes:[ { pts:[['H',.04,1.15,.22],['H',.2,.72,.33],['H',.34,.28,.35],['W',1,.42,0,.33],['R',.32,-.75,.3,.25],['R',.17,-1.6,.3,.7],['R',.07,-2.4,.31,1]], r:.15, t0:.02, t1:.66, peak:.38, rt:.035 } ],
+    label:.4 },
+  { id:'triceps', name:'Triceps brachii', short:'Triceps', group:'extensor', pos:{sup:1, neu:1, pro:1},
+    plain:'The big muscle at the back of your upper arm. It straightens your elbow.',
+    where:'Back of the upper arm. It has three parts that join into one tendon at the point of the elbow.',
+    everyday:'Pushing a door, getting up from a chair using your arms, a push-up.',
+    feel:'Straighten your elbow hard against a table. The back of your upper arm goes firm.',
+    origin:['Long head: infraglenoid tubercle of the scapula','Lateral head: posterior humerus, above the radial groove','Medial head: posterior humerus, below the radial groove'],
+    insertion:['Proximal surface of the olecranon and the deep fascia of the forearm'],
+    nerve:'Radial nerve', roots:'C6–C8 (mainly C7)', blood:'Profunda brachii artery, superior ulnar collateral artery',
+    actions:['Elbow extension','Long head: shoulder extension and adduction'],
+    position:'Forearm position does not change its pull. The long head crosses the shoulder, so it is stronger when the shoulder is flexed.',
+    palpation:'Posterior arm during resisted extension. The tendon is felt just above the olecranon.',
+    clinical:['Triceps reflex: C7.','The medial head is active in almost all extension; the long and lateral heads join in as load rises.','Mid-shaft humerus fractures can injure the radial nerve, usually below the branches to triceps.'],
+    tubes:[
+      { pts:[['S',-.08,2.8,-.45],['H',-.38,2.3,-.15],['H',-.5,1.5,-.05],['H',-.42,.75,0],['W',-1,.3,.1,-.02],['F',-.22,.24,-.16]], r:.2, t0:.08, t1:.8, peak:.45, rt:.06, head:'Long head', headId:'long' },
+      { pts:[['H',-.08,2.6,.12],['H',-.36,2.0,.16],['H',-.46,1.2,.12],['H',-.39,.7,.03],['W',-1,.3,.1,-.03],['F',-.22,.24,-.12]], r:.18, t0:.03, t1:.8, peak:.5, rt:.06, head:'Lateral head', headId:'lateral' },
+      { pts:[['H',-.12,1.9,-.15],['H',-.28,1.3,-.17],['H',-.31,.65,-.1],['W',-1,.27,.1,-.1],['F',-.21,.22,-.19]], r:.16, t0:.02, t1:.85, peak:.55, rt:.05, head:'Medial head', headId:'medial' } ],
+    label:.42 },
+  { id:'anconeus', name:'Anconeus', short:'Anconeus', group:'extensor', pos:{sup:.55, neu:.55, pro:.55},
+    plain:'A small muscle at the back of the elbow. It helps straighten the elbow and keeps the joint steady.',
+    where:'Small triangle on the outer back of the elbow, next to the bony point.',
+    everyday:'Works quietly whenever you straighten your elbow or hold it steady.',
+    feel:'Straighten your elbow against resistance and feel just outside the bony point of the elbow.',
+    origin:['Posterior surface of the lateral epicondyle of the humerus'],
+    insertion:['Lateral olecranon and proximal posterior ulna'],
+    nerve:'Radial nerve', roots:'C7–C8', blood:'Middle collateral artery, recurrent interosseous artery',
+    actions:['Assists elbow extension','Stabilises the joint (posterolateral support)'],
+    position:'Small lever arm. Its stabilising role matters more than its strength.',
+    palpation:'Triangle between the lateral epicondyle and the olecranon during resisted extension.',
+    clinical:['Can contribute to posterolateral elbow pain.','Surgical landmark: the Kocher approach runs between anconeus and ECU.'],
+    tubes:[ { pts:[['H',-.04,.14,.35],['F',-.16,-.22,.14],['F',-.2,-.58,-.04]], r:.09, t0:0, t1:1, peak:.35, rt:.03 } ],
+    label:.5 },
+  { id:'pronTeres', name:'Pronator teres', short:'Pronator teres', group:'rotator', pos:{sup:0, neu:0, pro:0}, flexAssist:.22,
+    plain:'A diagonal muscle across the front of your upper forearm. It turns your palm down, especially when the turn is quick or hard.',
+    where:'Front of the forearm, just below the elbow crease. It runs from the inner elbow bump diagonally to the middle of the thumb-side forearm bone.',
+    everyday:'Pouring from a jug, turning a key to lock, typing with palms down, a forehand in tennis.',
+    feel:'Put your fingers just below the inner side of your elbow crease and turn your palm down hard against your other hand.',
+    origin:['Humeral head: medial epicondyle (common flexor origin) and medial supracondylar ridge','Ulnar head: medial side of the coronoid process'],
+    insertion:['Pronator tuberosity: middle of the lateral surface of the radius'],
+    nerve:'Median nerve', roots:'C6–C7', blood:'Ulnar artery (anterior ulnar recurrent), radial artery',
+    actions:['Forearm pronation, recruited for fast or resisted pronation','Weak elbow flexion'],
+    position:'Pulls best when the elbow is extended. With the elbow fully flexed it is slack, which is why pronator quadratus is tested in full flexion.',
+    palpation:'Medial border of the cubital fossa during resisted pronation.',
+    clinical:['Pronator syndrome: median nerve compressed between its two heads.','Part of the common flexor origin, so involved in medial epicondylalgia ("golfer\'s elbow").'],
+    palmNote:'It is what turns your palm down when the turn is quick or hard.',
+    tubes:[ { pts:[['H',.04,.24,-.44],['W',1,.14,.02,-.36],['F',.25,-.5,-.12],['R',.2,-.95,.22,.5],['R',.12,-1.18,.33,1]], r:.11, t0:.04, t1:.82, peak:.42, rt:.03 } ],
+    label:.7 },
+  { id:'supinator', name:'Supinator', short:'Supinator', group:'rotator', pos:{sup:0, neu:0, pro:0},
+    plain:'A deep muscle that wraps around the top of the thumb-side forearm bone. It turns your palm up.',
+    where:'Deep in the outer, upper forearm, just below the elbow. It wraps around the radius like a sling.',
+    everyday:'Turning a doorknob or key to open, turning your palm up to receive change, using a screwdriver.',
+    feel:'Too deep to feel clearly. With your elbow straight, turn your palm up slowly. The supinator does most of that work.',
+    origin:['Lateral epicondyle of the humerus','Radial collateral and annular ligaments','Supinator crest and fossa of the ulna'],
+    insertion:['Lateral, posterior and anterior surfaces of the proximal third of the radius'],
+    nerve:'Deep branch of the radial nerve (posterior interosseous nerve)', roots:'C5–C6', blood:'Radial recurrent artery, recurrent interosseous artery',
+    actions:['Forearm supination in every elbow position','Main supinator in slow, unresisted supination and with the elbow extended'],
+    position:'Works in any elbow position. Biceps takes over most of the load in resisted supination with the elbow near 90°.',
+    palpation:'Deep. Felt vaguely distal to the radial head on the posterolateral forearm during supination.',
+    clinical:['The posterior interosseous nerve passes through it (arcade of Frohse): PIN compression or radial tunnel syndrome.','PIN palsy: weak finger and thumb extension without sensory loss.','A differential for lateral elbow pain.'],
+    palmNote:'It turns your palm up, and works alone when the turn is easy or your elbow is straight.',
+    tubes:[ { pts:[['F',-.11,-.34,-.05],['F',-.13,-.48,.17],['R',-.03,-.62,.31,.7],['R',.1,-.78,.3,1],['R',.15,-.92,.21,1]], r:.1, t0:.04, t1:.9, peak:.5, rt:.04 } ],
+    label:.55 },
+  { id:'pronQuad', name:'Pronator quadratus', short:'Pronator quadratus', group:'rotator', pos:{sup:0, neu:0, pro:0},
+    plain:'A small square muscle just above the wrist. It starts every palm-down turn.',
+    where:'Deep at the front of the forearm, just above the wrist, joining the two forearm bones.',
+    everyday:'Any palm-down turn: pouring, typing, turning a page face down.',
+    feel:'It sits under the wrist tendons, so you cannot feel it directly.',
+    origin:['Distal quarter of the anterior surface of the ulna'],
+    insertion:['Distal quarter of the anterior surface of the radius'],
+    nerve:'Anterior interosseous nerve (median nerve)', roots:'C8–T1 (C7)', blood:'Anterior interosseous artery',
+    actions:['Forearm pronation: the main pronator in every position','Deep head helps hold the radius and ulna together at the distal radioulnar joint'],
+    position:'Active in all pronation regardless of elbow angle or speed.',
+    palpation:'Not palpable: deep to the flexor tendons.',
+    clinical:['Isolate it by testing pronation with the elbow fully flexed (pronator teres slackened).','Weak in anterior interosseous nerve syndrome, along with FPL and the index FDP.'],
+    palmNote:'It does every palm-down turn, easy or hard.',
+    tubes:[ { pts:[['F',.07,-2.3,-.17],['F',.13,-2.28,-.06],['R',.14,-2.25,.1,.6],['R',.1,-2.22,.24,1]], r:.075, t0:.08, t1:.92, peak:.5, rt:.05 } ],
+    label:.5 },
+];
+
+const JOINT = {
+  patient: [
+    ['A hinge, like a door','Your elbow bends and straightens in one direction. Turning your palm up and down happens at joints between the two forearm bones.'],
+    ['How far it moves','Most people can bend to about 145° and straighten to 0°. Some people, often women, straighten a few degrees past 0°. That is usually normal.'],
+    ['Why bending stops','At full bend the muscles of your forearm and upper arm press together. That is the soft stop you feel.'],
+    ['Why straightening stops','Bone meets bone at the back of the elbow. That is the firm stop.'],
+    ['The "funny bone"','It is a nerve (the ulnar nerve) running behind the bony bump on the inside of your elbow.'],
+  ],
+  learner: [
+    ['Articulations','Humeroulnar and humeroradial joints, sharing a capsule with the proximal radioulnar joint'],
+    ['Classification','Synovial hinge (ginglymus), 1 degree of freedom'],
+    ['Normal ROM','Flexion 0–145° (up to 150°). Extension 0°; 0–10° hyperextension can be normal'],
+    ['End feel','Flexion: soft (soft-tissue approximation). Extension: hard (olecranon in fossa)'],
+    ['Capsular pattern','Flexion more limited than extension'],
+    ['Resting position','~70° flexion, 10° supination'],
+    ['Close-packed position','Full extension with supination'],
+    ['Carrying angle','~5–15° valgus, usually greater in females'],
+    ['Ligaments','UCL (anterior, posterior, transverse bands): resists valgus. LCL complex (RCL, LUCL, annular): resists varus and posterolateral rotatory instability. Annular ligament holds the radial head.'],
+    ['Nerves nearby','Ulnar n. behind medial epicondyle (cubital tunnel). Median n. medial in cubital fossa. Radial n. anterior to lateral epicondyle.'],
+    ['Common conditions','Lateral and medial epicondylalgia, olecranon bursitis, UCL sprain in throwers, radial head subluxation in children ("pulled elbow")'],
+  ],
+};
+
+const FOREARM = {
+  patient: [
+    ['A pivot, not a hinge','Turning your palm up and down happens between your two forearm bones. The radius (thumb side) rolls over the ulna, which stays still.'],
+    ['How far it turns','From thumb-up, most people turn about 80–90° each way: palm up (supination) and palm down (pronation).'],
+    ['Check it fairly','Keep your elbow bent at your side. If the elbow drifts away from your body, your shoulder is doing some of the turning.'],
+    ['Why your elbow angle matters','The biceps helps turn the palm up much more when your elbow is bent. With your elbow straight, that turn is weaker.'],
+  ],
+  learner: [
+    ['Articulations','Proximal radioulnar joint (radial head in the annular ligament) and distal radioulnar joint, linked by the interosseous membrane'],
+    ['Classification','Synovial pivot (trochoid), 1 degree of freedom. Axis runs from the radial head to the ulnar head'],
+    ['Normal ROM','Supination 0–80/90°. Pronation 0–80/90° (from mid-prone)'],
+    ['End feel','Firm in both directions (ligamentous, interosseous membrane). Pronation can be hard (radius on ulna)'],
+    ['Capsular pattern','Equal limitation of pronation and supination'],
+    ['Close-packed position','PRUJ and DRUJ: ~5° supination'],
+    ['Testing','Elbow at 90° and tucked to the side to remove shoulder rotation'],
+    ['Muscle recruitment','Supinator leads unresisted supination; biceps joins with resistance, mostly near 90° flexion. Pronator quadratus leads pronation; pronator teres joins with speed or resistance'],
+    ['Common conditions','Distal radius fracture (stiff rotation), DRUJ/TFCC injury, radial head fracture, "pulled elbow" in children'],
+  ],
+};
+
+const WORDS = {
+  patient:{ prime:'Main mover', syn:'Helper', ant:'Opposite side', stab:'Steadying', con:'Shortening', ecc:'Lengthening to control', iso:'Holding', rel:'Resting',
+    coact:'Lightly on, steadying', flexor:'Front of arm', extensor:'Back of arm', rotator:'Forearm turners',
+    flex:'Bending', extend:'Straightening', hold:'Holding', rest:'Resting', sup:'Turning palm up', pro:'Turning palm down',
+    palmUp:'palm up', palmDown:'palm down', thumbUp:'thumb up' },
+  learner:{ prime:'Prime mover', syn:'Synergist', ant:'Antagonist', stab:'Stabiliser', con:'Concentric', ecc:'Eccentric', iso:'Isometric', rel:'Relaxed',
+    coact:'Low-level co-activation', flexor:'Elbow flexors', extensor:'Elbow extensors', rotator:'Pronators & supinators',
+    flex:'Flexion', extend:'Extension', hold:'Isometric hold', rest:'At rest', sup:'Supination', pro:'Pronation',
+    palmUp:'supination', palmDown:'pronation', thumbUp:'mid-prone' },
+};
+
+const CAPTIONS = {
+  weight:{
+    rest:['Arm resting by your side. The muscles are switched off.','Arm at rest in extension: almost no gravitational torque about the elbow, so the muscles are quiet.'],
+    flex:['Lifting the weight: the muscles at the front of the arm shorten to pull it up. The triceps stays only lightly on.','Flexion against gravity: the elbow flexors contract concentrically. Triceps shows only low-level co-activation.'],
+    extend:['Lowering the weight: the front muscles are still working. They lengthen slowly to control it, and the triceps stays quiet.','Extension with gravity: the flexors control the descent eccentrically. The triceps is not needed, since gravity does the extending.'],
+    hold:['Holding still: the front muscles work without moving. It is hardest around 90°, where the weight pulls the most.','Isometric flexor contraction. Gravitational torque peaks at 90°, when the forearm is horizontal.'],
+  },
+  band:{
+    rest:['Arm resting.','At rest.'],
+    flex:['Letting the band bend your elbow: the triceps lengthens to control it.','Flexion driven by the external load: the triceps contracts eccentrically.'],
+    extend:['Pushing down against the band: the triceps shortens to straighten the elbow.','Extension against resistance: the triceps, helped by anconeus, contracts concentrically.'],
+    hold:['Holding against the band: the triceps works without moving.','Isometric extensor contraction against the band.'],
+  },
+  overhead:{
+    rest:['Arm straight up overhead. Your elbow is locked out, so the elbow muscles can relax.','Elbow fully extended overhead: the forearm is in line with gravity, so there is almost no torque about the elbow.'],
+    flex:['Lowering the weight behind your head: the triceps lengthens to control it.','Lowering phase: gravity now tries to bend the elbow, so the triceps contracts eccentrically.'],
+    extend:['Pushing the weight back up: the triceps shortens to straighten your elbow.','Extension against gravity: the triceps contracts concentrically, assisted by anconeus.'],
+    hold:['Holding still: the triceps works without moving. It is hardest when your forearm is level with the floor.','Isometric triceps contraction. Gravitational torque peaks with the forearm horizontal.'],
+  },
+  kickback:{
+    rest:['Forearm hanging straight down: the weight pulls through the elbow, so the muscles barely work.','Forearm vertical: the load acts along the forearm, so elbow torque is near zero.'],
+    flex:['Bringing the weight back down: the triceps lengthens to control it.','Return phase: the triceps contracts eccentrically.'],
+    extend:['Pushing the weight back: the triceps shortens to straighten your elbow. It gets harder the straighter your arm gets.','Extension against gravity: concentric triceps. Torque rises toward full extension, where the forearm is horizontal.'],
+    hold:['Holding still: the triceps works without moving. The straighter your arm, the harder it is.','Isometric triceps contraction. Torque is greatest near full extension.'],
+  },
+  takeover:['Past this point the weight pulls your elbow open, so the front muscles take over.','Here the load creates an extension torque, so the elbow flexors take over.'],
+  longHead:['With your arm overhead, the long part of the triceps is stretched across the shoulder.','Shoulder flexion lengthens the long head (it crosses the shoulder), so it works at a long muscle length.'],
+  rot:{
+    rest:['Forearm still. Turn your palm up or down to see which muscles do it.','Forearm at rest. Pronate or supinate to see recruitment.'],
+    sup:['Turning your palm up: the supinator does this.','Supination: the supinator is the prime mover.'],
+    supEasy:['Make it hard, like tightening a screw, and the biceps joins in.','Biceps is recruited for fast or resisted supination.'],
+    supHard:['Because it is hard and your elbow is bent, the biceps joins in strongly.','Resisted with the elbow near 90°: the biceps becomes the main supinator.'],
+    pro:['Turning your palm down: the pronator quadratus near the wrist starts it. The pronator teres joins in when it gets harder.','Pronation: pronator quadratus is the prime mover. Pronator teres is recruited for fast or resisted pronation.'],
+    straight:['With your elbow straight, the biceps can barely help, so this turn is weaker.','With the elbow extended the biceps has poor leverage for supination, so the supinator works largely alone.'],
+    stab:['The triceps tightens to stop the biceps from bending your elbow.','Triceps and anconeus contract isometrically to neutralise the flexion moment of the biceps.'],
+  },
+  pos:{
+    sup:['With your palm up, the biceps is at its strongest.','Supinated: biceps has its best line of pull.'],
+    neu:['With your thumb up, the brachioradialis does more of the work.','Mid-prone: brachioradialis has its best leverage.'],
+    pro:['With your palm down, the biceps cannot help as much, which is why this grip feels weaker. The brachialis carries the load.','Pronated: the biceps tendon wraps around the radius and contributes less. The brachialis carries the load.'],
+  },
+};
+
+/* ------------------------------------------------------------------ state */
+const state = {
+  theta:0, goal:0, vel:0, phi:0, phiGoal:0, phiVel:0, pos:'sup', load:'weight', rload:'light', mode:'patient', move:'elbow',
+  anim:null, loop:false, hold:0, loopDir:1, rotAnim:null, rotLoop:false, rotHold:0, rotDir:1,
+  phase:'rest', demand:0, selected:null, hovered:null,
+  ex:'overhead', tilt:0, sh:0, leftSh:0, workGroup:'flexor', workType:'con', curlPhi:0,
+};
+
+/* ------------------------------------------------------------------ renderer */
+const stage = document.getElementById('stage');
+const renderer = new THREE.WebGLRenderer({ antialias:true, alpha:true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.0;
+stage.appendChild(renderer.domElement);
+const labelRenderer = new CSS2DRenderer();
+labelRenderer.domElement.className = 'labels';
+stage.appendChild(labelRenderer.domElement);
+document.getElementById('loading').remove();
+
+const scene = new THREE.Scene();
+const SIDE = new URLSearchParams(location.search).get('side') === 'left' ? 'left' : 'right';
+document.getElementById('sideTxt').textContent = `(${SIDE})`;
+const mirror = new THREE.Group(); mirror.scale.z = SIDE === 'left' ? -1 : 1; scene.add(mirror);
+const pmrem = new THREE.PMREMGenerator(renderer);
+scene.environment = pmrem.fromScene(new RoomEnvironment(renderer), 0.04).texture;
+scene.add(new THREE.HemisphereLight(0xffffff, 0x9aa8b2, 0.9));
+const key = new THREE.DirectionalLight(0xffffff, 1.5); key.position.set(5, 7, 9 * mirror.scale.z); scene.add(key);
+const rim = new THREE.DirectionalLight(0xdfefff, 0.9); rim.position.set(-6, 3, -6 * mirror.scale.z); scene.add(rim);
+
+const camera = new THREE.PerspectiveCamera(32, 1, 0.1, 100);
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true; controls.dampingFactor = .08;
+controls.minDistance = 4; controls.maxDistance = 24;
+let homeDist = 13;
+
+/* ------------------------------------------------------------------ colors from tokens */
+const C = {};
+function readTokens(){
+  const cs = getComputedStyle(document.documentElement);
+  for (const k of ['con','ecc','iso','rest','bone','skin','accent','fg-3']) C[k] = new THREE.Color(cs.getPropertyValue('--'+k).trim());
+  boneMat.color.copy(C.bone); ghostMat.color.copy(C.bone); skinMat.color.copy(C.skin); silMat.color.copy(C.skin); benchMat.color.copy(C['fg-3']);
+  arcMat.color.copy(C.accent); arcLineMat.color.copy(C['fg-3']); sectorMat.color.copy(C.accent);
+  loadArrow.setColor(C['fg-3']);
+}
+
+/* ------------------------------------------------------------------ materials */
+const boneMat = new THREE.MeshPhysicalMaterial({ roughness:.55, clearcoat:.15, clearcoatRoughness:.6, envMapIntensity:.6, side:THREE.DoubleSide });
+const ghostMat = new THREE.MeshPhysicalMaterial({ roughness:.6, transparent:true, opacity:.28, depthWrite:false, envMapIntensity:.5 });
+const skinMat = new THREE.MeshPhysicalMaterial({ roughness:.55, transparent:true, opacity:.42, depthWrite:false, envMapIntensity:.4, sheen:.5 });
+const metalMat = new THREE.MeshStandardMaterial({ color:0x3b434c, metalness:.6, roughness:.35 });
+const arcMat = new THREE.MeshBasicMaterial({ transparent:true, opacity:.14, side:THREE.DoubleSide, depthWrite:false });
+const sectorMat = arcMat;
+const arcLineMat = new THREE.LineDashedMaterial({ dashSize:.08, gapSize:.06, transparent:true, opacity:.6 });
+
+function muscleMaterial(){
+  const m = new THREE.MeshPhysicalMaterial({ roughness:.42, clearcoat:.35, clearcoatRoughness:.35, sheen:.4, envMapIntensity:.55, transparent:true });
+  m.userData.u = { uTime:{value:0}, uFlow:{value:0}, uActive:{value:0}, uStripe:{value:new THREE.Color()} };
+  m.onBeforeCompile = (sh) => {
+    Object.assign(sh.uniforms, m.userData.u);
+    sh.vertexShader = sh.vertexShader
+      .replace('#include <common>', 'attribute float along;\nvarying float vAlong;\n#include <common>')
+      .replace('#include <begin_vertex>', '#include <begin_vertex>\nvAlong = along;');
+    sh.fragmentShader = sh.fragmentShader
+      .replace('#include <common>', 'uniform float uTime; uniform float uFlow; uniform float uActive; uniform vec3 uStripe;\nvarying float vAlong;\n#include <common>')
+      .replace('#include <emissivemap_fragment>', `#include <emissivemap_fragment>
+        float dC = abs(vAlong - 0.5);
+        float stripe = smoothstep(0.35, 0.95, 0.5 + 0.5 * sin(dC * 46.0 + uTime * uFlow * 5.0));
+        float pulse = 0.5 + 0.5 * sin(uTime * 3.5);
+        float glow = (abs(uFlow) < 0.5) ? (0.18 + 0.22 * pulse) : (0.12 + 0.5 * stripe);
+        totalEmissiveRadiance += uStripe * uActive * glow;`);
+  };
+  return m;
+}
+
+/* ------------------------------------------------------------------ geometry helpers */
+function capsule(a, b, r, mat){
+  const A = new V3(...a), B = new V3(...b);
+  const m = new THREE.Mesh(new THREE.CapsuleGeometry(r, A.distanceTo(B), 8, 18), mat);
+  m.position.copy(A).add(B).multiplyScalar(.5);
+  m.quaternion.setFromUnitVectors(new V3(0,1,0), B.clone().sub(A).normalize());
+  return m;
+}
+function ellip(c, s, mat, seg=32){ const m = new THREE.Mesh(new THREE.SphereGeometry(1, seg, Math.round(seg*.75)), mat); m.position.set(...c); m.scale.set(...s); return m; }
+function lathe(profile, mat, pos=[0,0,0]){ const m = new THREE.Mesh(new THREE.LatheGeometry(profile.map(([r,y]) => new THREE.Vector2(r,y)), 40), mat); m.position.set(...pos); return m; }
+
+// variable-radius tube with an "along" attribute (0 → 1 from origin to insertion)
+function makeTubeGeometry(segs, radial){
+  const g = new THREE.BufferGeometry(), n = (segs+1)*(radial+1);
+  g.setAttribute('position', new THREE.BufferAttribute(new Float32Array(n*3), 3));
+  g.setAttribute('normal', new THREE.BufferAttribute(new Float32Array(n*3), 3));
+  const along = new Float32Array(n), idx = [];
+  for (let i=0;i<=segs;i++) for (let j=0;j<=radial;j++) along[i*(radial+1)+j] = i/segs;
+  for (let i=0;i<segs;i++) for (let j=0;j<radial;j++){
+    const a = i*(radial+1)+j, b = a+radial+1, c = b+1, d = a+1;
+    idx.push(a,d,b, d,c,b);
+  }
+  g.setAttribute('along', new THREE.BufferAttribute(along, 1));
+  g.setIndex(idx);
+  return g;
+}
+const _T = new V3(), _N = new V3(), _B = new V3(), _ref = new V3(0,0,1);
+function updateTube(g, curve, segs, radial, rFn){
+  const pos = g.attributes.position.array, nor = g.attributes.normal.array;
+  const pts = curve.getSpacedPoints(segs);
+  let k = 0;
+  for (let i=0;i<=segs;i++){
+    const u = i/segs; curve.getTangentAt(u, _T);
+    _N.crossVectors(_ref, _T); if (_N.lengthSq() < 1e-6) _N.set(1,0,0); _N.normalize();
+    _B.crossVectors(_T, _N);
+    const r = rFn(u), P = pts[i];
+    for (let j=0;j<=radial;j++){
+      const a = j/radial*Math.PI*2, c = Math.cos(a), s = Math.sin(a);
+      const nx = c*_N.x+s*_B.x, ny = c*_N.y+s*_B.y, nz = c*_N.z+s*_B.z;
+      pos[k*3] = P.x+r*nx; pos[k*3+1] = P.y+r*ny; pos[k*3+2] = P.z+r*nz;
+      nor[k*3] = nx; nor[k*3+1] = ny; nor[k*3+2] = nz; k++;
+    }
+  }
+  g.attributes.position.needsUpdate = true; g.attributes.normal.needsUpdate = true;
+  g.computeBoundingSphere();
+}
+function profile(u, t, belly){
+  if (u <= t.t0 || u >= t.t1) return t.rt;
+  let s = (u - t.t0) / (t.t1 - t.t0);
+  s = Math.pow(s, Math.log(.5) / Math.log(t.peak));
+  return t.rt + (belly - t.rt) * Math.pow(Math.sin(Math.PI * s), .75);
+}
+
+/* ------------------------------------------------------------------ skeleton
+   Units: 1 = 10 cm. Right arm. Elbow axis at the origin along z.
+   +x anterior, +y up, +z lateral (camera side).                            */
+// body tilts about the hips (kickback); the arm rotates at the shoulder; the scapula stays with the trunk
+const HIP_Y = -2.4, TRUNK_Z = -1.95, SHOULDER = new V3(-.02, 3.08, -.14);
+const body = new THREE.Group(); body.position.set(0, HIP_Y, 0); mirror.add(body);
+const bodyInner = new THREE.Group(); bodyInner.position.set(0, -HIP_Y, 0); body.add(bodyInner);
+const shoulder = new THREE.Group(); shoulder.position.copy(SHOULDER); bodyInner.add(shoulder);
+const arm = new THREE.Group(); arm.position.copy(SHOULDER).negate(); shoulder.add(arm);
+const humerus = new THREE.Group(); arm.add(humerus);
+const forearm = new THREE.Group(); arm.add(forearm);
+const HC = new V3(.03, -.2, .17), UD = new V3(0, -2.55, -.16);
+const PRON_AXIS = HC.clone().sub(UD).normalize();
+const radiusPivot = new THREE.Group(); radiusPivot.position.copy(HC); forearm.add(radiusPivot);
+const radiusInner = new THREE.Group(); radiusInner.position.copy(HC).negate(); radiusPivot.add(radiusInner);
+
+const boneParts = [], forearmParts = [], handParts = [];
+function addBone(group, mesh, list){ group.add(mesh); boneParts.push(mesh); if (list) list.push(mesh); return mesh; }
+
+// humerus
+addBone(humerus, lathe([[.001,.28],[.2,.3],[.15,.48],[.12,.9],[.115,1.6],[.125,2.3],[.16,2.75],[.2,2.95],[.001,3.0]], boneMat));
+addBone(humerus, ellip([-.02,3.08,-.14],[.27,.27,.27], boneMat));
+addBone(humerus, ellip([.1,3.02,.1],[.15,.17,.15], boneMat));
+addBone(humerus, ellip([-.01,.2,-.03],[.16,.2,.42], boneMat));
+const troch = lathe([[.001,-.15],[.16,-.14],[.12,0],[.15,.13],[.001,.14]], boneMat, [0,.02,-.16]); troch.rotation.x = Math.PI/2; addBone(humerus, troch);
+addBone(humerus, ellip([.05,.0,.15],[.14,.14,.13], boneMat));
+addBone(humerus, ellip([-.02,.18,-.46],[.1,.09,.13], boneMat));
+addBone(humerus, ellip([-.02,.16,.36],[.08,.08,.08], boneMat));
+addBone(humerus, capsule([.0,.3,.3],[.0,1.1,.12], .035, boneMat));
+// scapula fragment (ghosted, for context)
+const scap = [ellip([-.02,3.1,-.52],[.18,.27,.07], ghostMat), capsule([.05,3.52,-.62],[.4,3.38,-.45], .06, ghostMat),
+  capsule([-.32,3.62,-.55],[.12,3.66,-.18], .07, ghostMat), ellip([-.32,2.9,-.75],[.4,.65,.05], ghostMat)];
+scap.forEach(m => bodyInner.add(m));
+
+// ulna (forearm frame)
+addBone(forearm, lathe([[.001,-2.64],[.08,-2.6],[.09,-2.46],[.065,-2.0],[.075,-1.2],[.1,-.6],[.14,-.32],[.001,-.2]], boneMat, [0,0,-.16]), forearmParts);
+addBone(forearm, capsule([-.1,-.12,-.16],[-.19,.2,-.16], .11, boneMat), forearmParts);
+addBone(forearm, capsule([.0,-.26,-.16],[.15,-.13,-.14], .06, boneMat), forearmParts);
+addBone(forearm, ellip([0,-2.55,-.16],[.09,.09,.09], boneMat), forearmParts);
+addBone(forearm, capsule([-.05,-2.56,-.21],[-.06,-2.68,-.23], .03, boneMat), forearmParts);
+// radius (radius frame = supinated forearm frame)
+const radHead = new THREE.Mesh(new THREE.CylinderGeometry(.12,.11,.11,32), boneMat); radHead.position.copy(HC); addBone(radiusInner, radHead, forearmParts);
+addBone(radiusInner, ellip([.07,-.42,.12],[.065,.08,.06], boneMat), forearmParts);
+{ const g = makeTubeGeometry(40, 20);
+  const c = new THREE.CatmullRomCurve3([HC.clone(), new V3(.03,-.42,.17), new V3(.05,-1.3,.27), new V3(.02,-2.45,.24)], false, 'centripetal');
+  updateTube(g, c, 40, 20, u => .06 + .045*u*u + .015*Math.sin(Math.PI*u));
+  addBone(radiusInner, new THREE.Mesh(g, boneMat), forearmParts); }
+addBone(radiusInner, ellip([.02,-2.52,.22],[.13,.1,.17], boneMat), forearmParts);
+addBone(radiusInner, capsule([0,-2.55,.34],[0,-2.68,.36], .035, boneMat), forearmParts);
+
+// hand (ghosted skin) + dumbbell, carried by the radius
+const hand = new THREE.Group(); radiusInner.add(hand);
+const palm = new THREE.Mesh(new RoundedBoxGeometry(.22,.8,.72,4,.09), skinMat); palm.position.set(.03,-3.08,.05); hand.add(palm);
+[.3,.1,-.1,-.27].forEach((z,i) => {
+  const L = i===3 ? .8 : 1;
+  hand.add(capsule([.04,-3.5,z],[.1,-3.5-.33*L,z], .07, skinMat));
+  hand.add(capsule([.1,-3.5-.33*L,z],[.24,-3.5-.52*L,z], .062, skinMat));
+});
+hand.add(capsule([.06,-2.82,.36],[.22,-3.1,.47], .08, skinMat));
+hand.add(capsule([.22,-3.1,.47],[.31,-3.33,.38], .07, skinMat));
+hand.children.forEach(m => handParts.push(m));
+const dumbbell = new THREE.Group(); dumbbell.position.set(.17,-3.82,.04); hand.add(dumbbell);
+{ const bar = new THREE.Mesh(new THREE.CylinderGeometry(.055,.055,1.15,20), metalMat); bar.rotation.x = Math.PI/2; dumbbell.add(bar);
+  for (const z of [-.5,.5]){ const p = new THREE.Mesh(new THREE.CylinderGeometry(.27,.27,.14,32), metalMat); p.rotation.x = Math.PI/2; p.position.z = z; dumbbell.add(p); } }
+dumbbell.children.forEach(m => handParts.push(m));
+
+const loadArrow = new THREE.ArrowHelper(new V3(0,-1,0), new V3(), 1, 0x888888, .22, .14);
+scene.add(loadArrow);
+
+/* ------------------------------------------------------------------ upper body silhouette + benches (context only) */
+const silMat = new THREE.MeshPhysicalMaterial({ roughness:.6, transparent:true, opacity:.22, depthWrite:false, envMapIntensity:.4 });
+const benchMat = new THREE.MeshStandardMaterial({ roughness:.8, transparent:true, opacity:0, depthWrite:false });
+const silhouette = new THREE.Group(); bodyInner.add(silhouette);
+{ const torso = lathe([[.001,-2.55],[.95,-2.5],[1.05,-2.1],[.9,-.9],[1.0,.4],[1.12,1.6],[1.15,2.5],[.95,3.05],[.45,3.3],[.001,3.32]], silMat, [0,0,TRUNK_Z]);
+  torso.scale.set(.72, 1, 1.38); silhouette.add(torso);
+  silhouette.add(capsule([.02,3.2,TRUNK_Z],[.08,3.85,TRUNK_Z], .4, silMat));
+  silhouette.add(ellip([.12,4.75,TRUNK_Z],[.88,1.05,.74], silMat));
+  silhouette.add(ellip([-.02,3.12,-.2],[.42,.4,.46], silMat)); }     // shoulder cap
+// the other (left) arm, hanging from its own shoulder
+const leftShoulder = new THREE.Group(); leftShoulder.position.set(-.02, 3.08, 2*TRUNK_Z + .14); silhouette.add(leftShoulder);
+leftShoulder.add(capsule([0,0,0],[0,-3.0,0], .36, silMat));
+leftShoulder.add(capsule([0,-3.08,0],[.05,-5.7,0], .28, silMat));
+leftShoulder.add(ellip([.06,-6.1,0],[.16,.42,.32], silMat));
+function makeBench(len, wid, top, legLen, cx, cz){
+  const g = new THREE.Group();
+  const seat = new THREE.Mesh(new RoundedBoxGeometry(len, .35, wid, 3, .08), benchMat); seat.position.set(cx, top - .175, cz); g.add(seat);
+  for (const dx of [-1, 1]) for (const dz of [-1, 1]){
+    const leg = new THREE.Mesh(new THREE.BoxGeometry(.18, legLen, .18), benchMat);
+    leg.position.set(cx + dx*(len/2 - .35), top - .35 - legLen/2, cz + dz*(wid/2 - .3)); g.add(leg);
+  }
+  mirror.add(g); return g;
+}
+const BENCHES = {
+  seat: makeBench(3.6, 3.4, -2.5, 4.4, 0, TRUNK_Z),    // seated overhead: hips rest on it
+  kneel: makeBench(7, 2.6, -7.15, 4.2, 2.6, -3.4),                  // kickback: left hand and knee on it
+};
+
+/* ------------------------------------------------------------------ range-of-motion arc */
+const ARC_R = 1.7, ARC_Z = -.95;
+const arcGroup = new THREE.Group(); arcGroup.position.z = ARC_Z; arm.add(arcGroup);
+{ const pts = []; for (let a=0;a<=MAXF;a+=2.5) pts.push(new V3(Math.sin(a*DEG)*ARC_R, -Math.cos(a*DEG)*ARC_R, 0));
+  const l = new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), arcLineMat); l.computeLineDistances(); arcGroup.add(l);
+  for (const a of [0,90,MAXF]){
+    const d = new V3(Math.sin(a*DEG), -Math.cos(a*DEG), 0);
+    arcGroup.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([d.clone().multiplyScalar(ARC_R-.08), d.clone().multiplyScalar(ARC_R+.08)]), arcLineMat));
+    const el = document.createElement('div'); el.className = 'ticklabel'; el.textContent = a + '°';
+    const o = new CSS2DObject(el); o.position.copy(d.multiplyScalar(ARC_R + .3)); arcGroup.add(o);
+  } }
+const sector = new THREE.Mesh(new THREE.BufferGeometry(), sectorMat); arcGroup.add(sector);
+const degEl = document.createElement('div'); degEl.className = 'deglabel';
+const degLabel = new CSS2DObject(degEl); arcGroup.add(degLabel);
+let sectorTheta = -1;
+function updateArc(){
+  if (Math.abs(sectorTheta - state.theta) < .2) return;
+  sectorTheta = state.theta;
+  sector.geometry.dispose();
+  sector.geometry = new THREE.CircleGeometry(ARC_R, 48, -Math.PI/2, Math.max(.001, state.theta*DEG));
+  const a = state.theta*DEG;
+  degLabel.position.set(Math.sin(a)*(ARC_R*.62), -Math.cos(a)*(ARC_R*.62), 0);
+  degEl.textContent = Math.round(state.theta) + '°';
+}
+
+/* ------------------------------------------------------------------ muscles */
+const SEGS = 64, RAD = 20;
+const muscleMeshes = [];
+const mF = new THREE.Matrix4(), mR = new THREE.Matrix4(), mS = new THREE.Matrix4(), _tmp = new V3();
+function resolve(p, out){
+  switch (p[0]){
+    case 'H': return out.set(p[1],p[2],p[3]);
+    case 'S': return out.set(p[1],p[2],p[3]).applyMatrix4(mS);    // on the scapula: fixed to the trunk, not the humerus
+    case 'F': return out.set(p[1],p[2],p[3]).applyMatrix4(mF);
+    case 'R': { out.set(p[1],p[2],p[3]).applyMatrix4(mR);
+      if (p[4] < 1){ _tmp.set(p[1],p[2],p[3]).applyMatrix4(mF); out.lerp(_tmp, 1-p[4]); } return out; }
+    case 'W': { const a = state.theta*DEG/2, x = p[1]*p[2], y = p[3];
+      return out.set(x*Math.cos(a) - y*Math.sin(a), x*Math.sin(a) + y*Math.cos(a), p[4]); }
+  }
+}
+for (const m of MUSCLES){
+  m.act = 0; m.contraction = 'rel'; m.role = null;
+  m.tubeObjs = m.tubes.map(t => {
+    const mat = muscleMaterial(), geo = makeTubeGeometry(SEGS, RAD), mesh = new THREE.Mesh(geo, mat);
+    mesh.userData.muscle = m; arm.add(mesh); muscleMeshes.push(mesh);
+    return { t, mat, geo, mesh, pts: t.pts.map(() => new V3()), curve:null, L0:1, len:1, act:0 };
+  });
+  const el = document.createElement('button'); el.className = 'tag'; el.textContent = m.short;
+  el.addEventListener('click', e => { e.stopPropagation(); select(m); });
+  m.labelEl = el; m.label3d = new CSS2DObject(el); arm.add(m.label3d);
+}
+
+const _mRot = new THREE.Matrix4(), _mT = new THREE.Matrix4();
+function updateTransforms(){
+  body.rotation.z = -state.tilt*DEG;
+  shoulder.rotation.z = state.sh*DEG;
+  leftShoulder.rotation.z = state.leftSh*DEG;
+  // scapula points expressed in the arm's frame: undo the shoulder rotation about the joint centre
+  mS.makeTranslation(SHOULDER.x, SHOULDER.y, SHOULDER.z).multiply(_mRot.makeRotationZ(-state.sh*DEG)).multiply(_mT.makeTranslation(-SHOULDER.x, -SHOULDER.y, -SHOULDER.z));
+  forearm.rotation.z = state.theta*DEG;
+  radiusPivot.quaternion.setFromAxisAngle(PRON_AXIS, state.phi*DEG);
+  forearm.updateMatrix(); radiusPivot.updateMatrix(); radiusInner.updateMatrix();
+  mF.copy(forearm.matrix); mR.copy(mF).multiply(radiusPivot.matrix).multiply(radiusInner.matrix);
+}
+function updateMuscleGeometry(){
+  for (const m of MUSCLES){
+    for (const o of m.tubeObjs){
+      o.t.pts.forEach((p,i) => resolve(p, o.pts[i]));
+      o.curve = new THREE.CatmullRomCurve3(o.pts, false, 'centripetal');
+      const L = o.curve.getLength();
+      o.len = L / o.L0;
+      const passive = Math.pow(o.L0 / L, .8);
+      const active = 1 + .16 * o.act * (m.contraction === 'rel' ? 0 : 1);
+      const belly = o.t.r * THREE.MathUtils.clamp(passive, .78, 1.5) * active;
+      updateTube(o.geo, o.curve, SEGS, RAD, u => profile(u, o.t, belly));
+    }
+    m.label3d.position.copy(m.tubeObjs[0].curve.getPointAt(m.label));
+  }
+}
+// rest lengths at full extension, supinated
+updateTransforms();
+for (const m of MUSCLES) for (const o of m.tubeObjs){ o.t.pts.forEach((p,i) => resolve(p, o.pts[i])); o.L0 = new THREE.CatmullRomCurve3(o.pts,false,'centripetal').getLength(); }
+
+/* ------------------------------------------------------------------ physiology model (simplified, for teaching) */
+const PHI = { sup:0, neu:85, pro:165 };   // radius rotation; 0 = full supination, 165 = full pronation
+const OPPOSITE = { con:'ecc', ecc:'con', iso:'iso' };
+const byId = id => MUSCLES.find(m => m.id === id);
+// muscle's leverage for elbow flexion at the current forearm rotation (interpolates the three presets)
+function posFactor(m){
+  const p = state.phi, { sup, neu, pro } = m.pos;
+  return p <= PHI.neu ? THREE.MathUtils.lerp(sup, neu, p / PHI.neu) : THREE.MathUtils.lerp(neu, pro, (p - PHI.neu) / (PHI.pro - PHI.neu));
+}
+// each returns Map muscle → [target activation, contraction type, role]; muscles not in it rest
+// exercise postures: trunk tilt (forward lean), shoulder angle (+ = flexion), other arm, bench, repeat range
+const POSTURES = {
+  curl:     { tilt:0,  sh:0,   left:0,  bench:null,    loop:[4,140], target:new V3(.9,-.3,0),    zoom:1,    dir:new V3(.34,.12,1) },
+  overhead: { tilt:0,  sh:170, left:0,  bench:'seat',  loop:[10,140], target:new V3(-.6,5.9,0),   zoom:1.35,   dir:new V3(0,.1,1) },
+  kickback: { tilt:75, sh:-15, left:75, bench:'kneel', loop:[5,95],  target:new V3(2.2,-2.6,0),  zoom:1.1,  dir:new V3(0,.1,1) },
+};
+const posture = () => state.move === 'rotate' ? 'curl' : state.ex;
+const loadKind = () => posture() === 'curl' ? state.load : 'weight';
+// gravity's torque about the elbow for a weight in the hand, as a fraction of its maximum.
+// > 0 pulls the elbow into flexion (extensors must work), < 0 pulls it into extension (flexors must work).
+const gravityTorque = (theta, sh, tilt) => -Math.sin((theta + sh - tilt) * DEG);
+// triceps heads: medial is active in almost all extension; lateral and long join as load rises
+function headFactor(h, d){ const r = Math.min(1, d/.6); return h === 'medial' ? 1 : h === 'lateral' ? .5 + .5*r : .45 + .5*r; }
+// each returns Map muscle → [target activation, contraction type, role]; muscles not in it rest
+function elbowPlan(){
+  const v = state.vel, moving = Math.abs(v) > 4;
+  let phase = moving ? (v > 0 ? 'flex' : 'extend') : 'hold';
+  let workGroup = 'extensor', demand = .8;
+  if (loadKind() === 'weight'){
+    const tau = gravityTorque(state.theta, state.sh, state.tilt);
+    workGroup = tau < 0 ? 'flexor' : 'extensor';
+    demand = .18 + .82*Math.abs(tau);
+    if (phase === 'hold' && Math.abs(tau) < .12) phase = 'rest';
+  }
+  state.phase = phase; state.workGroup = workGroup;
+  const plan = new Map();
+  if (phase === 'rest') return [plan, 0];
+  // the working group shortens if the motion goes its way, lengthens if not
+  const type = phase === 'hold' ? 'iso' : (phase === 'flex') === (workGroup === 'flexor') ? 'con' : 'ecc';
+  state.workType = type;
+  if (type === 'ecc') demand *= .72;           // eccentric work needs fewer motor units for the same load
+  // antagonists are not silent: low-level co-activation stiffens the joint, a little more with speed
+  const coact = .06 + .06*Math.min(1, Math.abs(v)/150) + .04*demand;
+  for (const m of MUSCLES){
+    if (m.group === workGroup){ const f = posFactor(m); plan.set(m, [demand*f, type, f >= .95 ? 'prime' : 'syn']); }
+    else if (m.group === 'flexor' || m.group === 'extensor') plan.set(m, [coact, OPPOSITE[type], 'ant']);
+    else if (m.flexAssist && workGroup === 'flexor') plan.set(m, [demand*m.flexAssist, type, 'syn']);
+  }
+  return [plan, demand];
+}
+function rotatePlan(){
+  const v = state.phiVel, moving = Math.abs(v) > 6;
+  const phase = moving ? (v > 0 ? 'pro' : 'sup') : 'rest';
+  state.phase = phase;
+  const plan = new Map();
+  if (phase === 'rest') return [plan, 0];
+  const hard = state.rload === 'hard', demand = hard ? .85 : .4;
+  const flexLever = .2 + .8*Math.sin(state.theta*DEG);   // biceps supinates best near 90° elbow flexion
+  const towardNeutral = phase === 'sup' ? state.phi > PHI.neu : state.phi < PHI.neu;
+  const coact = .05;
+  const set = (id, a, type, role) => plan.set(byId(id), [a, type, role]);
+  if (phase === 'sup'){
+    set('supinator', hard ? .9 : .6, 'con', 'prime');
+    const b = (hard ? 1 : .15) * flexLever;
+    set('biceps', b, 'con', b > .6 ? 'prime' : 'syn');
+    if (hard){ set('triceps', .32*flexLever, 'iso', 'stab'); set('anconeus', .3*flexLever, 'iso', 'stab'); }
+    set('pronTeres', coact, 'ecc', 'ant'); set('pronQuad', coact, 'ecc', 'ant');
+  } else {
+    set('pronQuad', hard ? .9 : .65, 'con', 'prime');
+    set('pronTeres', hard ? .85 : .2, 'con', hard ? 'prime' : 'syn');
+    set('supinator', coact, 'ecc', 'ant'); set('biceps', coact*.6, 'ecc', 'ant');
+  }
+  if (towardNeutral) set('brachioradialis', hard ? .45 : .22, 'con', 'syn');
+  return [plan, demand];
+}
+function updatePhysiology(dt){
+  const [plan, demand] = state.move === 'rotate' ? rotatePlan() : elbowPlan();
+  state.demand += (demand - state.demand) * (1 - Math.exp(-dt*8));
+  for (const m of MUSCLES){
+    const [target, type, role] = plan.get(m) || [.02, 'rel', null];
+    m.act += (target - m.act) * (1 - Math.exp(-dt*8));
+    m.contraction = type; m.role = role;
+    for (const o of m.tubeObjs) o.act = m.act * (o.t.headId && m.group === state.workGroup ? headFactor(o.t.headId, state.demand) : 1);
+  }
+}
+
+/* ------------------------------------------------------------------ appearance */
+const _col = new THREE.Color();
+function updateAppearance(time){
+  const sel = state.selected;
+  for (const m of MUSCLES){
+    const sc = m.contraction === 'rel' ? C.rest : C[m.contraction];
+    const faded = sel && sel !== m;
+    for (const o of m.tubeObjs){
+      const mat = o.mat, u = mat.userData.u;
+      mat.color.copy(_col.copy(C.rest).lerp(sc, Math.min(1, o.act*1.25) * .9));
+      u.uTime.value = reduceMotion ? 0 : time;
+      u.uFlow.value = m.contraction === 'con' ? 1 : m.contraction === 'ecc' ? -1 : 0;
+      u.uActive.value = m.contraction === 'rel' ? 0 : Math.min(1, o.act*1.2);
+      u.uStripe.value.copy(sc);
+      mat.opacity = faded ? .16 : 1; mat.depthWrite = !faded;
+      mat.emissive.setScalar(state.hovered === m && !faded ? .07 : 0);
+    }
+    m.labelEl.classList.toggle('dim', !!faded);
+    m.labelEl.classList.toggle('on', sel === m);
+    m.label3d.visible = showLabels || sel === m;     // the selected muscle keeps its label even with labels switched off
+  }
+  const weight = loadKind() === 'weight';
+  dumbbell.visible = weight && showHand && state.move === 'elbow';
+  loadArrow.visible = state.move === 'elbow';
+  for (const [k, g] of Object.entries(BENCHES)){
+    const on = showBody && POSTURES[posture()].bench === k;
+    g.userData.o = (g.userData.o ?? 0) + ((on ? .22 : 0) - (g.userData.o ?? 0)) * .12;
+    g.visible = g.userData.o > .01;
+  }
+  benchMat.opacity = Math.max(...Object.values(BENCHES).map(g => g.userData.o));
+  scene.updateMatrixWorld(true);
+  if (weight){
+    dumbbell.getWorldPosition(_tmp);
+    loadArrow.position.copy(_tmp).add(new V3(0,-.35,0)); loadArrow.setDirection(new V3(0,-1,0)); loadArrow.setLength(.9 + .5*state.demand, .22, .14);
+  } else {
+    const a = state.theta*DEG;
+    _tmp.set(Math.sin(a), -Math.cos(a), 0).multiplyScalar(3.1);
+    loadArrow.position.copy(arm.localToWorld(_tmp.add(new V3(-Math.cos(a), -Math.sin(a), .05).multiplyScalar(.9))));
+    loadArrow.setDirection(new V3(Math.cos(a), Math.sin(a), 0).transformDirection(arm.matrixWorld)); loadArrow.setLength(.75, .22, .14);
+  }
+}
+
+/* ------------------------------------------------------------------ motion: playback + smoothing */
+function stopAnim(){ state.anim = null; state.loop = false; syncButtons(); }
+function playTo(to){ state.anim = { to }; state.hold = 0; }
+function stopRot(){ state.rotAnim = null; state.rotLoop = false; syncButtons(); }
+function rotTo(to){ state.rotAnim = { to }; state.rotHold = 0; }
+function stepMotion(dt){
+  if (state.hold > 0){ state.hold -= dt; }
+  else if (state.anim){
+    const d = state.anim.to - state.goal;
+    const speed = 58 * THREE.MathUtils.clamp(.3 + Math.abs(d)/35, .3, 1) * THREE.MathUtils.clamp(.35 + (state.goal - 0)/40, .35, 1);
+    const s = speed * dt;
+    if (Math.abs(d) <= s){
+      state.goal = state.anim.to;
+      if (state.loop){ const [lo, hi] = POSTURES[posture()].loop; state.loopDir *= -1; state.anim = { to: state.loopDir > 0 ? hi : lo }; state.hold = .9; }
+      else { state.anim = null; syncButtons(); }
+    } else state.goal += Math.sign(d) * s;
+  }
+  const prev = state.theta;
+  state.theta += (state.goal - state.theta) * (1 - Math.exp(-dt*14));
+  const raw = (state.theta - prev) / Math.max(dt, 1e-3);
+  state.vel += (raw - state.vel) * (1 - Math.exp(-dt*12));
+  if (state.rotHold > 0){ state.rotHold -= dt; }
+  else if (state.rotAnim){
+    const d = state.rotAnim.to - state.phiGoal;
+    const s = 75 * THREE.MathUtils.clamp(.3 + Math.abs(d)/40, .3, 1) * dt;
+    if (Math.abs(d) <= s){
+      state.phiGoal = state.rotAnim.to;
+      if (state.rotLoop){ state.rotDir *= -1; state.rotAnim = { to: state.rotDir > 0 ? PHI.pro - 5 : PHI.sup + 5 }; state.rotHold = .8; }
+      else { state.rotAnim = null; syncButtons(); }
+    } else state.phiGoal += Math.sign(d) * s;
+  }
+  const P = POSTURES[posture()], kp = 1 - Math.exp(-dt*3.2);
+  state.tilt += (P.tilt - state.tilt)*kp; state.sh += (P.sh - state.sh)*kp; state.leftSh += (P.left - state.leftSh)*kp;
+  const prevPhi = state.phi;
+  state.phi += (state.phiGoal - state.phi) * (1 - Math.exp(-dt*10));
+  const rawPhi = (state.phi - prevPhi) / Math.max(dt, 1e-3);
+  state.phiVel += (rawPhi - state.phiVel) * (1 - Math.exp(-dt*12));
+}
+
+/* ------------------------------------------------------------------ picking + dragging the forearm */
+const ray = new THREE.Raycaster(), ndc = new THREE.Vector2(), dragPlane = new THREE.Plane(new V3(0,0,1), 0);
+let dragging = false, down = null;
+function setRay(e){
+  const r = renderer.domElement.getBoundingClientRect();
+  ndc.set(((e.clientX - r.left)/r.width)*2 - 1, -((e.clientY - r.top)/r.height)*2 + 1);
+  ray.setFromCamera(ndc, camera);
+}
+function pick(){
+  const objs = [...muscleMeshes.filter(m => !state.selected || m.userData.muscle === state.selected), ...(showBones ? boneParts : []), ...(showHand ? handParts.filter(m => m.parent.visible) : [])];
+  return ray.intersectObjects(objs, false)[0] || null;
+}
+function onForearm(hit){
+  if (!hit) return false;
+  if (forearmParts.includes(hit.object) || handParts.includes(hit.object)) return true;
+  const a = state.theta*DEG, p = arm.worldToLocal(hit.point.clone());
+  const along = p.x*Math.sin(a) - p.y*Math.cos(a);
+  return along > .7;
+}
+function angleFromRay(){
+  const p = new V3(); if (!ray.ray.intersectPlane(dragPlane, p)) return null;
+  arm.worldToLocal(p);
+  const a = Math.atan2(p.x, -p.y) / DEG;
+  return a < -90 ? MAXF : THREE.MathUtils.clamp(a, 0, MAXF);
+}
+stage.addEventListener('pointerdown', e => {
+  if (e.target !== renderer.domElement) return;
+  setRay(e); const hit = pick();
+  down = { x:e.clientX, y:e.clientY, hit };
+  if (onForearm(hit)){ dragging = true; controls.enabled = false; stopAnim(); renderer.domElement.setPointerCapture(e.pointerId); renderer.domElement.style.cursor = 'grabbing'; }
+}, true);
+renderer.domElement.addEventListener('pointermove', e => {
+  setRay(e);
+  if (dragging){ const a = angleFromRay(); if (a !== null) state.goal = a; return; }
+  if (e.buttons) return;
+  const hit = pick(), m = hit?.object.userData.muscle || null;
+  state.hovered = m;
+  renderer.domElement.style.cursor = onForearm(hit) ? 'grab' : m ? 'pointer' : '';
+});
+renderer.domElement.addEventListener('pointerup', e => {
+  const moved = down ? Math.hypot(e.clientX - down.x, e.clientY - down.y) : 99;
+  if (moved < 5 && down){ const m = down.hit?.object.userData.muscle; if (m) select(m); else if (!down.hit) select(null); }
+  if (dragging){ dragging = false; controls.enabled = true; renderer.domElement.style.cursor = ''; }
+  down = null;
+});
+
+/* ------------------------------------------------------------------ camera tween (fly-to) */
+let tween = null;
+function flyTo(target, dist, dur=.9){
+  tween = { t:0, dur, t0:controls.target.clone(), t1:target.clone(), dir:camera.position.clone().sub(controls.target).normalize(), d0:camera.position.distanceTo(controls.target), d1:dist };
+}
+function zoom(f){
+  const d = THREE.MathUtils.clamp((tween ? tween.d1 : camera.position.distanceTo(controls.target)) * f, controls.minDistance, controls.maxDistance);
+  flyTo(tween ? tween.t1 : controls.target, d, .35);
+}
+// forearm close-up for pronation/supination: from above and in front, so the radius can be seen crossing the ulna
+const FOREARM_TARGET = new V3(1.6, -.1, 0), FOREARM_DIR = new V3(.15, .8, .6).normalize();
+// left side: look at the mirrored arm from its own outer side
+if (SIDE === 'left') for (const v of [FOREARM_TARGET, FOREARM_DIR, ...Object.values(POSTURES).flatMap(P => [P.target, P.dir])]) v.z *= -1;
+function flyForearm(){ tween = { t:0, t0:controls.target.clone(), t1:FOREARM_TARGET.clone(), dir:camera.position.clone().sub(controls.target).normalize(), dir1:FOREARM_DIR.clone(), d0:camera.position.distanceTo(controls.target), d1:Math.min(homeDist*.5, 9) }; }
+const homeTarget = () => POSTURES[posture()].target;
+const homeDistance = () => homeDist * POSTURES[posture()].zoom;
+const homeDir = () => POSTURES[posture()].dir.clone().normalize();
+function flyHome(){ tween = { t:0, t0:controls.target.clone(), t1:homeTarget().clone(), dir:camera.position.clone().sub(controls.target).normalize(), dir1:homeDir(), d0:camera.position.distanceTo(controls.target), d1:homeDistance() }; }
+function stepTween(dt){
+  if (!tween) return;
+  tween.t = Math.min(1, tween.t + dt/(tween.dur || .9));
+  const e = tween.t < .5 ? 4*tween.t**3 : 1 - Math.pow(-2*tween.t + 2, 3)/2;
+  controls.target.lerpVectors(tween.t0, tween.t1, e);
+  const dir = tween.dir1 ? tween.dir.clone().lerp(tween.dir1, e).normalize() : tween.dir;
+  camera.position.copy(controls.target).addScaledVector(dir, THREE.MathUtils.lerp(tween.d0, tween.d1, e));
+  if (tween.t >= 1) tween = null;
+}
+
+/* ------------------------------------------------------------------ UI */
+const $ = id => document.getElementById(id);
+const words = () => WORDS[state.mode];
+let showBones = true, showHand = true, showBody = true, showLabels = true;
+
+function select(m){
+  state.selected = m;
+  if (m){
+    const p = arm.localToWorld(m.tubeObjs[0].curve.getPointAt(m.label));
+    flyTo(p.lerp(homeTarget(), .45), Math.min(camera.position.distanceTo(controls.target), 9.5));
+    showTab('detail');
+  } else if (activeTab === 'detail') showTab('muscles');
+  renderDetail();
+}
+
+let activeTab = 'muscles';
+function showTab(t){
+  activeTab = t;
+  $('paneMuscles').hidden = t !== 'muscles'; $('paneDetail').hidden = t !== 'detail'; $('paneJoint').hidden = t !== 'joint';
+  $('tabMuscles').setAttribute('aria-selected', t !== 'joint'); $('tabJoint').setAttribute('aria-selected', t === 'joint');
+}
+$('tabMuscles').onclick = () => { showTab(state.selected ? 'detail' : 'muscles'); };
+$('tabJoint').onclick = () => showTab('joint');
+
+function stateColorVar(m){ return m.contraction === 'rel' || (m.role === 'ant' && m.act <= .04) ? 'var(--rest)' : `var(--${m.contraction})`; }
+function statusText(m){
+  const w = words();
+  if (!m.role) return w.rel;
+  if (m.role === 'ant') return m.act > .04 ? w.coact : w.rel;
+  return w[m.contraction];
+}
+
+function renderMuscleList(){
+  const w = words(), pane = $('paneMuscles');
+  const grp = g => `
+    <div class="group-h"><h3>${w[g]}</h3></div>
+    <div class="mlist">${MUSCLES.filter(m => m.group === g).map(m => `
+      <button class="mrow" data-id="${m.id}">
+        <i class="dot"></i><span class="nm">${m.name}</span><span class="role"></span>
+        <span class="st"></span><span class="bar"><span></span></span>
+        ${state.mode === 'learner' && m.tubes.some(t => t.headId) ? `<span class="heads" style="grid-column:1 / 4">${m.tubes.map((t,i) => `
+          <span class="hrow" data-h="${i}"><span>${t.head}</span><span class="hl"></span><span class="bar"><span></span></span></span>`).join('')}</span>` : ''}
+      </button>`).join('')}</div>`;
+  pane.innerHTML = `
+    <div>
+      <h3 style="margin-bottom:4px">Working right now</h3>
+      <p class="note">${state.mode === 'patient' ? 'Tap a muscle to learn about it.' : 'Select a muscle for attachments, innervation and clinical notes.'}</p>
+    </div>
+    ${grp('flexor')}${grp('extensor')}${grp('rotator')}
+    <div class="legend" aria-label="Colour key">
+      <span><i style="background:var(--con)"></i>${w.con}</span>
+      <span><i style="background:var(--ecc)"></i>${w.ecc}</span>
+      <span><i style="background:var(--iso)"></i>${w.iso}</span>
+      <span><i style="background:var(--rest)"></i>${w.rel}</span>
+    </div>
+    <p class="note">${state.mode === 'patient' ? 'Moving stripes show the direction: inward when a muscle shortens, outward when it lengthens.' : 'Stripe flow: inward for concentric, outward for eccentric, pulsing for isometric. Activation levels are illustrative, not EMG data.'}</p>`;
+  pane.querySelectorAll('.mrow').forEach(b => b.onclick = () => select(MUSCLES.find(m => m.id === b.dataset.id)));
+}
+function updateMuscleList(){
+  const w = words();
+  for (const m of MUSCLES){
+    const row = document.querySelector(`.mrow[data-id="${m.id}"]`); if (!row) continue;
+    row.querySelector('.dot').style.background = stateColorVar(m);
+    row.querySelector('.role').textContent = m.role ? w[m.role] : '';
+    row.querySelector('.st').textContent = statusText(m);
+    const bar = row.querySelector('.bar span');
+    bar.style.width = Math.round(Math.min(1, m.act) * 100) + '%';
+    bar.style.background = stateColorVar(m);
+    row.querySelectorAll('.hrow').forEach(h => {
+      const o = m.tubeObjs[+h.dataset.h];
+      h.querySelector('.hl').textContent = `length ${Math.round(o.len * 100)}%`;
+      const b = h.querySelector('.bar span'); b.style.width = Math.round(Math.min(1, o.act) * 100) + '%'; b.style.background = stateColorVar(m);
+    });
+  }
+}
+
+function renderDetail(){
+  const m = state.selected, pane = $('paneDetail');
+  if (!m){ pane.innerHTML = ''; return; }
+  const L = state.mode === 'learner';
+  const list = a => `<ul>${a.map(x => `<li>${x}</li>`).join('')}</ul>`;
+  const heads = m.tubes.length > 1 && m.tubes[0].head ? '' : '';
+  pane.innerHTML = `
+    <button class="linkbtn back" id="backBtn">← All muscles</button>
+    <div class="detail" style="display:grid;gap:8px">
+      <h2>${m.name}</h2>
+      <p class="lede">${m.plain}</p>
+    </div>
+    <div class="statusbox" id="detailStatus"><i></i><span></span></div>
+    <dl class="kv">
+      ${L ? `
+      <div><dt>Origin</dt><dd>${list(m.origin)}</dd></div>
+      <div><dt>Insertion</dt><dd>${list(m.insertion)}</dd></div>
+      <div><dt>Innervation</dt><dd>${m.nerve} <span class="roots">${m.roots}</span></dd></div>
+      <div><dt>Blood supply</dt><dd>${m.blood}</dd></div>
+      <div><dt>Actions</dt><dd>${list(m.actions)}</dd></div>
+      <div><dt>Forearm position</dt><dd>${m.position}</dd></div>
+      <div><dt>Palpation</dt><dd>${m.palpation}</dd></div>
+      <div><dt>Clinical notes</dt><dd>${list(m.clinical)}</dd></div>` : `
+      <div><dt>Where it is</dt><dd>${m.where}</dd></div>
+      <div><dt>You use it for</dt><dd>${m.everyday}</dd></div>
+      <div><dt>Feel it yourself</dt><dd>${m.feel}</dd></div>
+      <div><dt>Palm direction</dt><dd>${m.palmNote || 'Palm direction makes little difference.'}</dd></div>`}
+    </dl>
+    <p class="note">Draft content for physiotherapist review.</p>`;
+  $('backBtn').onclick = () => select(null);
+  updateDetailStatus();
+}
+function updateDetailStatus(){
+  const m = state.selected, box = $('detailStatus'); if (!m || !box) return;
+  const w = words();
+  box.querySelector('i').style.background = stateColorVar(m);
+  box.querySelector('span').textContent = `Right now: ${m.role ? w[m.role].toLowerCase() + ', ' : ''}${statusText(m).toLowerCase()}`;
+}
+
+function renderJoint(){
+  const L = state.mode === 'learner';
+  $('paneJoint').innerHTML = `
+    <div class="detail" style="display:grid;gap:6px">
+      <h2>The elbow</h2>
+      <p class="lede">${L ? 'Hinge joint between the humerus, ulna and radius.' : 'Where your upper arm bone meets the two bones of your forearm.'}</p>
+    </div>
+    <dl class="kv">${JOINT[L ? 'learner' : 'patient'].map(([k,v]) => `<div><dt>${k}</dt><dd>${v}</dd></div>`).join('')}</dl>
+    <div class="detail" style="display:grid;gap:6px;border-top:1px solid var(--line);padding-top:14px">
+      <h2>${L ? 'Radioulnar joints' : 'Turning the forearm'}</h2>
+      <p class="lede">${L ? 'Pronation and supination of the forearm.' : 'How your palm turns up and down.'}</p>
+    </div>
+    <dl class="kv">${FOREARM[L ? 'learner' : 'patient'].map(([k,v]) => `<div><dt>${k}</dt><dd>${v}</dd></div>`).join('')}</dl>
+    <div style="border-top:1px solid var(--line);padding-top:12px">
+      <h3>Coming next</h3>
+      <ul class="note" style="padding-left:18px;margin:0;display:grid;gap:3px">
+        <li>Wrist and finger muscles</li><li>Ligament and nerve layers</li><li>Quiz mode</li></ul>
+    </div>
+    <p class="note">Draft content for physiotherapist review.</p>`;
+}
+
+/* ------------------------------------------------------------------ effort chart (learner): gravity torque vs elbow angle */
+const CH = { w:258, h:132, l:8, r:8, t:16, b:22 };
+const cx = th => CH.l + th / MAXF * (CH.w - CH.l - CH.r);
+const cy = v => CH.t + (1 - v) / 2 * (CH.h - CH.t - CH.b);       // +1 top (triceps), -1 bottom (flexors)
+const EX_LABEL = { curl:['Curl','Curl'], overhead:['Overhead','Overhead'], kickback:['Kickback','Kickback'] };
+const chartCurve = ex => {
+  if (ex === 'curl' && state.load === 'band') return () => .8;   // band: roughly constant, simplified
+  const P = POSTURES[ex]; return th => gravityTorque(th, P.sh, P.tilt);
+};
+function drawChart(){
+  const svg = $('echartSvg'); if (!svg || $('echart').hidden) return;
+  const series = Object.keys(POSTURES).map(ex => {
+    const f = chartCurve(ex); let d = '';
+    for (let th = 0; th <= MAXF; th += 2.5) d += (th ? 'L' : 'M') + cx(th).toFixed(1) + ' ' + cy(f(th)).toFixed(1);
+    return { ex, d, on: ex === state.ex };
+  }).sort((a, b) => a.on - b.on);     // current exercise drawn last, on top
+  // labels sit where each curve is clear of the others
+  const LBL = { curl:[90, -1], overhead:[112, 1], kickback:[22, -1] };   // [angle, +1 below / -1 above the curve]
+  svg.innerHTML = `
+    <line class="grid" x1="${cx(90)}" x2="${cx(90)}" y1="${CH.t}" y2="${CH.h - CH.b}"/>
+    <line class="zero" x1="${CH.l}" x2="${CH.w - CH.r}" y1="${cy(0)}" y2="${cy(0)}"/>
+    ${[0, 90, 145].map(a => `<text class="tick" x="${cx(a)}" y="${CH.h - 6}" text-anchor="${a ? a === 145 ? 'end' : 'middle' : 'start'}">${a}°</text>`).join('')}
+    ${series.map(sr => `<path class="ser${sr.on ? ' on' : ''}" d="${sr.d}"/>`).join('')}
+    ${series.map(sr => { const [a, side] = LBL[sr.ex], v = chartCurve(sr.ex)(a);
+      return `<text class="lbl${sr.on ? ' on' : ''}" x="${cx(a)}" y="${cy(v) + side*10 + (side > 0 ? 4 : 0)}" text-anchor="middle">${EX_LABEL[sr.ex][0]}${sr.ex === 'curl' && state.load === 'band' ? ' (band)' : ''}</text>`; }).join('')}
+    <line class="guide" id="chGuide" y1="${CH.t}" y2="${CH.h - CH.b}" visibility="hidden"/>
+    <circle class="dot" id="chDot" r="4.5"/>`;
+  updateChartDot();
+}
+function updateChartDot(){
+  const dot = $('chDot'); if (!dot || $('echart').hidden) return;
+  const f = chartCurve(state.ex);
+  dot.setAttribute('cx', cx(state.theta)); dot.setAttribute('cy', cy(f(state.theta)));
+  if (!chartHover) $('echartRead').textContent = chartText(state.theta, 'Now');
+}
+function chartText(th, prefix){
+  const v = chartCurve(state.ex)(th), pct = Math.round(Math.abs(v) * 100);
+  if (pct < 4) return `${prefix} at ${Math.round(th)}°: almost no load on the elbow`;
+  return `${prefix} at ${Math.round(th)}°: ${pct}% of peak load, ${v > 0 ? 'triceps' : 'elbow flexors'} working`;
+}
+let chartHover = false;
+function chartAngle(e){
+  const r = $('echartSvg').getBoundingClientRect(), x = (e.clientX - r.left) / r.width * CH.w;
+  return THREE.MathUtils.clamp((x - CH.l) / (CH.w - CH.l - CH.r) * MAXF, 0, MAXF);
+}
+$('echartSvg').addEventListener('pointermove', e => {
+  const th = chartAngle(e), g = $('chGuide'); chartHover = true;
+  g.setAttribute('x1', cx(th)); g.setAttribute('x2', cx(th)); g.setAttribute('visibility', 'visible');
+  $('echartRead').textContent = chartText(th, 'Hover');
+  if (e.buttons){ stopAnim(); state.goal = th; }
+});
+$('echartSvg').addEventListener('pointerdown', e => { stopAnim(); state.goal = chartAngle(e); });
+$('echartSvg').addEventListener('pointerleave', () => { chartHover = false; $('chGuide')?.setAttribute('visibility', 'hidden'); });
+
+/* ------------------------------------------------------------------ caption: short live headline + "More" with every phase */
+// names for each direction of movement, per exercise: [simple, clinical]
+const PHASE_NAMES = {
+  curl:     { flex:['Lifting','Flexion'], extend:['Lowering','Extension'] },
+  band:     { flex:['Band pulls up','Flexion'], extend:['Pushing down','Extension'] },
+  overhead: { flex:['Lowering behind head','Flexion'], extend:['Pushing up','Extension'] },
+  kickback: { flex:['Returning','Flexion'], extend:['Pushing back','Extension'] },
+};
+const captionKey = () => state.move === 'rotate' ? 'rot' : posture() === 'curl' ? loadKind() : posture();
+// every phase of the current exercise, in the order the movement goes through them
+function phaseList(){
+  const L = state.mode === 'learner' ? 1 : 0, w = words(), key = captionKey();
+  if (key === 'rot') return ['rest','sup','pro'].map(k => ({ k, t:w[k], type: k === 'rest' ? 'rel' : 'con', text:CAPTIONS.rot[k][L] }));
+  const tri = key !== 'weight';                       // which group carries the load in this exercise
+  const names = PHASE_NAMES[key === 'weight' ? 'curl' : key];
+  const typeFor = ph => ph === 'hold' ? 'iso' : (ph === 'flex') === !tri ? 'con' : 'ecc';
+  const order = key === 'kickback' || key === 'band' ? ['rest','extend','hold','flex'] : ['rest','flex','hold','extend'];
+  const list = order.map(k => ({ k, t: k === 'rest' ? w.rest : k === 'hold' ? w.hold : names[k][L], type: k === 'rest' ? 'rel' : typeFor(k), text:CAPTIONS[key][k][L] }));
+  if (key === 'kickback') list.push({ k:'takeover', t: L ? 'Past vertical' : 'Past straight down', type:'con', text:CAPTIONS.takeover[L] });
+  return list;
+}
+function liveKey(){
+  const takeover = state.move === 'elbow' && posture() !== 'curl' && state.workGroup === 'flexor' && state.phase !== 'rest';
+  return takeover ? 'takeover' : state.phase;
+}
+// the "why" notes only depend on the exercise and settings, never on the moment-to-moment movement
+function whyText(){
+  const L = state.mode === 'learner' ? 1 : 0, R = CAPTIONS.rot;
+  if (state.move === 'rotate') return state.rload === 'light' ? R.supEasy[L] : state.theta < 35 ? R.straight[L] : R.supHard[L] + ' ' + R.stab[L];
+  const ex = posture();
+  if (ex === 'curl' && loadKind() === 'band') return L ? 'The band pulls the forearm up throughout, so the triceps works in both directions: concentric pushing down, eccentric letting it back up.' : 'The band pulls your forearm up, so the triceps works both ways: shortening to push down, lengthening to let it back up.';
+  if (ex === 'curl') return CAPTIONS.pos[state.pos][L] + (L ? ' Torque peaks at 90°.' : ' It is hardest around 90°.');
+  if (ex === 'overhead') return CAPTIONS.longHead[L] + (L ? ' Torque peaks with the forearm horizontal.' : ' It is hardest when your forearm is level with the floor.');
+  return L ? 'Torque is greatest near full extension and near zero with the forearm vertical.' : 'It is hardest with your arm straight back, and easiest with your forearm hanging down.';
+}
+const exTitle = () => state.move === 'rotate' ? (state.mode === 'learner' ? 'Pronation / supination' : 'Turning the palm')
+  : ({ curl:'Biceps curl', overhead:'Overhead triceps extension', kickback:'Triceps kickback' })[posture()];
+let moreKey = '';
+function updateCaption(){
+  const list = phaseList(), now = liveKey();
+  const cur = list.find(p => p.k === now);
+  const short = cur && now !== 'rest' ? `${cur.t} · ${shortWho(cur)}` : words().rest;
+  if ($('headTxt').textContent !== short) $('headTxt').textContent = short;
+  if (!$('moreBox').hidden) renderMore(list, now);
+}
+// "Triceps shortening" style summary for the headline
+function shortWho(p){
+  const w = words(), L = state.mode === 'learner';
+  if (p.k === 'takeover') return L ? 'elbow flexors take over' : 'front muscles take over';
+  if (state.move === 'rotate') return p.k === 'sup' ? (L ? 'supinator, concentric' : 'supinator shortening') : (L ? 'pronators, concentric' : 'pronators shortening');
+  const tri = captionKey() !== 'weight';
+  return `${tri ? 'triceps' : (L ? 'elbow flexors' : 'front muscles')} ${w[p.type].toLowerCase()}`;
+}
+function renderMore(list = phaseList(), now = liveKey()){
+  const key = state.mode + '|' + captionKey() + '|' + list.map(p => p.text).join('|') + '|' + whyText();
+  if (key !== moreKey){
+    moreKey = key;
+    $('moreTitle').textContent = exTitle();
+    $('morePhases').innerHTML = list.map(p => `<li data-k="${p.k}"><b><i style="background:var(--${p.type === 'rel' ? 'rest' : p.type})"></i>${p.t}</b>${p.text}</li>`).join('');
+    $('moreWhy').textContent = whyText();
+  }
+  $('morePhases').querySelectorAll('li').forEach(li => li.classList.toggle('on', li.dataset.k === now));
+}
+function openMore(){ moreKey = ''; $('moreBox').hidden = false; renderMore(); $('moreBtn').setAttribute('aria-expanded', true); }
+function closeMore(){ $('moreBox').hidden = true; $('moreBtn').setAttribute('aria-expanded', false); }
+$('moreBtn').onclick = () => $('moreBox').hidden ? openMore() : closeMore();
+$('moreClose').onclick = closeMore;
+
+// hide labels that collide with a more important one (selected first, then the most active muscle)
+function declutterLabels(){
+  const placed = [];
+  const order = [...MUSCLES].sort((a,b) => (b === state.selected) - (a === state.selected) || b.act - a.act);
+  for (const m of order){
+    const el = m.labelEl;
+    if (!m.label3d.visible || el.style.display === 'none'){ continue; }
+    const r = el.getBoundingClientRect();
+    const hit = placed.some(q => r.left < q.right + 2 && r.right > q.left - 2 && r.top < q.bottom + 2 && r.bottom > q.top - 2);
+    el.classList.toggle('clash', hit);
+    if (!hit) placed.push(r);
+  }
+}
+function updateHUD(){
+  const w = words(), L = state.mode === 'learner' ? 1 : 0;
+  $('angleVal').textContent = Math.round(state.theta);
+  if (document.activeElement !== $('angle')) $('angle').value = Math.round(state.goal);
+  const rotate = state.move === 'rotate';
+  const pill = $(rotate ? 'rotPill' : 'phasePill');
+  $('phasePill').hidden = rotate; $('rotPill').hidden = !rotate;
+  const pc = state.phase === 'rest' ? 'var(--rest)' : rotate ? 'var(--con)' : `var(--${state.workType})`;
+  pill.querySelector('i').style.background = pc;
+  pill.querySelector('span').textContent = w[state.phase];
+  // forearm rotation readout: degrees from thumb-up
+  const r = Math.round(state.phi - PHI.neu);
+  $('rotVal').textContent = Math.abs(r);
+  $('rotLbl').textContent = Math.abs(r) < 3 ? w.thumbUp : r < 0 ? w.palmUp : w.palmDown;
+  if (document.activeElement !== $('rot')) $('rot').value = Math.round(state.phiGoal - PHI.neu);
+  state.pos = state.phi < 42 ? 'sup' : state.phi < 125 ? 'neu' : 'pro';
+  for (const [k,id] of Object.entries(POS_IDS)) $(id).setAttribute('aria-pressed', Math.abs(state.phiGoal - PHI[k]) < 6);
+  syncExPickers();
+  updateCaption();
+  $('effortBar').style.width = Math.round(Math.min(1, state.demand) * 100) + '%';
+  updateMuscleList(); updateDetailStatus(); declutterLabels(); updateChartDot();
+}
+
+function syncButtons(){
+  $('btnLoop').setAttribute('aria-pressed', state.loop);
+  $('btnRotLoop').setAttribute('aria-pressed', state.rotLoop);
+}
+function setPressed(ids, on){ ids.forEach(id => $(id).setAttribute('aria-pressed', id === on)); }
+
+$('angle').addEventListener('input', e => { stopAnim(); state.goal = +e.target.value; });
+$('btnFlex').onclick = () => { state.loop = false; syncButtons(); playTo(MAXF); };
+$('btnExt').onclick = () => { state.loop = false; syncButtons(); playTo(0); };
+$('btnLoop').onclick = () => {
+  if (state.loop) return stopAnim();
+  const [lo, hi] = POSTURES[posture()].loop;
+  state.loop = true; state.loopDir = state.goal > (lo + hi)/2 ? -1 : 1; playTo(state.loopDir > 0 ? hi : lo); syncButtons();
+};
+const POS_IDS = { sup:'posSup', neu:'posNeu', pro:'posPro' };
+for (const [k,id] of Object.entries(POS_IDS)) $(id).onclick = () => { stopRot(); state.phiGoal = PHI[k]; };
+$('rot').addEventListener('input', e => { stopRot(); state.phiGoal = +e.target.value + PHI.neu; });
+$('btnSup').onclick = () => { state.rotLoop = false; syncButtons(); rotTo(PHI.sup); };
+$('btnPro').onclick = () => { state.rotLoop = false; syncButtons(); rotTo(PHI.pro); };
+$('btnRotLoop').onclick = () => {
+  if (state.rotLoop) return stopRot();
+  state.rotLoop = true; state.rotDir = state.phiGoal > PHI.neu ? -1 : 1; rotTo(state.rotDir > 0 ? PHI.pro - 5 : PHI.sup + 5); syncButtons();
+};
+function setMove(mv){
+  state.move = mv;
+  setPressed(['mvElbow','mvRotate'], mv === 'elbow' ? 'mvElbow' : 'mvRotate');
+  const rotate = mv === 'rotate';
+  $('elbowBtns').hidden = rotate; $('rotBtns').hidden = !rotate;
+  syncSections();
+  updateHints();
+  if (!rotate && state.ex !== 'curl') state.phiGoal = PHI.neu;
+  if (rotate){ stopAnim(); playTo(90); select(null); flyForearm(); state.rotLoop = true; state.rotDir = state.phiGoal > PHI.neu ? -1 : 1; rotTo(state.rotDir > 0 ? PHI.pro - 5 : PHI.sup + 5); }
+  else { stopRot(); flyHome(); }
+  syncButtons();
+}
+// which control sections apply: exercise picker only for bend/straighten; palm and load choices only for the curl
+function syncSections(){
+  const rotate = state.move === 'rotate', curl = state.ex === 'curl';
+  $('exSection').hidden = rotate;
+  $('palmSection').hidden = !rotate && !curl;
+  $('subBi').hidden = !curl; $('subTri').hidden = curl;
+  $('posPresets').hidden = !rotate;          // in the curl, the Curl / Hammer / Reverse buttons set the palm
+  $('loadElbow').hidden = rotate || !curl; $('loadRotate').hidden = !rotate;
+  $('echart').hidden = rotate || state.mode !== 'learner';
+  drawChart();
+}
+// exercise buttons carry one of these values: curl-sup | curl-neu | curl-pro | overhead | kickback
+function currentExValue(){
+  if (state.ex !== 'curl') return state.ex;
+  const k = Object.keys(PHI).find(k => Math.abs(state.phiGoal - PHI[k]) < 6);
+  return k ? 'curl-' + k : 'curl-other';
+}
+function pickExercise(v){
+  if (v.startsWith('curl-')){
+    const k = v.slice(5); if (!PHI[k]) return;
+    if (state.ex === 'curl'){ stopRot(); state.phiGoal = PHI[k]; } else setExercise('curl', PHI[k]);
+  } else setExercise(v);
+  syncExPickers();
+}
+function syncExPickers(){
+  const cur = currentExValue();
+  document.querySelectorAll('[data-ex]').forEach(b => b.setAttribute('aria-pressed', b.dataset.ex === cur));
+  setPressed(['grpBi','grpTri'], state.ex === 'curl' ? 'grpBi' : 'grpTri');
+}
+document.querySelectorAll('[data-ex]').forEach(b => b.onclick = () => pickExercise(b.dataset.ex));
+$('grpBi').onclick = () => { if (state.ex !== 'curl') setExercise('curl'); syncExPickers(); };
+$('grpTri').onclick = () => { if (state.ex === 'curl') setExercise(state.lastTri || 'overhead'); syncExPickers(); };
+function setExercise(ex, phi){
+  if (state.ex === 'curl') state.curlPhi = state.phiGoal;
+  if (ex !== 'curl') state.lastTri = ex;
+  state.ex = ex;
+  stopRot();
+  state.phiGoal = ex === 'curl' ? (phi ?? state.curlPhi) : PHI.neu;    // triceps exercises: thumb-up grip
+  select(null); syncSections(); flyHome();
+  state.loop = true; state.loopDir = -1; playTo(POSTURES[ex].loop[0]); syncButtons();
+}
+$('go90').onclick = () => { state.loop = false; syncButtons(); playTo(90); };
+function updateHints(){
+  const L = state.mode === 'learner';
+  $('elbowHint').textContent = state.move === 'rotate'
+    ? (L ? 'Compare resisted supination at 90° and at 0°: the biceps contribution drops with the elbow extended.' : 'Try a hard turn with your elbow bent, then straight. Watch the biceps.')
+    : 'You can also drag the forearm or hand in the 3D view.';
+}
+$('mvElbow').onclick = () => setMove('elbow');
+$('mvRotate').onclick = () => setMove('rotate');
+$('rLight').onclick = () => { state.rload = 'light'; setPressed(['rLight','rHard'], 'rLight'); };
+$('rHard').onclick = () => { state.rload = 'hard'; setPressed(['rLight','rHard'], 'rHard'); };
+$('zoomIn').onclick = () => zoom(.8);
+$('zoomOut').onclick = () => zoom(1.25);
+addEventListener('keydown', e => {
+  if (e.target.closest('input')) return;
+  if (e.key === '+' || e.key === '=') zoom(.8);
+  else if (e.key === '-' || e.key === '_') zoom(1.25);
+});
+$('loadWeight').onclick = () => { state.load = 'weight'; setPressed(['loadWeight','loadBand'], 'loadWeight'); drawChart(); };
+$('loadBand').onclick = () => { state.load = 'band'; setPressed(['loadWeight','loadBand'], 'loadBand'); drawChart(); };
+// view toggles; both preview options (chip row, layers menu) drive the same switches and stay in sync
+const TOGGLES = {
+  labels: on => { showLabels = on; },
+  bones:  on => { showBones = on; boneParts.forEach(b => b.visible = on); scap.forEach(b => b.visible = on); },
+  hand:   on => { showHand = on; handParts.forEach(b => { if (!dumbbell.children.includes(b)) b.visible = on; }); },
+  arc:    on => arcGroup.traverse(o => { if (o === arcGroup || o.isCSS2DObject) o.visible = on; }),   // CSS2D labels ignore a hidden parent
+  body:   on => { showBody = on; silhouette.visible = on; },
+};
+document.querySelectorAll('input[data-t]').forEach(inp => inp.onchange = () => {
+  TOGGLES[inp.dataset.t](inp.checked);
+  document.querySelectorAll(`input[data-t="${inp.dataset.t}"]`).forEach(o => o.checked = inp.checked);
+});
+function setViewMenu(open){ $('viewMenu').hidden = !open; $('viewMenuBtn').setAttribute('aria-expanded', open); }
+$('viewMenuBtn').onclick = e => { e.stopPropagation(); setViewMenu($('viewMenu').hidden); };
+addEventListener('pointerdown', e => { if (!e.target.closest('.viewmenu')) setViewMenu(false); });
+addEventListener('keydown', e => { if (e.key === 'Escape'){ setViewMenu(false); closeMore(); } });
+$('resetView').onclick = () => { select(null); flyHome(); };
+
+function setMode(mode){
+  state.mode = mode;
+  setPressed(['modePatient','modeLearner'], mode === 'patient' ? 'modePatient' : 'modeLearner');
+  const L = mode === 'learner';
+  document.querySelectorAll('small[data-l]').forEach(s => { s.dataset.p ??= s.textContent; s.textContent = L ? s.dataset.l : s.dataset.p; });
+  $('flexTxt').textContent = L ? 'Flex' : 'Bend';
+  $('extTxt').textContent = L ? 'Extend' : 'Straighten';
+  $('scaleL').textContent = L ? '0° extension' : '0° straight';
+  $('scaleR').textContent = L ? '145° flexion' : '145° fully bent';
+  $('rotScaleL').textContent = L ? 'Supination 85°' : 'palm up';
+  $('rotScaleR').textContent = L ? 'Pronation 80°' : 'palm down';
+  $('supTxt').textContent = L ? 'Supinate' : 'Turn up';
+  $('proTxt').textContent = L ? 'Pronate' : 'Turn down';
+  updateHints();
+  renderMuscleList(); renderDetail(); renderJoint(); syncSections();
+}
+$('modePatient').onclick = () => setMode('patient');
+$('modeLearner').onclick = () => setMode('learner');
+
+function applyTheme(t){
+  document.documentElement.dataset.theme = t;
+  try { localStorage.setItem('myotrek-theme', t); } catch {}
+  readTokens();
+}
+$('themeBtn').onclick = () => applyTheme(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark');
+let savedTheme = null; try { savedTheme = localStorage.getItem('myotrek-theme'); } catch {}
+applyTheme(savedTheme || 'light');
+
+/* ------------------------------------------------------------------ resize + loop */
+function resize(){
+  const w = stage.clientWidth, h = stage.clientHeight;
+  renderer.setSize(w, h, false); labelRenderer.setSize(w, h);
+  camera.aspect = w / h; camera.updateProjectionMatrix();
+  const wide = innerWidth > 900;
+  homeDist = (wide ? 17 : 16) * Math.max(1, (wide ? 1.1 : .85) / camera.aspect);
+}
+new ResizeObserver(resize).observe(stage);
+resize();
+state.sh = POSTURES[state.ex].sh; state.tilt = POSTURES[state.ex].tilt; state.leftSh = POSTURES[state.ex].left;
+state.phi = state.phiGoal = PHI.neu;
+camera.position.copy(homeTarget()).addScaledVector(homeDir(), homeDistance());
+controls.target.copy(homeTarget());
+
+setMode('patient');
+syncExPickers();
+if (reduceMotion){ state.goal = state.theta = 90; }
+else { const [lo, hi] = POSTURES[state.ex].loop; state.goal = state.theta = lo; state.loop = true; state.loopDir = 1; playTo(hi); syncButtons(); }
+
+// handle for automated rendering checks
+window.myotrek = { state, MUSCLES, camera, controls, arm };
+const clock = new THREE.Clock();
+let hudT = 0;
+renderer.setAnimationLoop(() => {
+  const dt = Math.min(clock.getDelta(), .05), t = clock.elapsedTime;
+  stepMotion(dt);
+  updateTransforms();
+  updatePhysiology(dt);
+  updateMuscleGeometry();
+  updateAppearance(t);
+  updateArc();
+  stepTween(dt);
+  controls.update();
+  renderer.render(scene, camera);
+  labelRenderer.render(scene, camera);
+  if ((hudT += dt) > .08){ hudT = 0; updateHUD(); }
+});
+</script>
+
+</body></html>

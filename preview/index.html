@@ -1,0 +1,338 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Myotrek</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+/* Home: the whole skeleton with joint hotspots. Live joints zoom in and open their own page. */
+:root{
+  --bg:#E9EEF1; --bg-2:#F7FAFB; --panel:rgba(255,255,255,.88); --panel-solid:#FFFFFF;
+  --line:rgba(22,44,60,.11); --fg:#16222C; --fg-2:#4C5B68; --fg-3:#7C8994;
+  --accent:#0B6B70; --accent-soft:#D6EBEB; --accent-fg:#FFFFFF;
+  --bone:#ECE5D5; --soon:#9AA6B0; --shadow:0 10px 30px -12px rgba(20,40,60,.25), 0 1px 2px rgba(20,40,60,.06);
+  --font-display:"Bricolage Grotesque", ui-sans-serif, system-ui, sans-serif;
+  --font-body:"Atkinson Hyperlegible", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono:"JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#0E1318; --bg-2:#1A222B; --panel:rgba(22,29,37,.9); --panel-solid:#18202A;
+  --line:rgba(255,255,255,.09); --fg:#E6ECF1; --fg-2:#A7B3BE; --fg-3:#76838F;
+  --accent:#4FC2C3; --accent-soft:rgba(79,194,195,.15); --accent-fg:#06272A;
+  --bone:#D6CEBD; --soon:#5E6A75; --shadow:0 14px 34px -14px rgba(0,0,0,.6); color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#0E1318; --bg-2:#1A222B; --panel:rgba(22,29,37,.9); --panel-solid:#18202A;
+  --line:rgba(255,255,255,.09); --fg:#E6ECF1; --fg-2:#A7B3BE; --fg-3:#76838F;
+  --accent:#4FC2C3; --accent-soft:rgba(79,194,195,.15); --accent-fg:#06272A;
+  --bone:#D6CEBD; --soon:#5E6A75; --shadow:0 14px 34px -14px rgba(0,0,0,.6); color-scheme:dark }
+
+html,body{height:100%; margin:0}
+body{background:var(--bg); color:var(--fg); font:15px/1.5 var(--font-body); overflow:hidden}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+button{font:inherit; color:inherit}
+:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
+
+.app{position:relative; height:100%; background:radial-gradient(ellipse 55% 70% at 50% 48%, var(--bg-2), var(--bg) 75%)}
+#stage{position:absolute; inset:0}
+#stage canvas{display:block; width:100%; height:100%; touch-action:none}
+.labels{position:absolute; inset:0; pointer-events:none; z-index:1}
+.fade{position:absolute; inset:0; background:var(--bg); opacity:0; pointer-events:none; transition:opacity .35s; z-index:20}
+.fade.on{opacity:1}
+
+.top{position:absolute; top:16px; left:16px; right:16px; display:flex; align-items:center; justify-content:space-between; z-index:5; pointer-events:none}
+.top > *{pointer-events:auto}
+.brand{display:flex; align-items:center; gap:10px}
+.brand svg{width:30px; height:30px}
+.brand b{font:700 21px/1 var(--font-display)}
+.crumb{color:var(--fg-3); font-size:13px}
+.iconbtn{width:36px; height:36px; display:grid; place-items:center; border-radius:999px; border:1px solid var(--line); background:var(--panel); cursor:pointer}
+.iconbtn svg{width:18px; height:18px}
+.tag{font:700 11px/1 var(--font-body); letter-spacing:.06em; text-transform:uppercase; color:var(--fg-3); background:var(--accent-soft); padding:4px 8px; border-radius:999px}
+
+.panel{background:var(--panel); border:1px solid var(--line); border-radius:16px; box-shadow:var(--shadow)}
+.list{position:absolute; left:16px; top:72px; width:280px; max-height:calc(100% - 88px); overflow:auto; padding:16px; z-index:4}
+.list h1{font:700 22px/1.15 var(--font-display); margin:0 0 4px}
+.list .sub{margin:0 0 14px; color:var(--fg-2); font-size:13.5px}
+.list h3{margin:14px 0 6px; font:700 11px/1.2 var(--font-body); letter-spacing:.09em; text-transform:uppercase; color:var(--fg-3)}
+.jrow{display:flex; align-items:center; gap:8px; padding:7px 8px; border-radius:10px; cursor:pointer}
+.jrow:hover,.jrow.on{background:var(--accent-soft)}
+.jrow .dot{width:9px; height:9px; border-radius:50%; background:var(--soon); flex:none}
+.jrow.live .dot{background:var(--accent)}
+.jrow .nm{flex:1; font-weight:700; font-size:14px}
+.jrow .soon{font-size:11.5px; color:var(--fg-3)}
+.side{border:1px solid var(--accent); color:var(--accent); background:var(--panel-solid); border-radius:999px; padding:2px 9px; font-size:12px; font-weight:700; cursor:pointer}
+.side:hover{background:var(--accent); color:var(--accent-fg)}
+
+.card{position:absolute; right:16px; top:72px; width:320px; padding:16px 18px; z-index:4; display:grid; gap:10px}
+.card h2{font:700 22px/1.15 var(--font-display); margin:0}
+.card p{margin:0; font-size:14px}
+.card .clin{color:var(--fg-2); font-size:13px}
+.card ul{margin:0; padding-left:18px; font-size:13.5px; color:var(--fg-2)}
+.card .go{display:flex; gap:8px}
+.btn{flex:1; border:0; background:var(--accent); color:var(--accent-fg); font-weight:700; padding:9px 10px; border-radius:10px; cursor:pointer}
+.hint{position:absolute; left:50%; bottom:18px; transform:translateX(-50%); font-size:13px; color:var(--fg-3); z-index:3; pointer-events:none}
+
+/* joint hotspots on the 3D skeleton */
+.hs{pointer-events:auto; position:relative; width:18px; height:18px; border-radius:50%; border:2px solid var(--panel-solid); background:var(--soon); cursor:pointer; padding:0; box-shadow:0 1px 4px rgba(0,0,0,.25)}
+.hs.live{background:var(--accent)}
+.hs.live::after{content:""; position:absolute; inset:-6px; border-radius:50%; border:2px solid var(--accent); opacity:.6; animation:pulse 2s ease-out infinite}
+.hs span{position:absolute; left:50%; bottom:calc(100% + 6px); transform:translateX(-50%); white-space:nowrap; font:700 12px/1 var(--font-body); background:var(--panel-solid); color:var(--fg); border:1px solid var(--line); padding:4px 8px; border-radius:999px; opacity:0; transition:opacity .15s; pointer-events:none}
+.hs:hover span,.hs.on span,.hs:focus-visible span{opacity:1}
+.hs.on{transform:scale(1.25)}
+@keyframes pulse{from{transform:scale(.6); opacity:.7} to{transform:scale(1.5); opacity:0}}
+@media (prefers-reduced-motion: reduce){ .hs.live::after{animation:none} .fade{transition:none} }
+
+@media (max-width: 900px){
+  body{overflow:auto}
+  .app{height:auto; min-height:100%}
+  #stage{position:relative; height:62vh; min-height:380px}
+  .crumb{display:none}
+  .list,.card{position:static; width:auto; max-height:none; margin:0 16px 12px}
+  .hint{display:none}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <div id="stage"><div class="fade" id="fade"></div></div>
+  <header class="top">
+    <div class="brand">
+      <svg viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="15" fill="var(--accent)"/><path d="M11 6v10a5 5 0 0 0 5 5h9" stroke="var(--accent-fg)" stroke-width="3.2" fill="none" stroke-linecap="round"/><circle cx="11" cy="16" r="2.6" fill="var(--accent-fg)"/></svg>
+      <b>Myotrek</b> <span class="crumb">Whole body</span> <span class="tag">Preview</span>
+    </div>
+    <button class="iconbtn" id="themeBtn" aria-label="Switch light or dark theme" title="Light / dark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v3M12 20v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M1 12h3M20 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/></svg></button>
+  </header>
+  <nav class="list panel" aria-label="Joints">
+    <h1>Pick a joint</h1>
+    <p class="sub">Explore the muscles that move it, the movements and exercises.</p>
+    <div id="jointList"></div>
+  </nav>
+  <aside class="card panel" id="card" hidden aria-live="polite"></aside>
+  <p class="hint">Drag to turn the skeleton · click a dot</p>
+</div>
+
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+}}
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
+
+const V3 = THREE.Vector3;
+const $ = id => document.getElementById(id);
+const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* ------------------------------------------------------------------ joints
+   Positions are for the person's right side; x is mirrored for the left.
+   The person faces the camera (+z), so their right side is at -x.        */
+const JOINTS = [
+  { id:'neck', name:'Neck', region:'Spine', pos:[0,15.6,-.3], both:false,
+    clinical:'Cervical spine: atlanto-occipital, atlanto-axial and facet joints',
+    plan:['Flexion, extension, rotation, side bending','Deep neck flexors, sternocleidomastoid, upper trapezius'] },
+  { id:'shoulder', name:'Shoulder', region:'Upper limb', pos:[1.85,14.4,0], both:true,
+    clinical:'Glenohumeral, acromioclavicular, sternoclavicular and scapulothoracic',
+    plan:['Flexion, abduction, rotation; scapular movement','Rotator cuff, deltoid, pectoralis major, latissimus dorsi'] },
+  { id:'elbow', name:'Elbow', region:'Upper limb', pos:[2.15,11.4,0], both:true, page:'elbow.html',
+    clinical:'Humeroulnar, humeroradial and proximal radioulnar joints',
+    blurb:'Bend and straighten, turn the palm. Biceps curls and triceps exercises, with every muscle shown working.' },
+  { id:'wrist', name:'Wrist & hand', region:'Upper limb', pos:[2.32,9.0,.05], both:true,
+    clinical:'Radiocarpal, midcarpal and the joints of the hand',
+    plan:['Flexion, extension, radial and ulnar deviation, grip','Wrist flexors and extensors, finger flexors'] },
+  { id:'lowback', name:'Lower back', region:'Spine', pos:[0,11.0,-.45], both:false,
+    clinical:'Lumbar spine: intervertebral and facet joints',
+    plan:['Flexion, extension, side bending, rotation','Erector spinae, multifidus, abdominals'] },
+  { id:'hip', name:'Hip', region:'Lower limb', pos:[.9,9.0,0], both:true,
+    clinical:'Acetabulofemoral joint',
+    plan:['Flexion, extension, abduction, rotation','Gluteals, iliopsoas, adductors, hamstrings'] },
+  { id:'knee', name:'Knee', region:'Lower limb', pos:[.75,4.9,.12], both:true, page:'knee.html',
+    clinical:'Tibiofemoral and patellofemoral joints',
+    blurb:'Bend and straighten. Seated knee extension and a hamstring curl. A rough first draft.' },
+  { id:'ankle', name:'Ankle & foot', region:'Lower limb', pos:[.7,.8,0], both:true,
+    clinical:'Talocrural, subtalar and the joints of the foot',
+    plan:['Dorsiflexion, plantarflexion, inversion, eversion','Calf muscles, tibialis anterior, peroneals'] },
+];
+
+/* ------------------------------------------------------------------ renderer */
+const stage = $('stage');
+const renderer = new THREE.WebGLRenderer({ antialias:true, alpha:true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+stage.appendChild(renderer.domElement);
+const labelRenderer = new CSS2DRenderer(); labelRenderer.domElement.className = 'labels'; stage.appendChild(labelRenderer.domElement);
+const scene = new THREE.Scene();
+scene.environment = new THREE.PMREMGenerator(renderer).fromScene(new RoomEnvironment(renderer), .04).texture;
+scene.add(new THREE.HemisphereLight(0xffffff, 0x9aa8b2, .9));
+const key = new THREE.DirectionalLight(0xffffff, 1.4); key.position.set(4, 8, 10); scene.add(key);
+const camera = new THREE.PerspectiveCamera(30, 1, .1, 200);
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true; controls.enablePan = false; controls.minDistance = 12; controls.maxDistance = 60;
+controls.autoRotate = !reduceMotion; controls.autoRotateSpeed = .6;
+controls.addEventListener('start', () => controls.autoRotate = false);
+const HOME_TARGET = new V3(0, 8.9, 0);
+
+/* ------------------------------------------------------------------ stylised skeleton (bones are simple shapes, tagged by joint) */
+const boneMat = new THREE.MeshPhysicalMaterial({ roughness:.55, clearcoat:.15, envMapIntensity:.6 });
+const skel = new THREE.Group(); scene.add(skel);
+const byJoint = {};    // "elbow-right" → meshes to light up on hover
+function add(mesh, tags = []){ mesh.material = boneMat.clone(); skel.add(mesh); tags.forEach(t => (byJoint[t] ??= []).push(mesh)); return mesh; }
+function capsule(a, b, r, tags){
+  const A = new V3(...a), B = new V3(...b);
+  const m = new THREE.Mesh(new THREE.CapsuleGeometry(r, A.distanceTo(B), 6, 14));
+  m.position.copy(A).add(B).multiplyScalar(.5);
+  m.quaternion.setFromUnitVectors(new V3(0,1,0), B.clone().sub(A).normalize());
+  return add(m, tags);
+}
+function ellip(c, s, tags){ const m = new THREE.Mesh(new THREE.SphereGeometry(1, 28, 20)); m.position.set(...c); m.scale.set(...s); return add(m, tags); }
+
+// skull, spine, ribs, pelvis (midline)
+ellip([0,16.9,.05],[.8,1.0,.92], ['neck-mid']);
+ellip([0,16.15,.42],[.52,.34,.5], ['neck-mid']);
+for (let y = 10.25; y < 16.1; y += .37){
+  const t = (y - 10.25) / 5.85, z = -.42 - .16*Math.sin(t*Math.PI*2);     // lumbar lordosis, thoracic kyphosis
+  const v = new THREE.Mesh(new THREE.CylinderGeometry(.2 + .06*(1-t), .2 + .06*(1-t), .24, 16)); v.position.set(0, y, z);
+  add(v, [y > 15 ? 'neck-mid' : y < 12.6 ? 'lowback-mid' : 'spine']);
+}
+for (let i = 0; i < 10; i++){
+  const y = 14.55 - i*.27, rx = .78 + .32*Math.sin(Math.PI*(i+1.5)/11.5), rz = .55 + .2*Math.sin(Math.PI*(i+1)/11);
+  const r = new THREE.Mesh(new THREE.TorusGeometry(1, .045, 6, 40, Math.PI*1.62));
+  r.rotation.set(Math.PI/2, 0, Math.PI/2 + Math.PI*.19); r.scale.set(rx, rz, 1); r.position.set(0, y - .08*i*.2, -.08);
+  add(r, ['ribs']);
+}
+capsule([0,14.35,.66],[0,12.75,.64], .1, ['ribs']);
+for (const s of [-1, 1]){
+  const side = s < 0 ? 'right' : 'left', T = j => [`${j}-${side}`];
+  ellip([.95*s,10.0,-.1],[.72,.62,.32], T('hip'));                          // ilium
+  capsule([.2*s,9.15,.32],[.85*s,9.3,.12], .12, T('hip'));                    // pubis
+  ellip([.2*s,9.85,-.48],[.22,.55,.2], ['lowback-mid']);                      // sacrum half
+  // upper limb
+  capsule([.12*s,14.78,.55],[1.72*s,14.88,.02], .07, T('shoulder'));         // clavicle
+  ellip([1.25*s,13.85,-.72],[.55,.78,.09], T('shoulder'));                    // scapula
+  ellip([1.85*s,14.4,0],[.27,.27,.27], T('shoulder'));
+  capsule([1.86*s,14.2,0],[2.14*s,11.6,0], .13, [...T('shoulder'), ...T('elbow')]);  // humerus
+  ellip([2.15*s,11.42,0],[.24,.16,.19], T('elbow'));
+  capsule([2.1*s,11.25,.07],[2.3*s,9.15,.12], .065, [...T('elbow'), ...T('wrist')]);   // radius
+  capsule([2.22*s,11.3,-.08],[2.38*s,9.15,-.04], .06, [...T('elbow'), ...T('wrist')]); // ulna
+  ellip([2.4*s,8.45,.05],[.17,.55,.34], T('wrist'));                           // hand
+  // lower limb
+  ellip([.9*s,9.0,0],[.24,.24,.24], T('hip'));
+  capsule([.92*s,8.9,0],[.76*s,5.15,0], .17, [...T('hip'), ...T('knee')]);   // femur
+  ellip([.75*s,4.98,0],[.3,.2,.28], T('knee'));
+  ellip([.75*s,4.95,.3],[.13,.16,.08], T('knee'));                             // patella
+  capsule([.73*s,4.72,0],[.7*s,.95,.02], .14, [...T('knee'), ...T('ankle')]); // tibia
+  capsule([.95*s,4.55,-.06],[.92*s,1.0,-.04], .055, [...T('knee'), ...T('ankle')]); // fibula
+  ellip([.73*s,.38,.55],[.34,.24,.95], T('ankle'));                            // foot
+}
+
+/* ------------------------------------------------------------------ hotspots, list and card */
+const hotspots = [];
+const sides = j => j.both ? ['right','left'] : ['mid'];
+const sideWord = s => s === 'mid' ? '' : s === 'right' ? 'Right' : 'Left';
+const posFor = (j, s) => new V3(s === 'mid' ? 0 : s === 'right' ? -j.pos[0] : j.pos[0], j.pos[1], j.pos[2]);
+for (const j of JOINTS) for (const s of sides(j)){
+  const el = document.createElement('button');
+  el.className = 'hs' + (j.page ? ' live' : '');
+  el.setAttribute('aria-label', `${sideWord(s)} ${j.name}${j.page ? '' : ' (coming soon)'}`.trim());
+  el.innerHTML = `<span>${sideWord(s)} ${j.name.toLowerCase()}${j.page ? '' : ' · soon'}</span>`;
+  el.addEventListener('click', e => { e.stopPropagation(); choose(j, s); });
+  el.addEventListener('pointerenter', () => hover(j, s, true));
+  el.addEventListener('pointerleave', () => hover(j, s, false));
+  const o = new CSS2DObject(el); o.position.copy(posFor(j, s)); skel.add(o);
+  hotspots.push({ j, s, el });
+}
+const regions = [...new Set(JOINTS.map(j => j.region))];
+$('jointList').innerHTML = regions.map(r => `<h3>${r}</h3>` + JOINTS.filter(j => j.region === r).map(j => `
+  <div class="jrow${j.page ? ' live' : ''}" data-id="${j.id}">
+    <i class="dot"></i><span class="nm">${j.name}</span>
+    ${j.page ? sides(j).map(s => `<button class="side" data-side="${s}">${s === 'mid' ? 'Open' : s === 'right' ? 'R' : 'L'}</button>`).join('') : '<span class="soon">coming soon</span>'}
+  </div>`).join('')).join('');
+document.querySelectorAll('.jrow').forEach(row => {
+  const j = JOINTS.find(x => x.id === row.dataset.id);
+  row.addEventListener('pointerenter', () => sides(j).forEach(s => hover(j, s, true)));
+  row.addEventListener('pointerleave', () => sides(j).forEach(s => hover(j, s, false)));
+  row.addEventListener('click', e => { const b = e.target.closest('.side'); choose(j, b ? b.dataset.side : sides(j)[0], !b); });
+});
+
+const glow = new THREE.Color();
+function hover(j, s, on){
+  (byJoint[`${j.id}-${s}`] || []).forEach(m => m.material.emissive.copy(on ? glow : new THREE.Color(0)).multiplyScalar(on ? .35 : 0));
+  hotspots.filter(h => h.j === j && h.s === s).forEach(h => h.el.classList.toggle('on', on));
+}
+function showCard(j, s){
+  const c = $('card'); c.hidden = false;
+  c.innerHTML = `<h2>${j.name}</h2>
+    <p class="clin">${j.clinical}</p>
+    ${j.page ? `<p>${j.blurb}</p>
+      <div class="go">${sides(j).map(x => `<button class="btn" data-side="${x}">${x === 'mid' ? 'Open' : `Explore ${x}`}</button>`).join('')}</div>`
+    : `<p><b>Coming soon.</b> It will cover:</p><ul>${j.plan.map(p => `<li>${p}</li>`).join('')}</ul>`}`;
+  c.querySelectorAll('.btn').forEach(b => b.onclick = () => go(j, b.dataset.side));
+  document.querySelectorAll('.jrow').forEach(r => r.classList.toggle('on', r.dataset.id === j.id));
+}
+// live joints: zoom in and open the joint page; others: show what is planned
+function choose(j, s, cardOnly = false){
+  showCard(j, s);
+  if (j.page && !cardOnly) go(j, s);
+}
+let leaving = null;
+function go(j, s){
+  if (leaving) return;
+  const url = `${j.page}${s === 'mid' ? '' : `?side=${s}`}`;
+  if (reduceMotion){ location.href = url; return; }
+  controls.autoRotate = false;
+  leaving = { t:0, t0:controls.target.clone(), t1:posFor(j, s), p0:camera.position.clone(), url };
+  const dir = camera.position.clone().sub(controls.target).normalize();
+  leaving.p1 = leaving.t1.clone().addScaledVector(dir, 4.5);
+}
+function stepLeave(dt){
+  if (!leaving) return;
+  leaving.t = Math.min(1, leaving.t + dt/.85);
+  const e = 1 - Math.pow(1 - leaving.t, 3);
+  controls.target.lerpVectors(leaving.t0, leaving.t1, e);
+  camera.position.lerpVectors(leaving.p0, leaving.p1, e);
+  if (leaving.t > .65) $('fade').classList.add('on');
+  if (leaving.t >= 1 && !leaving.done){ leaving.done = true; location.href = leaving.url; }
+}
+// coming back with the browser's back button: clear the fade
+addEventListener('pageshow', e => { if (e.persisted){ leaving = null; $('fade').classList.remove('on'); resetView(); } });
+
+/* ------------------------------------------------------------------ theme, sizing, loop */
+function readTokens(){
+  const cs = getComputedStyle(document.documentElement);
+  const bone = new THREE.Color(cs.getPropertyValue('--bone').trim());
+  skel.traverse(o => { if (o.isMesh) o.material.color.copy(bone); });
+  glow.set(cs.getPropertyValue('--accent').trim());
+}
+function applyTheme(t){ document.documentElement.dataset.theme = t; try { localStorage.setItem('myotrek-theme', t); } catch {} readTokens(); }
+$('themeBtn').onclick = () => applyTheme(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark');
+let saved = null; try { saved = localStorage.getItem('myotrek-theme'); } catch {}
+applyTheme(saved || 'light');
+
+let homeDist = 40;
+function resize(){
+  const w = stage.clientWidth, h = stage.clientHeight;
+  renderer.setSize(w, h, false); labelRenderer.setSize(w, h);
+  camera.aspect = w / h; camera.updateProjectionMatrix();
+  homeDist = 40 * Math.max(1, .75 / camera.aspect);
+}
+function resetView(){ controls.target.copy(HOME_TARGET); camera.position.set(0, 10.5, homeDist); }
+new ResizeObserver(resize).observe(stage); resize(); resetView();
+
+const clock = new THREE.Clock();
+renderer.setAnimationLoop(() => {
+  const dt = Math.min(clock.getDelta(), .05);
+  stepLeave(dt);
+  if (!leaving) controls.update();
+  renderer.render(scene, camera); labelRenderer.render(scene, camera);
+});
+window.myotrekHome = { JOINTS, camera, controls };
+</script>
+</body>
+</html>
