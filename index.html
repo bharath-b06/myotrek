@@ -1416,7 +1416,7 @@ function updateCaptionOptions(){
 function openMore(){
   $('moreTxt').textContent = state.caption;
   // add only the "why" sentences the caption doesn't already say
-  $('moreWhy').textContent = whyText().split(/(?<=\.)\s+/).filter(x => !state.caption.includes(x)).join(' '); $('moreBox').hidden = false; $('moreBtn').setAttribute('aria-expanded', true); }
+  $('moreWhy').textContent = (whyText().match(/[^.]+\.?/g) || []).map(x => x.trim()).filter(x => x && !state.caption.includes(x)).join(' '); $('moreBox').hidden = false; $('moreBtn').setAttribute('aria-expanded', true); }
 function closeMore(){ $('moreBox').hidden = true; $('moreBtn').setAttribute('aria-expanded', false); }
 $('moreBtn').onclick = () => $('moreBox').hidden ? openMore() : closeMore();
 $('moreClose').onclick = closeMore;
