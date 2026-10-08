@@ -38,7 +38,7 @@ button,input{font:inherit;color:inherit}
 .app{position:relative; height:100%; background:radial-gradient(ellipse 60% 70% at 52% 46%, var(--bg-2), var(--bg) 75%)}
 #stage{position:absolute; inset:0}
 #stage canvas{display:block; width:100%; height:100%; touch-action:none}
-.labels{position:absolute; inset:0; pointer-events:none}
+.labels{position:absolute; inset:0; pointer-events:none; z-index:1}   /* own stacking layer: the 3D library gives each label its own z-index */
 
 /* header */
 .top{position:absolute; top:16px; left:16px; right:16px; display:flex; align-items:center; justify-content:space-between; gap:12px; pointer-events:none; z-index:5}
@@ -118,9 +118,32 @@ input[type=range]{width:100%; accent-color:var(--accent); margin:6px 0 2px}
 .back{align-self:flex-start}
 
 /* caption */
-.caption{position:absolute; left:322px; right:382px; bottom:16px; display:flex; justify-content:center; z-index:3; pointer-events:none}
-.caption .panel{pointer-events:auto; padding:12px 16px; display:flex; gap:16px; align-items:center; max-width:640px}
-.caption p{margin:0; font-size:15px; line-height:1.4; text-wrap:pretty}
+.caption{position:absolute; left:322px; right:382px; bottom:16px; display:flex; flex-direction:column; align-items:center; gap:8px; z-index:6; pointer-events:none}
+.caption .panel{pointer-events:auto; padding:10px 14px; display:flex; gap:14px; align-items:center; width:100%; max-width:640px; position:relative}
+.caption p{margin:0; font-size:14px; line-height:1.4; text-wrap:pretty}
+.why{font-size:12.5px!important; color:var(--fg-2)}
+.capB .headline{flex:1; font-weight:700; font-size:15px!important}
+/* caption: one fixed-size line; "More" lists every phase of the exercise and highlights the live one */
+.capB{height:52px}
+.capB .headline{flex:1; min-width:0; font-weight:700; font-size:15px!important; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+.why{font-size:12.5px!important; color:var(--fg-2)}
+.more-h{display:flex; justify-content:space-between; align-items:center}
+.phases{list-style:none; margin:0; padding:0; display:grid; gap:4px}
+.phases li{padding:6px 10px; border-radius:9px; border:1px solid transparent; font-size:13.5px; line-height:1.4}
+.phases li b{display:flex; align-items:center; gap:6px; font-size:12px; text-transform:uppercase; letter-spacing:.06em; color:var(--fg-3)}
+.phases li b i{width:8px; height:8px; border-radius:50%}
+.phases li.on{border-color:var(--accent); background:var(--accent-soft)}
+.phases li.on b{color:var(--fg)}
+.morebox{max-height:min(60vh, 460px); overflow:auto; position:absolute; left:0; right:0; bottom:calc(100% + 8px); padding:12px 14px; border-radius:14px; background:var(--panel-solid); border:1px solid var(--line); box-shadow:var(--shadow); display:grid; gap:6px}
+/* view toggles */
+.viewtools{position:absolute; left:322px; top:72px; right:440px; display:flex; flex-direction:column; align-items:flex-start; gap:8px; z-index:4; pointer-events:none}
+.viewtools > *{pointer-events:auto}
+.viewmenu{position:relative; display:flex; align-items:center; gap:6px}
+.viewmenu .iconbtn{width:40px; height:40px; box-shadow:var(--shadow)}
+.viewpop{position:absolute; left:0; top:calc(100% + 6px); padding:8px; display:grid; gap:2px; min-width:150px}
+.vrow{display:flex; align-items:center; gap:8px; font-size:13px; padding:5px 6px; border-radius:6px; cursor:pointer}
+.vrow:hover{background:var(--accent-soft)}
+.vrow input{accent-color:var(--accent); margin:0}
 .effort{flex:none; width:96px; display:grid; gap:4px}
 .effort small{font-size:11px; color:var(--fg-3); letter-spacing:.06em; text-transform:uppercase; font-weight:700}
 .effort .bar{height:6px; border-radius:3px; background:var(--line); overflow:hidden}
@@ -134,9 +157,10 @@ input[type=range]{width:100%; accent-color:var(--accent); margin:6px 0 2px}
 .deglabel{font:500 12px/1 var(--font-mono); color:var(--accent); background:var(--panel); padding:3px 6px; border-radius:6px; border:1px solid var(--line)}
 .ticklabel{font:500 10.5px/1 var(--font-mono); color:var(--fg-3)}
 
-.seg.block.sub{margin-top:6px; background:transparent}
-.viewbar{position:absolute; left:322px; top:72px; right:440px; display:flex; flex-wrap:wrap; gap:6px; z-index:4; pointer-events:none}
-.viewbar .chk{pointer-events:auto; background:var(--panel); backdrop-filter:blur(12px); box-shadow:var(--shadow)}
+.seg.block.sub{margin-top:6px; background:transparent; border-style:dashed}
+.seg.block.sub button{font-size:12px; padding:5px 4px}
+.seg.block.sub small{font-size:10px}
+.seg.block.sub button[aria-pressed="true"]{background:var(--accent-soft); color:var(--accent)}
 .slider90{position:relative}
 .slider90 input{position:relative; z-index:1}
 /* centre of the range thumb at 90/145 of the track (thumb ≈ 16px) */
@@ -183,20 +207,25 @@ input[type=range]{width:100%; accent-color:var(--accent); margin:6px 0 2px}
   .caption{position:static; margin:0 16px 12px}
   .caption .panel{width:100%}
   .zoom{right:12px; top:auto; bottom:12px}
-  .viewbar{left:0; right:0; top:60px; padding:0 12px 4px; flex-wrap:nowrap; overflow-x:auto; pointer-events:auto; scrollbar-width:none}
-  .viewbar .chk{flex:none; font-size:12px; padding:4px 9px}
+  .viewtools{left:12px; right:12px; top:60px}
+  .caption{gap:12px}
 }
 @media (prefers-reduced-motion: reduce){ *{transition:none!important} }
 </style>
 
 <div class="app">
   <div id="stage"><div class="loading" id="loading">Loading 3D model…</div>
-    <div class="viewbar" role="group" aria-label="Show in 3D view">
-      <label class="chk"><input type="checkbox" id="tLabels" checked> Labels</label>
-      <label class="chk"><input type="checkbox" id="tBones" checked> Bones</label>
-      <label class="chk"><input type="checkbox" id="tHand" checked> Hand</label>
-      <label class="chk"><input type="checkbox" id="tArc" checked> Angle arc</label>
-      <label class="chk"><input type="checkbox" id="tBody" checked> Body</label>
+    <div class="viewtools">
+      <div class="viewmenu">
+        <button class="iconbtn" id="viewMenuBtn" aria-expanded="false" aria-controls="viewMenu" title="Show / hide"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 3 2 8l10 5 10-5-10-5z"/><path d="m2 13 10 5 10-5"/></svg></button>
+        <div class="panel viewpop" id="viewMenu" hidden>
+          <label class="vrow"><input type="checkbox" data-t="labels" checked> Labels</label>
+          <label class="vrow"><input type="checkbox" data-t="bones" checked> Bones</label>
+          <label class="vrow"><input type="checkbox" data-t="hand" checked> Hand</label>
+          <label class="vrow"><input type="checkbox" data-t="arc" checked> Angle arc</label>
+          <label class="vrow"><input type="checkbox" data-t="body" checked> Body</label>
+        </div>
+      </div>
     </div>
     <div class="zoom" role="group" aria-label="Zoom">
       <button class="iconbtn" id="zoomIn" aria-label="Zoom in" title="Zoom in (+)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
@@ -237,13 +266,13 @@ input[type=range]{width:100%; accent-color:var(--accent); margin:6px 0 2px}
         <button id="grpTri" aria-pressed="true">Triceps<small data-l="Elbow extensors">back of arm</small></button>
       </div>
       <div class="seg block sub" role="group" aria-label="Biceps exercises" id="subBi" hidden>
-        <button id="exCurl">Curl<small data-l="Supinated">palm up</small></button>
-        <button id="exHammer">Hammer<small data-l="Mid-prone">thumb up</small></button>
-        <button id="exReverse">Reverse<small data-l="Pronated">palm down</small></button>
+        <button data-ex="curl-sup">Curl<small data-l="Supinated">palm up</small></button>
+        <button data-ex="curl-neu">Hammer<small data-l="Mid-prone">thumb up</small></button>
+        <button data-ex="curl-pro">Reverse<small data-l="Pronated">palm down</small></button>
       </div>
       <div class="seg block sub" role="group" aria-label="Triceps exercises" id="subTri">
-        <button id="exOver" aria-pressed="true">Overhead<small data-l="Shoulder flexed">arm up</small></button>
-        <button id="exKick" aria-pressed="false">Kickback<small data-l="Shoulder extended">leaning forward</small></button>
+        <button data-ex="overhead">Overhead<small data-l="Shoulder flexed">arm up</small></button>
+        <button data-ex="kickback">Kickback<small data-l="Shoulder extended">leaning forward</small></button>
       </div>
     </section>
     <section>
@@ -309,10 +338,18 @@ input[type=range]{width:100%; accent-color:var(--accent); margin:6px 0 2px}
     <div class="pane" id="paneJoint" hidden></div>
   </aside>
 
-  <div class="caption"><div class="panel">
-    <p id="captionTxt">Arm resting by your side.</p>
-    <div class="effort"><small>Effort</small><div class="bar"><span id="effortBar"></span></div></div>
-  </div></div>
+  <div class="caption">
+    <div class="panel capB">
+      <p class="headline" id="headTxt"></p>
+      <button class="linkbtn" id="moreBtn" aria-expanded="false" aria-controls="moreBox">More</button>
+      <div class="effort"><small>Effort</small><div class="bar"><span id="effortBar"></span></div></div>
+      <div class="morebox" id="moreBox" hidden>
+        <div class="more-h"><b id="moreTitle"></b><button class="linkbtn" id="moreClose">Close</button></div>
+        <ol class="phases" id="morePhases"></ol>
+        <p class="why" id="moreWhy"></p>
+      </div>
+    </div>
+  </div>
 </div>
 
 <script type="importmap">
@@ -1289,6 +1326,74 @@ $('echartSvg').addEventListener('pointermove', e => {
 $('echartSvg').addEventListener('pointerdown', e => { stopAnim(); state.goal = chartAngle(e); });
 $('echartSvg').addEventListener('pointerleave', () => { chartHover = false; $('chGuide')?.setAttribute('visibility', 'hidden'); });
 
+/* ------------------------------------------------------------------ caption: short live headline + "More" with every phase */
+// names for each direction of movement, per exercise: [simple, clinical]
+const PHASE_NAMES = {
+  curl:     { flex:['Lifting','Flexion'], extend:['Lowering','Extension'] },
+  band:     { flex:['Band pulls up','Flexion'], extend:['Pushing down','Extension'] },
+  overhead: { flex:['Lowering behind head','Flexion'], extend:['Pushing up','Extension'] },
+  kickback: { flex:['Returning','Flexion'], extend:['Pushing back','Extension'] },
+};
+const captionKey = () => state.move === 'rotate' ? 'rot' : posture() === 'curl' ? loadKind() : posture();
+// every phase of the current exercise, in the order the movement goes through them
+function phaseList(){
+  const L = state.mode === 'learner' ? 1 : 0, w = words(), key = captionKey();
+  if (key === 'rot') return ['rest','sup','pro'].map(k => ({ k, t:w[k], type: k === 'rest' ? 'rel' : 'con', text:CAPTIONS.rot[k][L] }));
+  const tri = key !== 'weight';                       // which group carries the load in this exercise
+  const names = PHASE_NAMES[key === 'weight' ? 'curl' : key];
+  const typeFor = ph => ph === 'hold' ? 'iso' : (ph === 'flex') === !tri ? 'con' : 'ecc';
+  const order = key === 'kickback' || key === 'band' ? ['rest','extend','hold','flex'] : ['rest','flex','hold','extend'];
+  const list = order.map(k => ({ k, t: k === 'rest' ? w.rest : k === 'hold' ? w.hold : names[k][L], type: k === 'rest' ? 'rel' : typeFor(k), text:CAPTIONS[key][k][L] }));
+  if (key === 'kickback') list.push({ k:'takeover', t: L ? 'Past vertical' : 'Past straight down', type:'con', text:CAPTIONS.takeover[L] });
+  return list;
+}
+function liveKey(){
+  const takeover = state.move === 'elbow' && posture() !== 'curl' && state.workGroup === 'flexor' && state.phase !== 'rest';
+  return takeover ? 'takeover' : state.phase;
+}
+// the "why" notes only depend on the exercise and settings, never on the moment-to-moment movement
+function whyText(){
+  const L = state.mode === 'learner' ? 1 : 0, R = CAPTIONS.rot;
+  if (state.move === 'rotate') return state.rload === 'light' ? R.supEasy[L] : state.theta < 35 ? R.straight[L] : R.supHard[L] + ' ' + R.stab[L];
+  const ex = posture();
+  if (ex === 'curl' && loadKind() === 'band') return L ? 'The band pulls the forearm up throughout, so the triceps works in both directions: concentric pushing down, eccentric letting it back up.' : 'The band pulls your forearm up, so the triceps works both ways: shortening to push down, lengthening to let it back up.';
+  if (ex === 'curl') return CAPTIONS.pos[state.pos][L] + (L ? ' Torque peaks at 90°.' : ' It is hardest around 90°.');
+  if (ex === 'overhead') return CAPTIONS.longHead[L] + (L ? ' Torque peaks with the forearm horizontal.' : ' It is hardest when your forearm is level with the floor.');
+  return L ? 'Torque is greatest near full extension and near zero with the forearm vertical.' : 'It is hardest with your arm straight back, and easiest with your forearm hanging down.';
+}
+const exTitle = () => state.move === 'rotate' ? (state.mode === 'learner' ? 'Pronation / supination' : 'Turning the palm')
+  : ({ curl:'Biceps curl', overhead:'Overhead triceps extension', kickback:'Triceps kickback' })[posture()];
+let moreKey = '';
+function updateCaption(){
+  const list = phaseList(), now = liveKey();
+  const cur = list.find(p => p.k === now);
+  const short = cur && now !== 'rest' ? `${cur.t} · ${shortWho(cur)}` : words().rest;
+  if ($('headTxt').textContent !== short) $('headTxt').textContent = short;
+  if (!$('moreBox').hidden) renderMore(list, now);
+}
+// "Triceps shortening" style summary for the headline
+function shortWho(p){
+  const w = words(), L = state.mode === 'learner';
+  if (p.k === 'takeover') return L ? 'elbow flexors take over' : 'front muscles take over';
+  if (state.move === 'rotate') return p.k === 'sup' ? (L ? 'supinator, concentric' : 'supinator shortening') : (L ? 'pronators, concentric' : 'pronators shortening');
+  const tri = captionKey() !== 'weight';
+  return `${tri ? 'triceps' : (L ? 'elbow flexors' : 'front muscles')} ${w[p.type].toLowerCase()}`;
+}
+function renderMore(list = phaseList(), now = liveKey()){
+  const key = state.mode + '|' + captionKey() + '|' + list.map(p => p.text).join('|') + '|' + whyText();
+  if (key !== moreKey){
+    moreKey = key;
+    $('moreTitle').textContent = exTitle();
+    $('morePhases').innerHTML = list.map(p => `<li data-k="${p.k}"><b><i style="background:var(--${p.type === 'rel' ? 'rest' : p.type})"></i>${p.t}</b>${p.text}</li>`).join('');
+    $('moreWhy').textContent = whyText();
+  }
+  $('morePhases').querySelectorAll('li').forEach(li => li.classList.toggle('on', li.dataset.k === now));
+}
+function openMore(){ moreKey = ''; $('moreBox').hidden = false; renderMore(); $('moreBtn').setAttribute('aria-expanded', true); }
+function closeMore(){ $('moreBox').hidden = true; $('moreBtn').setAttribute('aria-expanded', false); }
+$('moreBtn').onclick = () => $('moreBox').hidden ? openMore() : closeMore();
+$('moreClose').onclick = closeMore;
+
 // hide labels that collide with a more important one (selected first, then the most active muscle)
 function declutterLabels(){
   const placed = [];
@@ -1319,28 +1424,8 @@ function updateHUD(){
   if (document.activeElement !== $('rot')) $('rot').value = Math.round(state.phiGoal - PHI.neu);
   state.pos = state.phi < 42 ? 'sup' : state.phi < 125 ? 'neu' : 'pro';
   for (const [k,id] of Object.entries(POS_IDS)) $(id).setAttribute('aria-pressed', Math.abs(state.phiGoal - PHI[k]) < 6);
-  for (const [k,id] of Object.entries(CURL_IDS)) $(id).setAttribute('aria-pressed', Math.abs(state.phiGoal - PHI[k]) < 6);
-  let cap;
-  if (rotate){
-    cap = CAPTIONS.rot[state.phase][L];
-    if (state.phase === 'sup'){
-      const R = CAPTIONS.rot;
-      if (state.rload === 'light') cap += ' ' + R.supEasy[L];
-      else if (state.theta < 35) cap += ' ' + R.straight[L];
-      else cap += ' ' + R.supHard[L] + ' ' + R.stab[L];
-    }
-  } else {
-    const ex = posture(), lk = loadKind();
-    if (ex === 'curl'){
-      cap = CAPTIONS[lk][state.phase][L];
-      if (lk === 'weight' && state.phase !== 'rest' && state.phase !== 'extend') cap += ' ' + CAPTIONS.pos[state.pos][L];
-    } else if (state.phase !== 'rest' && state.workGroup === 'flexor') cap = CAPTIONS.takeover[L];
-    else {
-      cap = CAPTIONS[ex][state.phase][L];
-      if (ex === 'overhead' && state.phase !== 'rest') cap += ' ' + CAPTIONS.longHead[L];
-    }
-  }
-  if ($('captionTxt').textContent !== cap) $('captionTxt').textContent = cap;
+  syncExPickers();
+  updateCaption();
   $('effortBar').style.width = Math.round(Math.min(1, state.demand) * 100) + '%';
   updateMuscleList(); updateDetailStatus(); declutterLabels(); updateChartDot();
 }
@@ -1384,32 +1469,43 @@ function setMove(mv){
 function syncSections(){
   const rotate = state.move === 'rotate', curl = state.ex === 'curl';
   $('exSection').hidden = rotate;
-  $('subBi').hidden = !curl; $('subTri').hidden = curl;
   $('palmSection').hidden = !rotate && !curl;
+  $('subBi').hidden = !curl; $('subTri').hidden = curl;
   $('posPresets').hidden = !rotate;          // in the curl, the Curl / Hammer / Reverse buttons set the palm
   $('loadElbow').hidden = rotate || !curl; $('loadRotate').hidden = !rotate;
   $('echart').hidden = rotate || state.mode !== 'learner';
   drawChart();
 }
-const CURL_IDS = { sup:'exCurl', neu:'exHammer', pro:'exReverse' };
+// exercise buttons carry one of these values: curl-sup | curl-neu | curl-pro | overhead | kickback
+function currentExValue(){
+  if (state.ex !== 'curl') return state.ex;
+  const k = Object.keys(PHI).find(k => Math.abs(state.phiGoal - PHI[k]) < 6);
+  return k ? 'curl-' + k : 'curl-other';
+}
+function pickExercise(v){
+  if (v.startsWith('curl-')){
+    const k = v.slice(5); if (!PHI[k]) return;
+    if (state.ex === 'curl'){ stopRot(); state.phiGoal = PHI[k]; } else setExercise('curl', PHI[k]);
+  } else setExercise(v);
+  syncExPickers();
+}
+function syncExPickers(){
+  const cur = currentExValue();
+  document.querySelectorAll('[data-ex]').forEach(b => b.setAttribute('aria-pressed', b.dataset.ex === cur));
+  setPressed(['grpBi','grpTri'], state.ex === 'curl' ? 'grpBi' : 'grpTri');
+}
+document.querySelectorAll('[data-ex]').forEach(b => b.onclick = () => pickExercise(b.dataset.ex));
+$('grpBi').onclick = () => { if (state.ex !== 'curl') setExercise('curl'); syncExPickers(); };
+$('grpTri').onclick = () => { if (state.ex === 'curl') setExercise(state.lastTri || 'overhead'); syncExPickers(); };
 function setExercise(ex, phi){
   if (state.ex === 'curl') state.curlPhi = state.phiGoal;
   if (ex !== 'curl') state.lastTri = ex;
   state.ex = ex;
-  setPressed(['grpBi','grpTri'], ex === 'curl' ? 'grpBi' : 'grpTri');
-  setPressed(['exOver','exKick'], ex === 'overhead' ? 'exOver' : ex === 'kickback' ? 'exKick' : null);
   stopRot();
   state.phiGoal = ex === 'curl' ? (phi ?? state.curlPhi) : PHI.neu;    // triceps exercises: thumb-up grip
   select(null); syncSections(); flyHome();
   state.loop = true; state.loopDir = -1; playTo(POSTURES[ex].loop[0]); syncButtons();
 }
-$('grpBi').onclick = () => { if (state.ex !== 'curl') setExercise('curl'); };
-$('grpTri').onclick = () => { if (state.ex === 'curl') setExercise(state.lastTri || 'overhead'); };
-$('exOver').onclick = () => setExercise('overhead');
-$('exKick').onclick = () => setExercise('kickback');
-for (const [k,id] of Object.entries(CURL_IDS)) $(id).onclick = () => {
-  if (state.ex === 'curl'){ stopRot(); state.phiGoal = PHI[k]; } else setExercise('curl', PHI[k]);
-};
 $('go90').onclick = () => { state.loop = false; syncButtons(); playTo(90); };
 function updateHints(){
   const L = state.mode === 'learner';
@@ -1430,11 +1526,22 @@ addEventListener('keydown', e => {
 });
 $('loadWeight').onclick = () => { state.load = 'weight'; setPressed(['loadWeight','loadBand'], 'loadWeight'); drawChart(); };
 $('loadBand').onclick = () => { state.load = 'band'; setPressed(['loadWeight','loadBand'], 'loadBand'); drawChart(); };
-$('tBody').onchange = e => { showBody = e.target.checked; silhouette.visible = showBody; };
-$('tLabels').onchange = e => MUSCLES.forEach(m => m.label3d.visible = e.target.checked);
-$('tBones').onchange = e => { showBones = e.target.checked; boneParts.forEach(b => b.visible = showBones); scap.forEach(b => b.visible = showBones); };
-$('tHand').onchange = e => { showHand = e.target.checked; handParts.forEach(b => { if (!dumbbell.children.includes(b)) b.visible = showHand; }); };
-$('tArc').onchange = e => arcGroup.traverse(o => { if (o === arcGroup || o.isCSS2DObject) o.visible = e.target.checked; });
+// view toggles; both preview options (chip row, layers menu) drive the same switches and stay in sync
+const TOGGLES = {
+  labels: on => MUSCLES.forEach(m => m.label3d.visible = on),
+  bones:  on => { showBones = on; boneParts.forEach(b => b.visible = on); scap.forEach(b => b.visible = on); },
+  hand:   on => { showHand = on; handParts.forEach(b => { if (!dumbbell.children.includes(b)) b.visible = on; }); },
+  arc:    on => arcGroup.traverse(o => { if (o === arcGroup || o.isCSS2DObject) o.visible = on; }),   // CSS2D labels ignore a hidden parent
+  body:   on => { showBody = on; silhouette.visible = on; },
+};
+document.querySelectorAll('input[data-t]').forEach(inp => inp.onchange = () => {
+  TOGGLES[inp.dataset.t](inp.checked);
+  document.querySelectorAll(`input[data-t="${inp.dataset.t}"]`).forEach(o => o.checked = inp.checked);
+});
+function setViewMenu(open){ $('viewMenu').hidden = !open; $('viewMenuBtn').setAttribute('aria-expanded', open); }
+$('viewMenuBtn').onclick = e => { e.stopPropagation(); setViewMenu($('viewMenu').hidden); };
+addEventListener('pointerdown', e => { if (!e.target.closest('.viewmenu')) setViewMenu(false); });
+addEventListener('keydown', e => { if (e.key === 'Escape'){ setViewMenu(false); closeMore(); } });
 $('resetView').onclick = () => { select(null); flyHome(); };
 
 function setMode(mode){
@@ -1481,6 +1588,7 @@ camera.position.copy(homeTarget()).addScaledVector(homeDir(), homeDistance());
 controls.target.copy(homeTarget());
 
 setMode('patient');
+syncExPickers();
 if (reduceMotion){ state.goal = state.theta = 90; }
 else { const [lo, hi] = POSTURES[state.ex].loop; state.goal = state.theta = lo; state.loop = true; state.loopDir = 1; playTo(hi); syncButtons(); }
 
