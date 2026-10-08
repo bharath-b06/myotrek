@@ -118,9 +118,46 @@ input[type=range]{width:100%; accent-color:var(--accent); margin:6px 0 2px}
 .back{align-self:flex-start}
 
 /* caption */
-.caption{position:absolute; left:322px; right:382px; bottom:16px; display:flex; justify-content:center; z-index:3; pointer-events:none}
-.caption .panel{pointer-events:auto; padding:12px 16px; display:flex; gap:16px; align-items:center; max-width:640px}
-.caption p{margin:0; font-size:15px; line-height:1.4; text-wrap:pretty}
+.caption{position:absolute; left:322px; right:382px; bottom:16px; display:flex; flex-direction:column; align-items:center; gap:8px; z-index:3; pointer-events:none}
+.caption .panel{pointer-events:auto; padding:10px 14px; display:flex; gap:14px; align-items:center; width:100%; max-width:640px; position:relative}
+.caption p{margin:0; font-size:14px; line-height:1.4; text-wrap:pretty}
+/* preview-only option badges */
+.opt{flex:none; width:18px; height:18px; display:grid; place-items:center; border-radius:5px; background:var(--fg); color:var(--bg); font:700 11px/1 var(--font-body)}
+.caption .opt{position:absolute; left:-9px; top:-9px}
+/* option A: fixed phase cards; only the highlight moves */
+.capA-main{flex:1; display:grid; gap:6px; min-width:0}
+.pcards{display:grid; grid-template-columns:repeat(var(--n,3), 1fr); gap:6px}
+.pcard{border:1px solid var(--line); border-radius:10px; padding:6px 9px; background:var(--panel-solid); opacity:.55; transition:opacity .25s, border-color .25s, box-shadow .25s}
+.pcard b{display:flex; align-items:center; gap:6px; font-size:13px}
+.pcard b i{width:8px; height:8px; border-radius:50%; flex:none}
+.pcard span{display:block; font-size:12px; color:var(--fg-2); margin-top:1px}
+.pcard.on{opacity:1; border-color:var(--accent); box-shadow:0 0 0 1px var(--accent)}
+.why{font-size:12.5px!important; color:var(--fg-2)}
+/* option B: short live headline, full text on demand (frozen while open) */
+.capB .headline{flex:1; font-weight:700; font-size:15px!important}
+.morebox{position:absolute; left:0; right:0; bottom:calc(100% + 8px); padding:12px 14px; border-radius:14px; background:var(--panel-solid); border:1px solid var(--line); box-shadow:var(--shadow); display:grid; gap:6px}
+/* view toggles */
+.viewtools{position:absolute; left:322px; top:72px; right:440px; display:flex; flex-direction:column; align-items:flex-start; gap:8px; z-index:4; pointer-events:none}
+.viewtools > *{pointer-events:auto}
+.viewtools .opt{margin-right:2px}
+.viewmenu{position:relative; display:flex; align-items:center; gap:6px}
+.viewmenu .iconbtn{width:32px; height:32px}
+.viewpop{position:absolute; left:24px; top:calc(100% + 6px); padding:8px; display:grid; gap:2px; min-width:150px}
+.vrow{display:flex; align-items:center; gap:8px; font-size:13px; padding:5px 6px; border-radius:6px; cursor:pointer}
+.vrow:hover{background:var(--accent-soft)}
+.vrow input{accent-color:var(--accent); margin:0}
+/* exercise picker: tabs for the muscle group, icon chips for the exercise */
+.grouptabs{display:flex; border-bottom:1px solid var(--line); margin-bottom:8px}
+.grouptabs button{flex:1; border:0; background:none; padding:6px 4px 8px; cursor:pointer; color:var(--fg-3); font-weight:700; font-size:14px; border-bottom:2px solid transparent; margin-bottom:-1px}
+.grouptabs button small{display:block; font-size:11px; font-weight:400}
+.grouptabs button[aria-selected="true"]{color:var(--fg); border-color:var(--accent)}
+.exchips{display:flex; gap:6px}
+.exchip{flex:1; display:flex; flex-direction:column; align-items:center; gap:2px; padding:6px 4px 7px; border:1px dashed var(--line); border-radius:10px; background:transparent; cursor:pointer; color:var(--fg-2)}
+.exchip svg{width:30px; height:30px}
+.exchip b{font-size:12.5px; color:var(--fg)}
+.exchip small{font-size:10.5px; color:var(--fg-3); text-align:center; line-height:1.2}
+.exchip:hover{border-color:var(--accent)}
+.exchip[aria-pressed="true"]{border:1.5px solid var(--accent); background:var(--accent-soft); color:var(--accent)}
 .effort{flex:none; width:96px; display:grid; gap:4px}
 .effort small{font-size:11px; color:var(--fg-3); letter-spacing:.06em; text-transform:uppercase; font-weight:700}
 .effort .bar{height:6px; border-radius:3px; background:var(--line); overflow:hidden}
@@ -135,8 +172,10 @@ input[type=range]{width:100%; accent-color:var(--accent); margin:6px 0 2px}
 .ticklabel{font:500 10.5px/1 var(--font-mono); color:var(--fg-3)}
 
 .seg.block.sub{margin-top:6px; background:transparent}
-.viewbar{position:absolute; left:322px; top:72px; right:440px; display:flex; flex-wrap:wrap; gap:6px; z-index:4; pointer-events:none}
-.viewbar .chk{pointer-events:auto; background:var(--panel); backdrop-filter:blur(12px); box-shadow:var(--shadow)}
+.viewbar{display:flex; flex-wrap:wrap; align-items:center; gap:4px; opacity:.72; transition:opacity .2s}
+.viewbar:hover,.viewbar:focus-within{opacity:1}
+.viewbar .chk{font-size:11.5px; padding:3px 8px; gap:5px; background:color-mix(in srgb, var(--panel-solid) 45%, transparent); border-color:var(--line); backdrop-filter:blur(6px)}
+.viewbar .chk input{width:12px; height:12px}
 .slider90{position:relative}
 .slider90 input{position:relative; z-index:1}
 /* centre of the range thumb at 90/145 of the track (thumb ≈ 16px) */
@@ -183,20 +222,36 @@ input[type=range]{width:100%; accent-color:var(--accent); margin:6px 0 2px}
   .caption{position:static; margin:0 16px 12px}
   .caption .panel{width:100%}
   .zoom{right:12px; top:auto; bottom:12px}
-  .viewbar{left:0; right:0; top:60px; padding:0 12px 4px; flex-wrap:nowrap; overflow-x:auto; pointer-events:auto; scrollbar-width:none}
-  .viewbar .chk{flex:none; font-size:12px; padding:4px 9px}
+  .viewtools{left:12px; right:12px; top:60px}
+  .viewbar{flex-wrap:nowrap; overflow-x:auto; max-width:100%; scrollbar-width:none}
+  .viewbar .chk{flex:none}
+  .caption{gap:12px}
 }
 @media (prefers-reduced-motion: reduce){ *{transition:none!important} }
 </style>
 
 <div class="app">
   <div id="stage"><div class="loading" id="loading">Loading 3D model…</div>
-    <div class="viewbar" role="group" aria-label="Show in 3D view">
-      <label class="chk"><input type="checkbox" id="tLabels" checked> Labels</label>
-      <label class="chk"><input type="checkbox" id="tBones" checked> Bones</label>
-      <label class="chk"><input type="checkbox" id="tHand" checked> Hand</label>
-      <label class="chk"><input type="checkbox" id="tArc" checked> Angle arc</label>
-      <label class="chk"><input type="checkbox" id="tBody" checked> Body</label>
+    <div class="viewtools">
+      <div class="viewbar" role="group" aria-label="Show in 3D view">
+        <span class="opt">A</span>
+        <label class="chk"><input type="checkbox" data-t="labels" checked> Labels</label>
+        <label class="chk"><input type="checkbox" data-t="bones" checked> Bones</label>
+        <label class="chk"><input type="checkbox" data-t="hand" checked> Hand</label>
+        <label class="chk"><input type="checkbox" data-t="arc" checked> Angle arc</label>
+        <label class="chk"><input type="checkbox" data-t="body" checked> Body</label>
+      </div>
+      <div class="viewmenu">
+        <span class="opt">B</span>
+        <button class="iconbtn" id="viewMenuBtn" aria-expanded="false" aria-controls="viewMenu" title="Show / hide"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 3 2 8l10 5 10-5-10-5z"/><path d="m2 13 10 5 10-5"/></svg></button>
+        <div class="panel viewpop" id="viewMenu" hidden>
+          <label class="vrow"><input type="checkbox" data-t="labels" checked> Labels</label>
+          <label class="vrow"><input type="checkbox" data-t="bones" checked> Bones</label>
+          <label class="vrow"><input type="checkbox" data-t="hand" checked> Hand</label>
+          <label class="vrow"><input type="checkbox" data-t="arc" checked> Angle arc</label>
+          <label class="vrow"><input type="checkbox" data-t="body" checked> Body</label>
+        </div>
+      </div>
     </div>
     <div class="zoom" role="group" aria-label="Zoom">
       <button class="iconbtn" id="zoomIn" aria-label="Zoom in" title="Zoom in (+)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
@@ -232,18 +287,18 @@ input[type=range]{width:100%; accent-color:var(--accent); margin:6px 0 2px}
     </section>
     <section id="exSection">
       <h3>Exercise</h3>
-      <div class="seg block" role="group" aria-label="Muscle group">
-        <button id="grpBi" aria-pressed="false">Biceps<small data-l="Elbow flexors">front of arm</small></button>
-        <button id="grpTri" aria-pressed="true">Triceps<small data-l="Elbow extensors">back of arm</small></button>
+      <div class="grouptabs" role="tablist" aria-label="Muscle group">
+        <button role="tab" id="grpBi" aria-selected="false">Biceps <small data-l="Elbow flexors">front of arm</small></button>
+        <button role="tab" id="grpTri" aria-selected="true">Triceps <small data-l="Elbow extensors">back of arm</small></button>
       </div>
-      <div class="seg block sub" role="group" aria-label="Biceps exercises" id="subBi" hidden>
-        <button id="exCurl">Curl<small data-l="Supinated">palm up</small></button>
-        <button id="exHammer">Hammer<small data-l="Mid-prone">thumb up</small></button>
-        <button id="exReverse">Reverse<small data-l="Pronated">palm down</small></button>
+      <div class="exchips" role="group" aria-label="Biceps exercises" id="subBi" hidden>
+        <button class="exchip" id="exCurl" aria-pressed="false"><svg viewBox="0 0 32 32" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="2.6"/><path d="M12 8v11M12 19l-3 9M12 19l3 9M12 10l1 6 6-5"/><circle cx="19.6" cy="10.4" r="1.7"/><path d="M17.6 13.2q2 1.4 4 0"/></svg><b>Curl</b><small data-l="Supinated">palm up</small></button>
+        <button class="exchip" id="exHammer" aria-pressed="false"><svg viewBox="0 0 32 32" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="2.6"/><path d="M12 8v11M12 19l-3 9M12 19l3 9M12 10l1 6 6-5"/><path d="M19.4 7.2v6.4M17.9 7.2h3M17.9 13.6h3"/></svg><b>Hammer</b><small data-l="Mid-prone">thumb up</small></button>
+        <button class="exchip" id="exReverse" aria-pressed="false"><svg viewBox="0 0 32 32" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="2.6"/><path d="M12 8v11M12 19l-3 9M12 19l3 9M12 10l1 6 6-5"/><circle cx="19.6" cy="11" r="1.7"/><path d="M17.6 8.2q2-1.4 4 0"/></svg><b>Reverse</b><small data-l="Pronated">palm down</small></button>
       </div>
-      <div class="seg block sub" role="group" aria-label="Triceps exercises" id="subTri">
-        <button id="exOver" aria-pressed="true">Overhead<small data-l="Shoulder flexed">arm up</small></button>
-        <button id="exKick" aria-pressed="false">Kickback<small data-l="Shoulder extended">leaning forward</small></button>
+      <div class="exchips" role="group" aria-label="Triceps exercises" id="subTri">
+        <button class="exchip" id="exOver" aria-pressed="true"><svg viewBox="0 0 32 32" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="10" r="2.6"/><path d="M10 13v9h6v7M5 22h14M10 14l2.5-10.5L7.5 7"/><circle cx="6.6" cy="7.6" r="1.7"/></svg><b>Overhead</b><small data-l="Shoulder flexed">arm up</small></button>
+        <button class="exchip" id="exKick" aria-pressed="false"><svg viewBox="0 0 32 32" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="23.5" cy="10.5" r="2.4"/><path d="M6 15l14-3M20 12v10M6 15v7M6 15l-2 13M3 22h20M19 12.5l-7 0.2-7.5 0"/><circle cx="3.6" cy="12.7" r="1.7"/></svg><b>Kickback</b><small data-l="Shoulder extended">leaning forward</small></button>
       </div>
     </section>
     <section>
@@ -309,10 +364,27 @@ input[type=range]{width:100%; accent-color:var(--accent); margin:6px 0 2px}
     <div class="pane" id="paneJoint" hidden></div>
   </aside>
 
-  <div class="caption"><div class="panel">
-    <p id="captionTxt">Arm resting by your side.</p>
-    <div class="effort"><small>Effort</small><div class="bar"><span id="effortBar"></span></div></div>
-  </div></div>
+  <div class="caption">
+    <div class="panel capA">
+      <span class="opt">A</span>
+      <div class="capA-main">
+        <div class="pcards" id="pcards"></div>
+        <p class="why" id="whyTxt"></p>
+      </div>
+      <div class="effort"><small>Effort</small><div class="bar"><span id="effortBar"></span></div></div>
+    </div>
+    <div class="panel capB">
+      <span class="opt">B</span>
+      <p class="headline" id="headTxt"></p>
+      <button class="linkbtn" id="moreBtn" aria-expanded="false" aria-controls="moreBox">More</button>
+      <div class="effort"><small>Effort</small><div class="bar"><span id="effortBar2"></span></div></div>
+      <div class="morebox" id="moreBox" hidden>
+        <p id="moreTxt"></p>
+        <p class="why" id="moreWhy"></p>
+        <button class="linkbtn" id="moreClose">Close</button>
+      </div>
+    </div>
+  </div>
 </div>
 
 <script type="importmap">
@@ -1289,6 +1361,66 @@ $('echartSvg').addEventListener('pointermove', e => {
 $('echartSvg').addEventListener('pointerdown', e => { stopAnim(); state.goal = chartAngle(e); });
 $('echartSvg').addEventListener('pointerleave', () => { chartHover = false; $('chGuide')?.setAttribute('visibility', 'hidden'); });
 
+/* ------------------------------------------------------------------ caption options (preview: A = phase cards, B = headline + More) */
+// names for each direction of movement, per exercise: [simple, clinical]
+const PHASE_NAMES = {
+  curl:     { flex:['Lifting','Flexion'], extend:['Lowering','Extension'] },
+  band:     { flex:['Band pulls up','Flexion'], extend:['Pushing down','Extension'] },
+  overhead: { flex:['Lowering behind head','Flexion'], extend:['Pushing up','Extension'] },
+  kickback: { flex:['Returning','Flexion'], extend:['Pushing back','Extension'] },
+};
+function phaseCards(){
+  const L = state.mode === 'learner' ? 1 : 0, w = words();
+  if (state.move === 'rotate') return [
+    { k:'sup', t:w.sup, d: L ? 'Supinator (+ biceps if resisted), concentric' : 'Supinator shortens', type:'con' },
+    { k:'pro', t:w.pro, d: L ? 'Pronator quadratus (+ teres if resisted), concentric' : 'Pronators shorten', type:'con' },
+  ];
+  const ex = posture(), key = ex === 'curl' && loadKind() === 'band' ? 'band' : ex;
+  const tri = key !== 'curl';                       // which group carries the load in this exercise
+  const who = tri ? (L ? 'Triceps' : 'Triceps') : (L ? 'Elbow flexors' : 'Front muscles');
+  const typeFor = ph => ph === 'hold' ? 'iso' : (ph === 'flex') === !tri ? 'con' : 'ecc';
+  const order = key === 'kickback' || key === 'band' ? ['extend','hold','flex'] : ['flex','hold','extend'];
+  return order.map(ph => ({ k:ph, t: ph === 'hold' ? w.hold : PHASE_NAMES[key][ph][L], d:`${who}: ${w[typeFor(ph)].toLowerCase()}`, type:typeFor(ph) }));
+}
+// the "why" line only depends on the exercise and settings, never on the moment-to-moment movement
+function whyText(){
+  const L = state.mode === 'learner' ? 1 : 0, R = CAPTIONS.rot;
+  if (state.move === 'rotate') return state.rload === 'light' ? R.supEasy[L] : state.theta < 35 ? R.straight[L] : R.supHard[L] + ' ' + R.stab[L];
+  const ex = posture();
+  if (ex === 'curl' && loadKind() === 'band') return L ? 'The band pulls the forearm up throughout, so the triceps works in both directions: concentric pushing down, eccentric letting it back up.' : 'The band pulls your forearm up, so the triceps works both ways: shortening to push down, lengthening to let it back up.';
+  if (ex === 'curl') return CAPTIONS.pos[state.pos][L] + (L ? ' Torque peaks at 90°.' : ' It is hardest around 90°.');
+  if (ex === 'overhead') return CAPTIONS.longHead[L] + (L ? ' Torque peaks with the forearm horizontal.' : ' It is hardest when your forearm is level with the floor.');
+  return L ? 'Torque is greatest near full extension and near zero with the forearm vertical.' : 'It is hardest with your arm straight back, and easiest with your forearm hanging down.';
+}
+let cardsKey = '';
+function updateCaptionOptions(){
+  const cards = phaseCards(), w = words();
+  const key = cards.map(c => c.k + c.t + c.d).join('|');
+  if (key !== cardsKey){
+    cardsKey = key;
+    $('pcards').style.setProperty('--n', cards.length);
+    $('pcards').innerHTML = cards.map(c => `<div class="pcard" data-k="${c.k}"><b><i style="background:var(--${c.type})"></i>${c.t}</b><span>${c.d}</span></div>`).join('');
+  }
+  const takeover = state.move === 'elbow' && posture() !== 'curl' && state.workGroup === 'flexor' && state.phase !== 'rest';
+  $('pcards').querySelectorAll('.pcard').forEach(el => el.classList.toggle('on', !takeover && el.dataset.k === state.phase));
+  const why = takeover ? CAPTIONS.takeover[state.mode === 'learner' ? 1 : 0] : whyText();
+  if ($('whyTxt').textContent !== why) $('whyTxt').textContent = why;
+  // B: one short live line
+  let head = w.rest;
+  if (state.phase !== 'rest'){
+    const c = cards.find(c => c.k === state.phase);
+    head = takeover ? CAPTIONS.takeover[0].split(',')[0] : c ? `${c.t}: ${c.d.replace(': ', ' ')}` : w[state.phase];
+  }
+  if ($('headTxt').textContent !== head) $('headTxt').textContent = head;
+}
+function openMore(){
+  $('moreTxt').textContent = state.caption;
+  // add only the "why" sentences the caption doesn't already say
+  $('moreWhy').textContent = whyText().split(/(?<=\.)\s+/).filter(x => !state.caption.includes(x)).join(' '); $('moreBox').hidden = false; $('moreBtn').setAttribute('aria-expanded', true); }
+function closeMore(){ $('moreBox').hidden = true; $('moreBtn').setAttribute('aria-expanded', false); }
+$('moreBtn').onclick = () => $('moreBox').hidden ? openMore() : closeMore();
+$('moreClose').onclick = closeMore;
+
 // hide labels that collide with a more important one (selected first, then the most active muscle)
 function declutterLabels(){
   const placed = [];
@@ -1340,8 +1472,9 @@ function updateHUD(){
       if (ex === 'overhead' && state.phase !== 'rest') cap += ' ' + CAPTIONS.longHead[L];
     }
   }
-  if ($('captionTxt').textContent !== cap) $('captionTxt').textContent = cap;
-  $('effortBar').style.width = Math.round(Math.min(1, state.demand) * 100) + '%';
+  state.caption = cap;
+  updateCaptionOptions();
+  $('effortBar').style.width = $('effortBar2').style.width = Math.round(Math.min(1, state.demand) * 100) + '%';
   updateMuscleList(); updateDetailStatus(); declutterLabels(); updateChartDot();
 }
 
@@ -1396,7 +1529,7 @@ function setExercise(ex, phi){
   if (state.ex === 'curl') state.curlPhi = state.phiGoal;
   if (ex !== 'curl') state.lastTri = ex;
   state.ex = ex;
-  setPressed(['grpBi','grpTri'], ex === 'curl' ? 'grpBi' : 'grpTri');
+  $('grpBi').setAttribute('aria-selected', ex === 'curl'); $('grpTri').setAttribute('aria-selected', ex !== 'curl');
   setPressed(['exOver','exKick'], ex === 'overhead' ? 'exOver' : ex === 'kickback' ? 'exKick' : null);
   stopRot();
   state.phiGoal = ex === 'curl' ? (phi ?? state.curlPhi) : PHI.neu;    // triceps exercises: thumb-up grip
@@ -1430,11 +1563,22 @@ addEventListener('keydown', e => {
 });
 $('loadWeight').onclick = () => { state.load = 'weight'; setPressed(['loadWeight','loadBand'], 'loadWeight'); drawChart(); };
 $('loadBand').onclick = () => { state.load = 'band'; setPressed(['loadWeight','loadBand'], 'loadBand'); drawChart(); };
-$('tBody').onchange = e => { showBody = e.target.checked; silhouette.visible = showBody; };
-$('tLabels').onchange = e => MUSCLES.forEach(m => m.label3d.visible = e.target.checked);
-$('tBones').onchange = e => { showBones = e.target.checked; boneParts.forEach(b => b.visible = showBones); scap.forEach(b => b.visible = showBones); };
-$('tHand').onchange = e => { showHand = e.target.checked; handParts.forEach(b => { if (!dumbbell.children.includes(b)) b.visible = showHand; }); };
-$('tArc').onchange = e => arcGroup.traverse(o => { if (o === arcGroup || o.isCSS2DObject) o.visible = e.target.checked; });
+// view toggles; both preview options (chip row, layers menu) drive the same switches and stay in sync
+const TOGGLES = {
+  labels: on => MUSCLES.forEach(m => m.label3d.visible = on),
+  bones:  on => { showBones = on; boneParts.forEach(b => b.visible = on); scap.forEach(b => b.visible = on); },
+  hand:   on => { showHand = on; handParts.forEach(b => { if (!dumbbell.children.includes(b)) b.visible = on; }); },
+  arc:    on => arcGroup.traverse(o => { if (o === arcGroup || o.isCSS2DObject) o.visible = on; }),   // CSS2D labels ignore a hidden parent
+  body:   on => { showBody = on; silhouette.visible = on; },
+};
+document.querySelectorAll('input[data-t]').forEach(inp => inp.onchange = () => {
+  TOGGLES[inp.dataset.t](inp.checked);
+  document.querySelectorAll(`input[data-t="${inp.dataset.t}"]`).forEach(o => o.checked = inp.checked);
+});
+function setViewMenu(open){ $('viewMenu').hidden = !open; $('viewMenuBtn').setAttribute('aria-expanded', open); }
+$('viewMenuBtn').onclick = e => { e.stopPropagation(); setViewMenu($('viewMenu').hidden); };
+addEventListener('pointerdown', e => { if (!e.target.closest('.viewmenu')) setViewMenu(false); });
+addEventListener('keydown', e => { if (e.key === 'Escape'){ setViewMenu(false); closeMore(); } });
 $('resetView').onclick = () => { select(null); flyHome(); };
 
 function setMode(mode){
