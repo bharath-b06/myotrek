@@ -186,7 +186,10 @@ const camera = new THREE.PerspectiveCamera(30, 1, .1, 200);
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true; controls.enablePan = false; controls.minDistance = 6; controls.maxDistance = 60;
 controls.autoRotate = !reduceMotion; controls.autoRotateSpeed = .6;
-controls.addEventListener('start', () => controls.autoRotate = false);
+// keep the slow turn: dragging pauses it, and it picks up again a few seconds after you let go
+let resumeTimer = null;
+controls.addEventListener('start', () => { controls.autoRotate = false; clearTimeout(resumeTimer); });
+controls.addEventListener('end', () => { clearTimeout(resumeTimer); resumeTimer = setTimeout(() => { if (!leaving) controls.autoRotate = !reduceMotion; }, 4000); });
 const HOME_TARGET = new V3(0, 8.9, 0);
 
 /* ------------------------------------------------------------------ skeleton: drawn in code, anatomically shaped but not photoreal.
@@ -405,9 +408,9 @@ function go(j, s){
   const dir = camera.position.clone().sub(controls.target).normalize();
   leaving.p1 = leaving.t1.clone().addScaledVector(dir, 4.5);
 }
-// zoom buttons and reset: short camera glides; reset returns to the front view and stays still
+// zoom buttons and reset: short camera glides; the slow turn carries on, and reset restarts it from the front
 let glide = null;
-function glideTo(target, pos){ controls.autoRotate = false; glide = { t:0, t0:controls.target.clone(), t1:target, p0:camera.position.clone(), p1:pos }; }
+function glideTo(target, pos){ glide = { t:0, t0:controls.target.clone(), t1:target, p0:camera.position.clone(), p1:pos }; }
 function zoom(f){
   const dir = camera.position.clone().sub(controls.target), d = THREE.MathUtils.clamp(dir.length()*f, controls.minDistance, controls.maxDistance);
   glideTo(controls.target.clone(), controls.target.clone().addScaledVector(dir.normalize(), d));
@@ -420,7 +423,7 @@ function stepGlide(dt){
 }
 $('zoomIn').onclick = () => zoom(.75);
 $('zoomOut').onclick = () => zoom(1.33);
-$('resetView').onclick = () => glideTo(HOME_TARGET.clone(), new V3(0, 10.5, homeDist));
+$('resetView').onclick = () => { glideTo(HOME_TARGET.clone(), new V3(0, 10.5, homeDist)); clearTimeout(resumeTimer); controls.autoRotate = !reduceMotion; };
 addEventListener('keydown', e => { if (e.key === '+' || e.key === '=') zoom(.75); else if (e.key === '-' || e.key === '_') zoom(1.33); });
 function stepLeave(dt){
   if (!leaving) return;

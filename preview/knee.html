@@ -223,8 +223,8 @@ const WORDS = {
 };
 // exercises: how the leg sits in space. legRot turns the whole leg; 0 = thigh level (seated), -90 = thigh vertical (standing)
 const EX = {
-  ext:  { legRot:0,   loop:[90, 4],  target:new V3(-.4,-1.4,0), dist:19 },
-  curl: { legRot:-90, loop:[4, 100], target:new V3(-.6,-.4,0),  dist:19 },
+  ext:  { legRot:0,   loop:[90, 4],  target:new V3(-1.2,.6,0), dist:24 },
+  curl: { legRot:-90, loop:[4, 100], target:new V3(-.6,1.8,0),  dist:26 },
 };
 
 /* ------------------------------------------------------------------ state + scene */
@@ -280,7 +280,61 @@ cuff.position.set(3.7, 0, 0); cuff.rotation.y = Math.PI/2; shank.add(cuff);
 const loadArrow = new THREE.ArrowHelper(new V3(0,-1,0), new V3(), 1, 0x888888, .22, .14); scene.add(loadArrow);
 // seat for the seated exercise
 const seatMat = new THREE.MeshStandardMaterial({ transparent:true, opacity:.2, depthWrite:false, roughness:.8 });
-const seat = new THREE.Mesh(new THREE.BoxGeometry(4.8, .35, 3), seatMat); seat.position.set(-2.4, -.55, -.3); mirror.add(seat);
+const seat = new THREE.Mesh(new THREE.BoxGeometry(4.8, .35, 3), seatMat); seat.position.set(-2.4, -.55, -.9); seat.scale.z = 1.25; mirror.add(seat);
+
+/* ------------------------------------------------------------------ see-through body for reference (like the elbow page)
+   A simple mannequin posed per exercise. Built upright, facing +x, right side at +z, pelvis centre at the origin;
+   limb angles are measured from hanging straight down (0) toward the front (+). It is then flipped/rolled into the
+   exercise position and shifted so the chosen joint sits at the origin of the 3D joint, the rest of the body behind. */
+const silMat = new THREE.MeshPhysicalMaterial({ roughness:.6, transparent:true, opacity:.16, depthWrite:false, envMapIntensity:.4 });
+const surfMat = new THREE.MeshStandardMaterial({ roughness:.8, transparent:true, opacity:.16, depthWrite:false });
+function mannequin({ lean = 0, thigh = [0,0], shank = [0,0], uarm = [0,0], farm = [0,0], omit = [], surface = null, facing = 1, roll = 0, anchor }){
+  const d = a => [Math.sin(a*DEG), -Math.cos(a*DEG)];
+  const leanP = ([x, y]) => [x*Math.cos(lean*DEG) + y*Math.sin(lean*DEG), -x*Math.sin(lean*DEG) + y*Math.cos(lean*DEG)];
+  const add = (p, q) => [p[0] + q[0], p[1] + q[1]], mul = (v, k) => [v[0]*k, v[1]*k];
+  const parts = [], J = {};
+  const cap = (name, a, b, r) => { if (!omit.includes(name) && !(omit.includes('upper') && UPPER.includes(name))) parts.push({ type:'cap', a, b, r }); };
+  const ell = (name, c, s, rz = 0) => { if (!omit.includes(name) && !(omit.includes('upper') && UPPER.includes(name))) parts.push({ type:'ell', c, s, rz }); };
+  const UPPER = ['torso','neck','head','rUarm','rFarm','rHand','lUarm','lFarm','lHand'];
+  const S0 = leanP([0,4.7]);
+  ell('torso', [...leanP([0,2.4]), 0], [.95,2.9,1.55], -lean);
+  ell('pelvis', [0,.1,0], [.9,.8,1.35]);
+  cap('neck', [...leanP([0,4.9]), 0], [...leanP([0,5.9]), 0], .42);
+  ell('head', [...leanP([.1,6.9]), 0], [.85,1.0,.75], -lean);
+  J.C5 = [...leanP([-.35,5.6]), 0]; J.L3 = [...leanP([-.45,1.4]), 0];
+  for (const [i, s, n] of [[0, 1, 'r'], [1, -1, 'l']]){
+    const sh = S0, el = add(sh, mul(d(uarm[i]), 3.0)), wr = add(el, mul(d(farm[i]), 2.6)), hd = add(wr, mul(d(farm[i]), .8));
+    const hp = [0,-.3], kn = add(hp, mul(d(thigh[i]), 4.3)), an = add(kn, mul(d(shank[i]), 4.0)), toe = add(an, mul(d(shank[i] + 90), 1.5));
+    const z3 = (p, z) => [p[0], p[1], z];
+    cap(n+'Uarm', z3(sh, 1.85*s), z3(el, 2.0*s), .36); cap(n+'Farm', z3(el, 2.0*s), z3(wr, 2.1*s), .3); cap(n+'Hand', z3(wr, 2.1*s), z3(hd, 2.15*s), .22);
+    cap(n+'Thigh', z3(hp, .9*s), z3(kn, .85*s), .55); cap(n+'Shank', z3(kn, .85*s), z3(an, .8*s), .42); cap(n+'Foot', z3(an, .8*s), z3(toe, .8*s), .26);
+    Object.assign(J, { [n+'Shoulder']:z3(sh, 1.85*s), [n+'Elbow']:z3(el, 2.0*s), [n+'Wrist']:z3(wr, 2.1*s), [n+'Hip']:z3(hp, .9*s), [n+'Knee']:z3(kn, .85*s), [n+'Ankle']:z3(an, .8*s) });
+  }
+  // something to sit or lie on
+  if (surface === 'seat') parts.push({ type:'box', c:[-.3,-.95,0], s:[2.8,.3,3.6] });
+  if (surface === 'back') parts.push({ type:'box', c:[-1.05,1.6,0], s:[.3,7.5,3.2] });         // lying on the back (bench behind the body)
+  if (surface === 'front') parts.push({ type:'box', c:[1.05,-2.5,0], s:[.3,9,3.2] });           // lying face down, from the hips to the feet
+  if (surface === 'frontFull') parts.push({ type:'box', c:[1.05,-1.5,0], s:[.3,13,3.2] });       // lying face down, whole body
+  // place: mirror for facing, roll into position, then put the anchor joint at the origin
+  const T = ([x, y, z]) => { x *= facing; const c = Math.cos(roll*DEG), s = Math.sin(roll*DEG); return [x*c - y*s, x*s + y*c, z]; };
+  const A = T(J[anchor]);
+  const P = p => { const q = T(p); return new V3(q[0] - A[0], q[1] - A[1], q[2] - A[2]); };
+  const g = new THREE.Group();
+  for (const pt of parts){
+    let m;
+    if (pt.type === 'cap'){ const a = P(pt.a), b = P(pt.b); m = new THREE.Mesh(new THREE.CapsuleGeometry(pt.r, a.distanceTo(b), 6, 12), silMat);
+      m.position.copy(a).add(b).multiplyScalar(.5); m.quaternion.setFromUnitVectors(new V3(0,1,0), b.clone().sub(a).normalize()); }
+    else { m = new THREE.Mesh(pt.type === 'box' ? new THREE.BoxGeometry(1,1,1) : new THREE.SphereGeometry(1, 24, 18), pt.type === 'box' ? surfMat : silMat);
+      m.position.copy(P(pt.c)); m.scale.set(...pt.s); m.rotation.z = (pt.rz || 0)*DEG*facing + roll*DEG; }
+    g.add(m);
+  }
+  return g;
+}
+const bodies = {
+  ext: mannequin({ facing:1, thigh:[90,90], omit:['rShank','rFoot'], anchor:'rKnee' }),
+  curl: mannequin({ facing:1, omit:['rShank','rFoot'], anchor:'rKnee' }),
+};
+for (const g of Object.values(bodies)){ g.visible = false; mirror.add(g); }
 
 /* ------------------------------------------------------------------ muscles (same tube + stripe technique as the elbow) */
 function muscleMaterial(){
@@ -388,7 +442,7 @@ const C = {}, _col = new THREE.Color();
 function readTokens(){
   const cs = getComputedStyle(document.documentElement);
   for (const k of ['con','ecc','iso','rest','bone','skin','fg-3']) C[k] = new THREE.Color(cs.getPropertyValue('--'+k).trim());
-  boneMat.color.copy(C.bone); ghostMat.color.copy(C.skin); seatMat.color.copy(C['fg-3']); loadArrow.setColor(C['fg-3']);
+  boneMat.color.copy(C.bone); ghostMat.color.copy(C.skin); seatMat.color.copy(C['fg-3']); silMat.color.copy(C.skin); surfMat.color.copy(C['fg-3']); loadArrow.setColor(C['fg-3']);
 }
 function updateAppearance(time){
   for (const m of MUSCLES){
@@ -403,6 +457,8 @@ function updateAppearance(time){
     m.labelEl.classList.toggle('dim', !!faded); m.labelEl.classList.toggle('on', state.selected === m);
   }
   seat.visible = state.ex === 'ext';
+  const settled = Math.abs(EX[state.ex].legRot - state.legRot) < 6;
+  for (const [k, g] of Object.entries(bodies)) g.visible = k === state.ex && settled;
   scene.updateMatrixWorld(true);
   cuff.getWorldPosition(_v); loadArrow.position.copy(_v).add(new V3(0,-.45,0)); loadArrow.setLength(.8 + .5*state.demand, .22, .14);
 }
