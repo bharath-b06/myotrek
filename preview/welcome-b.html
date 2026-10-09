@@ -148,7 +148,7 @@ footer .wrap{display:flex; flex-wrap:wrap; gap:16px; justify-content:space-betwe
   <a class="btn primary small" href="body.html">Explore the body</a>
 </div></header>
 <main>
-<section class="hero" style="padding:0"><div class="wrap">
+<section class="hero"><div class="wrap">
   <div>
     <span class="eyebrow">Interactive 3D anatomy · early preview</span>
     <h1>See every <em>muscle</em> move.</h1>
@@ -163,13 +163,23 @@ footer .wrap{display:flex; flex-wrap:wrap; gap:16px; justify-content:space-betwe
       <span class="chip"><i style="background:var(--iso)"></i>Holding</span>
     </div>
   </div>
-  <div class="stage3d" aria-hidden="true"><div class="glow"></div><iframe src="body.html?embed=1" title="Turning 3D skeleton" loading="eager" tabindex="-1"></iframe></div>
+  <figure class="shot" style="margin:0"><div class="bar"><i></i><i></i><i></i></div><img src="img/elbow.jpg" alt="Myotrek showing the muscles of the elbow during an exercise" loading="lazy" width="1440" height="900"></figure>
 </div></section>
 <section id="features"><div class="wrap">
   <span class="kicker">Features</span>
   <h2>Anatomy you can watch, not just read.</h2>
   <p class="intro">Textbooks show muscles standing still. Myotrek shows them working: during the lift, the lowering and the hold.</p>
-  <div class="grid3"><article class="card"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 18c3-8 6-12 8-12s3 4 8 12"/><path d="M8 18h8"/></svg></span><h3>Watch muscles move in 3D</h3><p>Turn and zoom a live model. Muscles bulge as they shorten and thin as they stretch, in time with the joint.</p></article><article class="card"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="7" cy="12" r="3"/><circle cx="12" cy="7" r="3"/><circle cx="17" cy="12" r="3"/><circle cx="12" cy="17" r="3"/></svg></span><h3>See what each muscle is doing</h3><p>Colour shows it at a glance: shortening, lengthening under control, or holding. Moving stripes show the direction.</p></article><article class="card"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 18h4v-5H4zM10 18h4V9h-4zM16 18h4V5h-4z"/></svg></span><h3>Easy or detailed, your choice</h3><p>Simple mode explains it in everyday words. Clinical mode adds origins, insertions, nerves and contraction types.</p></article><article class="card"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 9v6M6 7v10M18 7v10M21 9v6M6 12h12"/></svg></span><h3>Real exercises</h3><p>Biceps curls, overhead triceps extensions, kickbacks, raises and more, each with the body in position.</p></article><article class="card"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3v18h18"/><path d="M6 15c3-6 6-8 9-6s4 4 6 2"/></svg></span><h3>Where it gets hard</h3><p>An effort graph shows how the load on the joint changes through the movement, and why some angles feel harder.</p></article><article class="card"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="4.5" r="2"/><path d="M12 7v7M8 10h8M12 14l-3 7M12 14l3 7"/></svg></span><h3>The whole body, both sides</h3><p>Start from a full skeleton, pick any joint, left or right, and zoom straight into it.</p></article></div>
+  <div class="row"><div class="text"><span class="kicker">Watch it move</span><h3>Muscles shortening, lengthening and holding, in colour.</h3>
+    <p>Play an exercise and follow the colours: red when a muscle shortens, blue when it lengthens under control, amber when it holds.</p>
+    <ul><li>Bulges and stretches in time with the joint</li><li>Tap any muscle for its card</li><li>Drag, turn and zoom</li></ul></div>
+    <figure class="shot" style="margin:0"><div class="bar"><i></i><i></i><i></i></div><img src="img/elbow.jpg" alt="The elbow page during an overhead triceps extension" loading="lazy" width="1440" height="900"></figure></div>
+  <div class="row flip"><div class="text"><span class="kicker">Easy or detailed</span><h3>One tap from everyday words to clinical detail.</h3>
+    <p>Clinical mode adds contraction types, each head of a muscle, an effort graph across the movement, and every phase explained.</p></div>
+    <figure class="shot" style="margin:0"><div class="bar"><i></i><i></i><i></i></div><img src="img/clinical.jpg" alt="Clinical mode with the effort graph and every phase explained" loading="lazy" width="1440" height="900"></figure></div>
+  <div class="row"><div class="text"><span class="kicker">The whole body</span><h3>Start from the skeleton, zoom into any joint.</h3>
+    <p>Pick a joint on the left or right side. Each one comes with its own exercises and the body in position.</p></div>
+    <figure class="shot" style="margin:0"><div class="bar"><i></i><i></i><i></i></div><img src="img/body.jpg" alt="The whole-body skeleton with joint hotspots" loading="lazy" width="1440" height="900"></figure></div>
+  <div style="margin-top:56px"><div class="grid3"><article class="card"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 18c3-8 6-12 8-12s3 4 8 12"/><path d="M8 18h8"/></svg></span><h3>Watch muscles move in 3D</h3><p>Turn and zoom a live model. Muscles bulge as they shorten and thin as they stretch, in time with the joint.</p></article><article class="card"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="7" cy="12" r="3"/><circle cx="12" cy="7" r="3"/><circle cx="17" cy="12" r="3"/><circle cx="12" cy="17" r="3"/></svg></span><h3>See what each muscle is doing</h3><p>Colour shows it at a glance: shortening, lengthening under control, or holding. Moving stripes show the direction.</p></article><article class="card"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 18h4v-5H4zM10 18h4V9h-4zM16 18h4V5h-4z"/></svg></span><h3>Easy or detailed, your choice</h3><p>Simple mode explains it in everyday words. Clinical mode adds origins, insertions, nerves and contraction types.</p></article><article class="card"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 9v6M6 7v10M18 7v10M21 9v6M6 12h12"/></svg></span><h3>Real exercises</h3><p>Biceps curls, overhead triceps extensions, kickbacks, raises and more, each with the body in position.</p></article><article class="card"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3v18h18"/><path d="M6 15c3-6 6-8 9-6s4 4 6 2"/></svg></span><h3>Where it gets hard</h3><p>An effort graph shows how the load on the joint changes through the movement, and why some angles feel harder.</p></article><article class="card"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="4.5" r="2"/><path d="M12 7v7M8 10h8M12 14l-3 7M12 14l3 7"/></svg></span><h3>The whole body, both sides</h3><p>Start from a full skeleton, pick any joint, left or right, and zoom straight into it.</p></article></div></div>
 </div></section>
 <section class="alt" id="levels"><div class="wrap">
   <span class="kicker">Two levels</span>
@@ -214,7 +224,7 @@ footer .wrap{display:flex; flex-wrap:wrap; gap:16px; justify-content:space-betwe
 </main>
 <footer><div class="wrap">
   <span>Myotrek · preview</span>
-  <span class="switch">Comparing layouts: this is version A (live 3D). <a href="welcome-b.html">See the other version</a></span>
+  <span class="switch">Comparing layouts: this is version B (still images). <a href="./">See the other version</a></span>
 </div></footer>
 <script>
 // light / dark, shared with the rest of the app

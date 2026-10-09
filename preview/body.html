@@ -1,0 +1,480 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Myotrek</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+/* Home: the whole skeleton with joint hotspots. Live joints zoom in and open their own page. */
+:root{
+  --bg:#DCE3E8; --bg-2:#F3F6F8; --panel:rgba(255,255,255,.88); --panel-solid:#FFFFFF;
+  --line:rgba(22,44,60,.11); --fg:#16222C; --fg-2:#4C5B68; --fg-3:#7C8994;
+  --accent:#0B6B70; --accent-soft:#D6EBEB; --accent-fg:#FFFFFF;
+  --bone:#D8C9AD; --soon:#8995A0; --shadow:0 10px 30px -12px rgba(20,40,60,.25), 0 1px 2px rgba(20,40,60,.06);
+  --font-display:"Bricolage Grotesque", ui-sans-serif, system-ui, sans-serif;
+  --font-body:"Atkinson Hyperlegible", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono:"JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#0E1318; --bg-2:#1A222B; --panel:rgba(22,29,37,.9); --panel-solid:#18202A;
+  --line:rgba(255,255,255,.09); --fg:#E6ECF1; --fg-2:#A7B3BE; --fg-3:#76838F;
+  --accent:#4FC2C3; --accent-soft:rgba(79,194,195,.15); --accent-fg:#06272A;
+  --bone:#D6CEBD; --soon:#5E6A75; --shadow:0 14px 34px -14px rgba(0,0,0,.6); color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#0E1318; --bg-2:#1A222B; --panel:rgba(22,29,37,.9); --panel-solid:#18202A;
+  --line:rgba(255,255,255,.09); --fg:#E6ECF1; --fg-2:#A7B3BE; --fg-3:#76838F;
+  --accent:#4FC2C3; --accent-soft:rgba(79,194,195,.15); --accent-fg:#06272A;
+  --bone:#D6CEBD; --soon:#5E6A75; --shadow:0 14px 34px -14px rgba(0,0,0,.6); color-scheme:dark }
+
+html,body{height:100%; margin:0}
+body{background:var(--bg); color:var(--fg); font:15px/1.5 var(--font-body); overflow:hidden}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+button{font:inherit; color:inherit}
+:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
+
+.app{position:relative; height:100%; background:radial-gradient(ellipse 55% 70% at 50% 48%, var(--bg-2), var(--bg) 75%)}
+#stage{position:absolute; inset:0}
+#stage canvas{display:block; width:100%; height:100%; touch-action:none}
+.labels{position:absolute; inset:0; pointer-events:none; z-index:1}
+.fade{position:absolute; inset:0; background:var(--bg); opacity:0; pointer-events:none; transition:opacity .35s; z-index:20}
+.fade.on{opacity:1}
+
+.top{position:absolute; top:16px; left:16px; right:16px; display:flex; align-items:center; justify-content:space-between; z-index:5; pointer-events:none}
+.top > *{pointer-events:auto}
+.brand{display:flex; align-items:center; gap:10px}
+.brand svg{width:30px; height:30px}
+.brand b{font:700 21px/1 var(--font-display)}
+.crumb{color:var(--fg-3); font-size:13px}
+.iconbtn{width:36px; height:36px; display:grid; place-items:center; border-radius:999px; border:1px solid var(--line); background:var(--panel); cursor:pointer}
+.iconbtn svg{width:18px; height:18px}
+.tag{font:700 11px/1 var(--font-body); letter-spacing:.06em; text-transform:uppercase; color:var(--fg-3); background:var(--accent-soft); padding:4px 8px; border-radius:999px}
+
+.panel{background:var(--panel); border:1px solid var(--line); border-radius:16px; box-shadow:var(--shadow)}
+.list{position:absolute; left:16px; top:72px; width:280px; max-height:calc(100% - 88px); overflow:auto; padding:16px; z-index:4}
+.list h1{font:700 22px/1.15 var(--font-display); margin:0 0 4px}
+.list .sub{margin:0 0 14px; color:var(--fg-2); font-size:13.5px}
+.list h3{margin:14px 0 6px; font:700 11px/1.2 var(--font-body); letter-spacing:.09em; text-transform:uppercase; color:var(--fg-3)}
+.jrow{display:flex; align-items:center; gap:8px; padding:7px 8px; border-radius:10px; cursor:pointer}
+.jrow:hover,.jrow.on{background:var(--accent-soft)}
+.jrow .dot{width:9px; height:9px; border-radius:50%; background:var(--soon); flex:none}
+.jrow.live .dot{background:var(--accent)}
+.jrow .nm{flex:1; font-weight:700; font-size:14px}
+.jrow .soon{font-size:11.5px; color:var(--fg-3)}
+.side{border:1px solid var(--accent); color:var(--accent); background:var(--panel-solid); border-radius:999px; padding:2px 9px; font-size:12px; font-weight:700; cursor:pointer}
+.side:hover{background:var(--accent); color:var(--accent-fg)}
+
+.card{position:absolute; right:16px; top:72px; width:320px; padding:16px 18px; z-index:4; display:grid; gap:10px}
+.card h2{font:700 22px/1.15 var(--font-display); margin:0}
+.card p{margin:0; font-size:14px}
+.card .clin{color:var(--fg-2); font-size:13px}
+.card ul{margin:0; padding-left:18px; font-size:13.5px; color:var(--fg-2)}
+.card .go{display:flex; gap:8px}
+.btn{flex:1; border:0; background:var(--accent); color:var(--accent-fg); font-weight:700; padding:9px 10px; border-radius:10px; cursor:pointer}
+.zoom{position:absolute; right:352px; top:72px; display:flex; flex-direction:column; gap:6px; z-index:4}
+.zoom .iconbtn{width:40px; height:40px; box-shadow:var(--shadow)}
+.hint{position:absolute; left:50%; bottom:18px; transform:translateX(-50%); font-size:13px; color:var(--fg-3); z-index:3; pointer-events:none}
+
+/* joint hotspots on the 3D skeleton */
+.hs{pointer-events:auto; position:relative; width:18px; height:18px; border-radius:50%; border:2px solid var(--panel-solid); background:var(--soon); cursor:pointer; padding:0; box-shadow:0 1px 4px rgba(0,0,0,.25)}
+.hs.live{background:var(--accent)}
+.hs.live::after{content:""; position:absolute; inset:-6px; border-radius:50%; border:2px solid var(--accent); opacity:.6; animation:pulse 2s ease-out infinite}
+.hs span{position:absolute; left:50%; bottom:calc(100% + 6px); transform:translateX(-50%); white-space:nowrap; font:700 12px/1 var(--font-body); background:var(--panel-solid); color:var(--fg); border:1px solid var(--line); padding:4px 8px; border-radius:999px; opacity:0; transition:opacity .15s; pointer-events:none}
+.hs:hover span,.hs.on span,.hs:focus-visible span{opacity:1}
+.hs.on{transform:scale(1.25)}
+@keyframes pulse{from{transform:scale(.6); opacity:.7} to{transform:scale(1.5); opacity:0}}
+@media (prefers-reduced-motion: reduce){ .hs.live::after{animation:none} .fade{transition:none} }
+
+/* ?embed=1: just the turning skeleton, used as the landing page backdrop */
+.embed body{background:transparent} .embed .app{background:transparent}
+.embed .top,.embed .list,.embed .card,.embed .hint,.embed .zoom,.embed .labels{display:none!important}
+a.brand{color:inherit; text-decoration:none}
+@media (max-width: 900px){
+  body{overflow:auto}
+  .app{height:auto; min-height:100%}
+  #stage{position:relative; height:62vh; min-height:380px}
+  .crumb{display:none}
+  .list,.card{position:static; width:auto; max-height:none; margin:0 16px 12px}
+  .hint{display:none}
+  .zoom{right:12px; top:auto; bottom:12px}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <div id="stage"><div class="fade" id="fade"></div>
+    <div class="zoom" role="group" aria-label="Zoom">
+      <button class="iconbtn" id="zoomIn" aria-label="Zoom in" title="Zoom in (+)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
+      <button class="iconbtn" id="zoomOut" aria-label="Zoom out" title="Zoom out (−)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M5 12h14"/></svg></button>
+      <button class="iconbtn" id="resetView" aria-label="Reset view" title="Reset view"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></svg></button>
+    </div>
+  </div>
+  <header class="top">
+    <a class="brand" href="./" title="Back to the start">
+      <svg viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="15" fill="var(--accent)"/><path d="M11 6v10a5 5 0 0 0 5 5h9" stroke="var(--accent-fg)" stroke-width="3.2" fill="none" stroke-linecap="round"/><circle cx="11" cy="16" r="2.6" fill="var(--accent-fg)"/></svg>
+      <b>Myotrek</b> <span class="crumb">Whole body</span> <span class="tag">Preview</span>
+    </a>
+    <button class="iconbtn" id="themeBtn" aria-label="Switch light or dark theme" title="Light / dark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v3M12 20v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M1 12h3M20 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/></svg></button>
+  </header>
+  <nav class="list panel" aria-label="Joints">
+    <h1>Pick a joint</h1>
+    <p class="sub">Explore the muscles that move it, the movements and exercises.</p>
+    <div id="jointList"></div>
+  </nav>
+  <aside class="card panel" id="card" hidden aria-live="polite"></aside>
+  <p class="hint">Drag to turn the skeleton · click a dot</p>
+</div>
+
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+}}
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
+
+const V3 = THREE.Vector3;
+const EMBED = new URLSearchParams(location.search).has('embed');
+if (EMBED) document.documentElement.classList.add('embed');
+const $ = id => document.getElementById(id);
+const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* ------------------------------------------------------------------ joints
+   Positions are for the person's right side; x is mirrored for the left.
+   The person faces the camera (+z), so their right side is at -x.        */
+const JOINTS = [
+  { id:'neck', name:'Neck', region:'Spine', pos:[0,15.6,-.3], both:false, page:'joint.html?j=neck', blurb:'Nodding forward and tilting back. Head lifts lying on your back and face down. Rough draft.',
+    clinical:'Cervical spine: atlanto-occipital, atlanto-axial and facet joints',
+    plan:['Flexion, extension, rotation, side bending','Deep neck flexors, sternocleidomastoid, upper trapezius'] },
+  { id:'shoulder', name:'Shoulder', region:'Upper limb', pos:[1.85,14.4,0], both:true, page:'joint.html?j=shoulder', blurb:'Raising the arm forward and taking it back. Front raise and lying pullover. Rough draft.',
+    clinical:'Glenohumeral, acromioclavicular, sternoclavicular and scapulothoracic',
+    plan:['Flexion, abduction, rotation; scapular movement','Rotator cuff, deltoid, pectoralis major, latissimus dorsi'] },
+  { id:'elbow', name:'Elbow', region:'Upper limb', pos:[2.15,11.4,0], both:true, page:'elbow.html',
+    clinical:'Humeroulnar, humeroradial and proximal radioulnar joints',
+    blurb:'Bend and straighten, turn the palm. Biceps curls and triceps exercises, with every muscle shown working.' },
+  { id:'wrist', name:'Wrist & hand', region:'Upper limb', pos:[2.32,9.0,.05], both:true, page:'joint.html?j=wrist', blurb:'Bending the wrist forward and back. Wrist curl and reverse wrist curl. Rough draft.',
+    clinical:'Radiocarpal, midcarpal and the joints of the hand',
+    plan:['Flexion, extension, radial and ulnar deviation, grip','Wrist flexors and extensors, finger flexors'] },
+  { id:'lowback', name:'Lower back', region:'Spine', pos:[0,11.0,-.45], both:false, page:'joint.html?j=lowback', blurb:'Bending forward and straightening. Back extension and curl-up. Rough draft.',
+    clinical:'Lumbar spine: intervertebral and facet joints',
+    plan:['Flexion, extension, side bending, rotation','Erector spinae, multifidus, abdominals'] },
+  { id:'hip', name:'Hip', region:'Lower limb', pos:[.9,9.0,0], both:true, page:'joint.html?j=hip', blurb:'Lifting the leg forward and taking it back. Straight leg raise and prone hip extension. Rough draft.',
+    clinical:'Acetabulofemoral joint',
+    plan:['Flexion, extension, abduction, rotation','Gluteals, iliopsoas, adductors, hamstrings'] },
+  { id:'knee', name:'Knee', region:'Lower limb', pos:[.75,4.9,.12], both:true, page:'knee.html',
+    clinical:'Tibiofemoral and patellofemoral joints',
+    blurb:'Bend and straighten. Seated knee extension and a hamstring curl. A rough first draft.' },
+  { id:'ankle', name:'Ankle & foot', region:'Lower limb', pos:[.7,.8,0], both:true, page:'joint.html?j=ankle', blurb:'Pointing the foot down and pulling it up. Calf raise and toe raise. Rough draft.',
+    clinical:'Talocrural, subtalar and the joints of the foot',
+    plan:['Dorsiflexion, plantarflexion, inversion, eversion','Calf muscles, tibialis anterior, peroneals'] },
+];
+
+/* ------------------------------------------------------------------ renderer */
+const stage = $('stage');
+const renderer = new THREE.WebGLRenderer({ antialias:true, alpha:true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+stage.appendChild(renderer.domElement);
+const labelRenderer = new CSS2DRenderer(); labelRenderer.domElement.className = 'labels'; stage.appendChild(labelRenderer.domElement);
+const scene = new THREE.Scene();
+scene.environment = new THREE.PMREMGenerator(renderer).fromScene(new RoomEnvironment(renderer), .04).texture;
+scene.add(new THREE.HemisphereLight(0xffffff, 0x7d8a96, .75));
+const key = new THREE.DirectionalLight(0xffffff, 1.7); key.position.set(5, 9, 10); scene.add(key);
+const rim = new THREE.DirectionalLight(0xdfe9ff, .9); rim.position.set(-6, 5, -8); scene.add(rim);     // edge light so bones separate from the background
+const camera = new THREE.PerspectiveCamera(30, 1, .1, 200);
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true; controls.enablePan = false; controls.minDistance = 6; controls.maxDistance = 60;
+controls.autoRotate = !reduceMotion; controls.autoRotateSpeed = EMBED ? 1.1 : .6;
+if (EMBED){ controls.enabled = false; controls.enableZoom = false; }
+// keep the slow turn: dragging pauses it, and it picks up again a few seconds after you let go
+let resumeTimer = null;
+controls.addEventListener('start', () => { controls.autoRotate = false; clearTimeout(resumeTimer); });
+controls.addEventListener('end', () => { clearTimeout(resumeTimer); resumeTimer = setTimeout(() => { if (!leaving) controls.autoRotate = !reduceMotion; }, 4000); });
+const HOME_TARGET = new V3(0, 8.9, 0);
+
+/* ------------------------------------------------------------------ skeleton: drawn in code, anatomically shaped but not photoreal.
+   Units ≈ 10 cm. y up, the person faces +z, their right side is at -x. Every mesh is tagged with the joints it belongs to. */
+const boneMat = new THREE.MeshPhysicalMaterial({ roughness:.62, clearcoat:.12, clearcoatRoughness:.7, envMapIntensity:.55, sheen:.2 });
+const skel = new THREE.Group(); scene.add(skel);
+const byJoint = {};    // "elbow-right" → meshes to light up on hover
+// kind: 'bone' | 'cart' (cartilage, discs) | 'dark' (eye sockets, nasal opening) | 'tooth'
+function add(mesh, tags = [], kind = 'bone'){
+  mesh.material = boneMat.clone(); mesh.userData.kind = kind;
+  if (kind === 'cart'){ mesh.material.transparent = true; mesh.material.opacity = .8; }
+  skel.add(mesh); tags.forEach(t => (byJoint[t] ??= []).push(mesh)); return mesh;
+}
+function capsule(a, b, r, tags, kind){
+  const A = new V3(...a), B = new V3(...b);
+  const m = new THREE.Mesh(new THREE.CapsuleGeometry(r, A.distanceTo(B), 6, 12));
+  m.position.copy(A).add(B).multiplyScalar(.5);
+  m.quaternion.setFromUnitVectors(new V3(0,1,0), B.clone().sub(A).normalize());
+  return add(m, tags, kind);
+}
+function ellip(c, s, tags, kind, rot){ const m = new THREE.Mesh(new THREE.SphereGeometry(1, 24, 18)); m.position.set(...c); m.scale.set(...s); if (rot) m.rotation.set(...rot); return add(m, tags, kind); }
+// long bone with a radius profile [[t 0..1, r], ...] from a to b: flared ends, slim shaft
+function longBone(a, b, prof, tags){
+  const A = new V3(...a), B = new V3(...b), L = A.distanceTo(B);
+  const pts = [new THREE.Vector2(.001, 0), ...prof.map(([t, r]) => new THREE.Vector2(r, t*L)), new THREE.Vector2(.001, L)];
+  const m = new THREE.Mesh(new THREE.LatheGeometry(pts, 22));
+  m.position.copy(A); m.quaternion.setFromUnitVectors(new V3(0,1,0), B.clone().sub(A).normalize());
+  return add(m, tags);
+}
+function tube(points, r, tags, kind){
+  const curve = new THREE.CatmullRomCurve3(points.map(p => new V3(...p)), false, 'centripetal');
+  return add(new THREE.Mesh(new THREE.TubeGeometry(curve, Math.max(12, points.length*10), r, 8, false)), tags, kind);
+}
+
+// ---- skull
+ellip([0,17.05,-.12],[.78,.8,.95], ['neck-mid']);                          // cranium
+ellip([0,16.58,.38],[.5,.48,.45], ['neck-mid']);                           // face / maxilla
+for (const s of [-1, 1]){
+  ellip([.27*s,16.78,.66],[.18,.15,.07], ['neck-mid'], 'dark');               // orbit
+  tube([[.42*s,16.62,.6],[.62*s,16.6,.25],[.66*s,16.62,-.05]], .055, ['neck-mid']);   // zygomatic arch
+}
+ellip([0,16.47,.79],[.08,.12,.05], ['neck-mid'], 'dark');                   // nasal aperture
+tube([[-.56,16.5,-.06],[-.53,15.98,.1],[-.36,15.84,.48],[0,15.8,.66],[.36,15.84,.48],[.53,15.98,.1],[.56,16.5,-.06]], .075, ['neck-mid']);  // mandible
+for (let i = -5; i <= 5; i++){ const a = i/5*1.15; ellip([Math.sin(a)*.36, 16.14, .3 + Math.cos(a)*.36], [.045,.06,.04], ['neck-mid'], 'tooth'); }
+
+// ---- spine: 7 cervical, 12 thoracic, 5 lumbar, with the natural S-curve
+const spineZ = y => y < 12.55 ? -.33 + .13*Math.sin(Math.PI*(y-10.3)/2.25)       // lumbar lordosis
+  : y < 15.1 ? -.33 - .26*Math.sin(Math.PI*(y-12.55)/2.55)                       // thoracic kyphosis
+  : -.33 + .12*Math.sin(Math.PI*(y-15.1)/1.05);                                 // cervical lordosis
+const LEVELS = [];
+for (let i = 0; i < 5; i++) LEVELS.push({ y:10.42 + i*.44, r:.27, h:.3, tag:'lowback-mid' });
+for (let i = 0; i < 12; i++) LEVELS.push({ y:12.58 + i*.215, r:.2 + .02*(1 - i/11), h:.16, tag:'spine' });
+for (let i = 0; i < 7; i++) LEVELS.push({ y:15.2 + i*.14, r:.14, h:.09, tag:'neck-mid' });
+LEVELS.forEach((v, i) => {
+  const z = spineZ(v.y);
+  const body = new THREE.Mesh(new THREE.CylinderGeometry(v.r, v.r*1.05, v.h, 18)); body.position.set(0, v.y, z); add(body, [v.tag]);
+  const next = LEVELS[i+1];
+  if (next){ const g = next.y - v.y - (v.h + next.h)/2; if (g > .02){ const d = new THREE.Mesh(new THREE.CylinderGeometry(v.r*.95, v.r*.95, g, 16)); d.position.set(0, v.y + v.h/2 + g/2, z); add(d, [v.tag], 'cart'); } }
+  capsule([0, v.y, z - v.r*.9], [0, v.y - v.h*1.4, z - v.r*.9 - v.r*1.5], v.r*.22, [v.tag]);     // spinous process
+  for (const s of [-1, 1]) capsule([v.r*.7*s, v.y, z - v.r*.55], [v.r*1.9*s, v.y + .02, z - v.r*.95], v.r*.16, [v.tag]);   // transverse processes
+});
+
+// ---- thorax: sternum, 12 pairs of ribs, costal cartilage
+const STZ = .74;
+capsule([0,14.98,STZ - .04],[0,14.5,STZ], .14, ['ribs']);                   // manubrium
+capsule([0,14.38,STZ],[0,12.95,STZ - .02], .11, ['ribs']);                   // body
+capsule([0,12.85,STZ - .03],[0,12.6,STZ - .08], .05, ['ribs'], 'cart');      // xiphoid
+// each rib follows an ellipse round the chest: from its vertebra (back), out to the side, forward and down to the front,
+// then costal cartilage carries it to the sternum (ribs 1–7) or to the cartilage above (8–10); 11–12 float
+const RX = [.66,.9,1.04,1.13,1.19,1.22,1.23,1.21,1.15,1.05,.9,.75];
+for (let k = 0; k < 12; k++){
+  const y0 = LEVELS[5 + k].y, zBack = spineZ(y0) - .02, rx = RX[k];
+  const rz = (STZ - zBack)/2, zc = (STZ + zBack)/2, drop = .5 + k*.045;
+  const at = (phi, dy) => [rx*Math.sin(phi), y0 - dy, zc - rz*Math.cos(phi)];
+  const PHI_END = k >= 10 ? 1.75 : 2.3;
+  for (const sg of [-1, 1]){
+    const bone = [];
+    for (let i = 0; i <= 6; i++){ const phi = .22 + (PHI_END - .22)*i/6; const p = at(phi, drop*Math.pow(phi/2.3, 1.3)); p[0] *= sg; bone.push(p); }
+    tube(bone, k < 2 ? .055 : .046, ['ribs']);
+    if (k >= 10) continue;
+    const start = bone[6], endY = k < 7 ? 14.78 - k*.27 : 13.05 - (k - 7)*.12;
+    const cart = [start];
+    for (let i = 1; i <= 4; i++){
+      const t = i/4, phi = 2.3 + (k < 7 ? Math.PI - .2 - 2.3 : .55)*t;
+      const p = at(phi, 0); p[0] *= sg; p[1] = start[1] + (endY - start[1])*Math.pow(t, k < 7 ? 1.4 : .8); cart.push(p);
+    }
+    tube(cart, .038, ['ribs'], 'cart');
+  }
+}
+
+// ---- shoulder girdle and arms (anatomical position: arms by the side, palms forward)
+for (const s of [-1, 1]){
+  const side = s < 0 ? 'right' : 'left', T = j => [`${j}-${side}`];
+  tube([[.15*s,14.86,.68],[.75*s,14.97,.74],[1.35*s,14.96,.38],[1.76*s,14.9,.04]], .065, T('shoulder'));   // clavicle (S-shaped)
+  // scapula: flat triangle on the back of the ribs, with its spine, acromion and glenoid
+  const sh = new THREE.Shape([new THREE.Vector2(.55, 14.75), new THREE.Vector2(1.62, 14.55), new THREE.Vector2(1.08, 12.95)]);
+  const scap = new THREE.Mesh(new THREE.ExtrudeGeometry(sh, { depth:.05, bevelEnabled:true, bevelSize:.04, bevelThickness:.03, bevelSegments:2 }));
+  scap.scale.x = s; scap.position.z = -1.0; scap.rotation.y = s * -.18; add(scap, T('shoulder')); scap.material.side = THREE.DoubleSide;
+  capsule([.75*s,14.35,-1.1],[1.66*s,14.72,-.75], .05, T('shoulder'));          // spine of scapula
+  ellip([1.8*s,14.78,-.25],[.18,.07,.22], T('shoulder'));                         // acromion
+  capsule([1.45*s,14.55,.05],[1.6*s,14.45,.32], .045, T('shoulder'));            // coracoid
+  // humerus
+  ellip([1.86*s,14.38,-.06],[.25,.26,.25], T('shoulder'));
+  ellip([1.98*s,14.28,.12],[.12,.14,.12], T('shoulder'));                         // greater tubercle
+  longBone([1.92*s,14.22,-.02],[2.14*s,11.6,0], [[0,.17],[.07,.13],[.25,.1],[.75,.1],[.92,.15],[1,.13]], [...T('shoulder'), ...T('elbow')]);
+  ellip([2.15*s,11.47,0],[.3,.11,.15], T('elbow'));                               // epicondyles
+  // forearm: ulna medial (with olecranon), radius lateral
+  ellip([2.1*s,11.52,-.16],[.1,.14,.1], T('elbow'));                              // olecranon
+  longBone([2.1*s,11.45,-.1],[2.26*s,9.12,-.06], [[0,.1],[.1,.075],[.6,.05],[.95,.045],[1,.05]], [...T('elbow'), ...T('wrist')]);
+  longBone([2.3*s,11.28,.04],[2.45*s,9.12,.08], [[0,.075],[.08,.05],[.6,.055],[.92,.1],[1,.08]], [...T('elbow'), ...T('wrist')]);
+  // hand: carpals, then metacarpals and phalanges per ray (thumb on the lateral side)
+  for (let i = 0; i < 8; i++) ellip([(2.27 + (i % 4)*.07)*s, 8.98 - Math.floor(i/4)*.12, .05], [.05,.05,.05], T('wrist'));
+  const RAYS = [{ x:2.5, z:.05, len:[.42,.24,.16,.11] }, { x:2.41, z:.06, len:[.44,.27,.17,.12] }, { x:2.32, z:.05, len:[.42,.25,.16,.11] }, { x:2.24, z:.04, len:[.38,.2,.13,.1] }];
+  for (const r of RAYS){
+    let p = [r.x*s, 8.82, r.z];
+    r.len.forEach((L, j) => { const q = [p[0] + .005*s, p[1] - L, p[2] + .03 + j*.025]; capsule(p, q, j ? .03 : .036, T('wrist')); p = q; });
+  }
+  { let p = [2.5*s, 8.9, .12]; [[.3,.08],[.22,.06],[.16,.05]].forEach(([L, dx], j) => { const q = [p[0] + dx*s, p[1] - L, p[2] + .1]; capsule(p, q, j ? .033 : .04, T('wrist')); p = q; }); }   // thumb
+}
+
+// ---- pelvis, legs and feet
+ellip([0,9.98,-.52],[.34,.52,.18], ['lowback-mid'], 'bone', [.32,0,0]);           // sacrum
+capsule([0,9.42,-.5],[0,9.2,-.34], .045, ['lowback-mid']);                          // coccyx
+for (const s of [-1, 1]){
+  const side = s < 0 ? 'right' : 'left', T = j => [`${j}-${side}`];
+  { // iliac wing: a flaring bowl, wide at the crest and narrowing down toward the hip socket
+    const g = new THREE.SphereGeometry(1, 28, 14, Math.PI*.55, Math.PI*.95, Math.PI*.5, Math.PI*.42);
+    const w = new THREE.Mesh(g); w.position.set(.42*s, 10.42, -.12); w.scale.set(.74*s, .78, .5); add(w, T('hip')).material.side = THREE.DoubleSide;
+    capsule([.62*s,9.9,-.18],[.84*s,9.28,-.02], .19, T('hip')); }      // body of the ilium, down to the hip socket
+  tube([[.33*s,10.32,-.56],[.95*s,10.52,-.35],[1.22*s,10.3,.05],[1.02*s,9.95,.36]], .065, T('hip'));   // iliac crest to ASIS
+  ellip([.86*s,9.22,0],[.27,.28,.28], T('hip'));                                     // acetabulum region
+  tube([[.85*s,9.15,.15],[.5*s,9.05,.38],[.1*s,8.95,.42]], .08, T('hip'));          // superior pubic ramus
+  tube([[.1*s,8.85,.38],[.38*s,8.62,.16],[.56*s,8.6,-.1],[.78*s,8.95,-.14]], .07, T('hip'));   // inferior ramus + ischium (obturator ring)
+  ellip([.6*s,8.58,-.16],[.12,.1,.11], T('hip'));                                    // ischial tuberosity
+  // femur: head, neck, greater trochanter, shaft, condyles
+  ellip([.88*s,9.0,0],[.22,.22,.22], T('hip'));
+  capsule([.88*s,9.0,0],[1.08*s,8.74,-.02], .12, T('hip'));
+  ellip([1.15*s,8.78,-.06],[.15,.22,.16], T('hip'));
+  longBone([1.08*s,8.66,0],[.8*s,5.22,.02], [[0,.15],[.1,.13],[.5,.115],[.85,.14],[1,.2]], [...T('hip'), ...T('knee')]);
+  ellip([.62*s,5.0,-.03],[.15,.17,.22], T('knee')); ellip([.9*s,5.0,-.03],[.15,.17,.22], T('knee'));
+  ellip([.76*s,5.02,.27],[.13,.17,.07], T('knee'));                                  // patella
+  // tibia, fibula
+  ellip([.75*s,4.78,0],[.31,.1,.25], T('knee'));                                     // tibial plateau
+  ellip([.76*s,4.45,.17],[.08,.12,.06], T('knee'));                                  // tibial tuberosity
+  longBone([.75*s,4.74,0],[.68*s,.95,.02], [[0,.18],[.07,.14],[.15,.11],[.8,.085],[.95,.12],[1,.11]], [...T('knee'), ...T('ankle')]);
+  ellip([.58*s,.85,.02],[.07,.12,.08], T('ankle'));                                  // medial malleolus
+  longBone([.98*s,4.6,-.08],[.92*s,.92,-.05], [[0,.07],[.06,.05],[.9,.042],[1,.07]], [...T('knee'), ...T('ankle')]);
+  ellip([.93*s,.82,-.04],[.07,.13,.08], T('ankle'));                                 // lateral malleolus
+  // foot: talus, calcaneus, midfoot, metatarsals, toes
+  ellip([.72*s,.6,.03],[.17,.13,.22], T('ankle'));
+  ellip([.74*s,.36,-.24],[.16,.2,.3], T('ankle'));
+  ellip([.68*s,.42,.38],[.2,.11,.16], T('ankle'));
+  const TOES = [{ x:.56, r:.065 }, { x:.67, r:.045 }, { x:.77, r:.042 }, { x:.86, r:.04 }, { x:.94, r:.038 }];
+  TOES.forEach((t, i) => {
+    const base = [t.x*s, .4 - i*.01, .5], head = [(t.x + .02*(i - 2))*s, .12, 1.12 - i*.06], tip = [(t.x + .03*(i - 2))*s, .07, (i ? 1.38 : 1.45) - i*.08];
+    capsule(base, head, t.r, T('ankle')); capsule(head, tip, t.r*.8, T('ankle'));
+  });
+}
+
+/* ------------------------------------------------------------------ hotspots, list and card */
+const hotspots = [];
+const sides = j => j.both ? ['right','left'] : ['mid'];
+const sideWord = s => s === 'mid' ? '' : s === 'right' ? 'Right' : 'Left';
+const posFor = (j, s) => new V3(s === 'mid' ? 0 : s === 'right' ? -j.pos[0] : j.pos[0], j.pos[1], j.pos[2]);
+for (const j of JOINTS) for (const s of sides(j)){
+  const el = document.createElement('button');
+  el.className = 'hs' + (j.page ? ' live' : '');
+  el.setAttribute('aria-label', `${sideWord(s)} ${j.name}${j.page ? '' : ' (coming soon)'}`.trim());
+  el.innerHTML = `<span>${sideWord(s)} ${j.name.toLowerCase()}${j.page ? '' : ' · soon'}</span>`;
+  el.addEventListener('click', e => { e.stopPropagation(); choose(j, s); });
+  el.addEventListener('pointerenter', () => hover(j, s, true));
+  el.addEventListener('pointerleave', () => hover(j, s, false));
+  const o = new CSS2DObject(el); o.position.copy(posFor(j, s)); skel.add(o);
+  hotspots.push({ j, s, el });
+}
+const regions = [...new Set(JOINTS.map(j => j.region))];
+$('jointList').innerHTML = regions.map(r => `<h3>${r}</h3>` + JOINTS.filter(j => j.region === r).map(j => `
+  <div class="jrow${j.page ? ' live' : ''}" data-id="${j.id}">
+    <i class="dot"></i><span class="nm">${j.name}</span>
+    ${j.page ? sides(j).map(s => `<button class="side" data-side="${s}">${s === 'mid' ? 'Open' : s === 'right' ? 'R' : 'L'}</button>`).join('') : '<span class="soon">coming soon</span>'}
+  </div>`).join('')).join('');
+document.querySelectorAll('.jrow').forEach(row => {
+  const j = JOINTS.find(x => x.id === row.dataset.id);
+  row.addEventListener('pointerenter', () => sides(j).forEach(s => hover(j, s, true)));
+  row.addEventListener('pointerleave', () => sides(j).forEach(s => hover(j, s, false)));
+  row.addEventListener('click', e => { const b = e.target.closest('.side'); choose(j, b ? b.dataset.side : sides(j)[0], !b); });
+});
+
+const glow = new THREE.Color();
+function hover(j, s, on){
+  (byJoint[`${j.id}-${s}`] || []).forEach(m => m.material.emissive.copy(on ? glow : new THREE.Color(0)).multiplyScalar(on ? .35 : 0));
+  hotspots.filter(h => h.j === j && h.s === s).forEach(h => h.el.classList.toggle('on', on));
+}
+function showCard(j, s){
+  const c = $('card'); c.hidden = false;
+  c.innerHTML = `<h2>${j.name}</h2>
+    <p class="clin">${j.clinical}</p>
+    ${j.page ? `<p>${j.blurb}</p>
+      <div class="go">${sides(j).map(x => `<button class="btn" data-side="${x}">${x === 'mid' ? 'Open' : `Explore ${x}`}</button>`).join('')}</div>`
+    : `<p><b>Coming soon.</b> It will cover:</p><ul>${j.plan.map(p => `<li>${p}</li>`).join('')}</ul>`}`;
+  c.querySelectorAll('.btn').forEach(b => b.onclick = () => go(j, b.dataset.side));
+  document.querySelectorAll('.jrow').forEach(r => r.classList.toggle('on', r.dataset.id === j.id));
+}
+// live joints: zoom in and open the joint page; others: show what is planned
+function choose(j, s, cardOnly = false){
+  showCard(j, s);
+  if (j.page && !cardOnly) go(j, s);
+}
+let leaving = null;
+function go(j, s){
+  if (leaving) return;
+  const url = s === 'mid' ? j.page : `${j.page}${j.page.includes('?') ? '&' : '?'}side=${s}`;
+  if (reduceMotion){ location.href = url; return; }
+  controls.autoRotate = false;
+  leaving = { t:0, t0:controls.target.clone(), t1:posFor(j, s), p0:camera.position.clone(), url };
+  const dir = camera.position.clone().sub(controls.target).normalize();
+  leaving.p1 = leaving.t1.clone().addScaledVector(dir, 4.5);
+}
+// zoom buttons and reset: short camera glides; the slow turn carries on, and reset restarts it from the front
+let glide = null;
+function glideTo(target, pos){ glide = { t:0, t0:controls.target.clone(), t1:target, p0:camera.position.clone(), p1:pos }; }
+function zoom(f){
+  const dir = camera.position.clone().sub(controls.target), d = THREE.MathUtils.clamp(dir.length()*f, controls.minDistance, controls.maxDistance);
+  glideTo(controls.target.clone(), controls.target.clone().addScaledVector(dir.normalize(), d));
+}
+function stepGlide(dt){
+  if (!glide) return;
+  glide.t = Math.min(1, glide.t + dt/.45); const e = 1 - Math.pow(1 - glide.t, 3);
+  controls.target.lerpVectors(glide.t0, glide.t1, e); camera.position.lerpVectors(glide.p0, glide.p1, e);
+  if (glide.t >= 1) glide = null;
+}
+$('zoomIn').onclick = () => zoom(.75);
+$('zoomOut').onclick = () => zoom(1.33);
+$('resetView').onclick = () => { glideTo(HOME_TARGET.clone(), new V3(0, 10.5, homeDist)); clearTimeout(resumeTimer); controls.autoRotate = !reduceMotion; };
+addEventListener('keydown', e => { if (e.key === '+' || e.key === '=') zoom(.75); else if (e.key === '-' || e.key === '_') zoom(1.33); });
+function stepLeave(dt){
+  if (!leaving) return;
+  leaving.t = Math.min(1, leaving.t + dt/.85);
+  const e = 1 - Math.pow(1 - leaving.t, 3);
+  controls.target.lerpVectors(leaving.t0, leaving.t1, e);
+  camera.position.lerpVectors(leaving.p0, leaving.p1, e);
+  if (leaving.t > .65) $('fade').classList.add('on');
+  if (leaving.t >= 1 && !leaving.done){ leaving.done = true; location.href = leaving.url; }
+}
+// coming back with the browser's back button: clear the fade
+addEventListener('pageshow', e => { if (e.persisted){ leaving = null; $('fade').classList.remove('on'); resetView(); } });
+
+/* ------------------------------------------------------------------ theme, sizing, loop */
+function readTokens(){
+  const cs = getComputedStyle(document.documentElement);
+  const bone = new THREE.Color(cs.getPropertyValue('--bone').trim());
+  const cart = bone.clone().lerp(new THREE.Color(0xbfd3e6), .45), dark = bone.clone().multiplyScalar(.32), tooth = bone.clone().lerp(new THREE.Color(0xffffff), .5);
+  skel.traverse(o => { if (o.isMesh) o.material.color.copy({ cart, dark, tooth }[o.userData.kind] || bone); });
+  glow.set(cs.getPropertyValue('--accent').trim());
+}
+function applyTheme(t){ document.documentElement.dataset.theme = t; try { localStorage.setItem('myotrek-theme', t); } catch {} readTokens(); }
+$('themeBtn').onclick = () => applyTheme(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark');
+let saved = null; try { saved = localStorage.getItem('myotrek-theme'); } catch {}
+applyTheme(saved || 'light');
+
+let homeDist = 40;
+function resize(){
+  const w = stage.clientWidth, h = stage.clientHeight;
+  renderer.setSize(w, h, false); labelRenderer.setSize(w, h);
+  camera.aspect = w / h; camera.updateProjectionMatrix();
+  homeDist = 40 * Math.max(1, .75 / camera.aspect);
+}
+function resetView(){ controls.target.copy(HOME_TARGET); camera.position.set(0, EMBED ? 9.2 : 10.5, EMBED ? homeDist*.82 : homeDist); }
+new ResizeObserver(resize).observe(stage); resize(); resetView();
+
+const clock = new THREE.Clock();
+renderer.setAnimationLoop(() => {
+  const dt = Math.min(clock.getDelta(), .05);
+  stepLeave(dt); stepGlide(dt);
+  if (!leaving) controls.update();
+  renderer.render(scene, camera); labelRenderer.render(scene, camera);
+});
+window.myotrekHome = { JOINTS, camera, controls };
+</script>
+</body>
+</html>
