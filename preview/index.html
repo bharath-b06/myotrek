@@ -56,7 +56,7 @@ img{max-width:100%; display:block}
 
 /* hero */
 .hero{position:relative; overflow:hidden; background:radial-gradient(ellipse 70% 80% at 72% 50%, var(--bg-2), var(--bg) 70%)}
-.hero .wrap{display:grid; grid-template-columns:1.05fr 1fr; gap:32px; align-items:center; min-height:min(78vh, 720px); padding-top:40px; padding-bottom:40px}
+.hero .wrap{display:grid; grid-template-columns:1fr 1.05fr; gap:32px; align-items:center; min-height:min(78vh, 720px); padding-top:40px; padding-bottom:40px}
 .eyebrow{display:inline-flex; align-items:center; gap:8px; font:700 12px/1 var(--font-body); letter-spacing:.1em; text-transform:uppercase; color:var(--accent); background:var(--accent-soft); padding:7px 12px; border-radius:999px}
 h1{font:800 clamp(40px, 6vw, 72px)/1.02 var(--font-display); letter-spacing:-.025em; margin:18px 0 18px; text-wrap:balance}
 h1 em{font-style:normal; color:var(--accent)}
@@ -65,7 +65,9 @@ h1 em{font-style:normal; color:var(--accent)}
 .levels{margin-top:22px; display:flex; flex-wrap:wrap; gap:8px; align-items:center; color:var(--fg-3); font-size:14px}
 .chip{display:inline-flex; align-items:center; gap:6px; padding:4px 10px; border-radius:999px; background:var(--panel); border:1px solid var(--line); font-size:13px; color:var(--fg-2)}
 .chip i{width:9px; height:9px; border-radius:50%}
-.stage3d{position:relative; height:min(78vh, 700px); min-height:440px}
+.stage3d{position:relative; display:block; height:min(84vh, 780px); min-height:480px; cursor:pointer; border-radius:24px; color:inherit; text-decoration:none}
+.stage3d .open3d{position:absolute; left:50%; bottom:14px; transform:translateX(-50%); display:inline-flex; align-items:center; gap:6px; padding:8px 14px; border-radius:999px; background:var(--panel); border:1px solid var(--line); box-shadow:var(--shadow); font-weight:700; font-size:14px; opacity:.85; transition:opacity .2s, transform .2s}
+.stage3d:hover .open3d,.stage3d:focus-visible .open3d{opacity:1; transform:translateX(-50%) translateY(-2px); border-color:var(--accent); color:var(--accent)}
 .stage3d iframe{position:absolute; inset:0; width:100%; height:100%; border:0; pointer-events:none}
 .stage3d .glow{position:absolute; inset:12% 18%; border-radius:50%; background:radial-gradient(circle, var(--accent-soft), transparent 70%); filter:blur(20px)}
 .shot{border-radius:16px; overflow:hidden; border:1px solid var(--line); box-shadow:var(--shadow); background:var(--panel)}
@@ -163,7 +165,7 @@ footer .wrap{display:flex; flex-wrap:wrap; gap:16px; justify-content:space-betwe
       <span class="chip"><i style="background:var(--iso)"></i>Holding</span>
     </div>
   </div>
-  <div class="stage3d" aria-hidden="true"><div class="glow"></div><iframe src="body.html?embed=1" title="Turning 3D skeleton" loading="eager" tabindex="-1"></iframe></div>
+  <a class="stage3d" href="body.html" aria-label="Open the full 3D skeleton"><div class="glow"></div><iframe src="body.html?embed=1" title="Turning 3D skeleton" loading="eager" tabindex="-1" aria-hidden="true"></iframe><span class="open3d">Explore in 3D <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></a>
 </div></section>
 <section id="features"><div class="wrap">
   <span class="kicker">Features</span>
@@ -214,19 +216,19 @@ footer .wrap{display:flex; flex-wrap:wrap; gap:16px; justify-content:space-betwe
 </main>
 <footer><div class="wrap">
   <span>Myotrek · preview</span>
-  <span class="switch">Comparing layouts: this is version A (live 3D). <a href="welcome-b.html">See the other version</a></span>
 </div></footer>
 <script>
 // light / dark, shared with the rest of the app
 function applyTheme(t){ document.documentElement.dataset.theme = t; try { localStorage.setItem('myotrek-theme', t); } catch {} }
 document.getElementById('themeBtn').onclick = () => {
   applyTheme(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark');
-  const f = document.querySelector('.stage3d iframe'); if (f) f.src = f.src;      // the 3D backdrop re-reads the theme
+  const f = document.querySelector('.stage3d iframe');
+  if (f) f.contentWindow.postMessage({ theme: document.documentElement.dataset.theme }, location.origin === 'null' ? '*' : location.origin);
 };
 let saved = null; try { saved = localStorage.getItem('myotrek-theme'); } catch {}
 applyTheme(saved || 'light');
 // keep the 3D backdrop in the same theme
 const f = document.querySelector('.stage3d iframe');
-if (f) f.addEventListener('load', () => { try { f.contentWindow.document.documentElement.dataset.theme = document.documentElement.dataset.theme; } catch {} });
+if (f) f.addEventListener('load', () => f.contentWindow.postMessage({ theme: document.documentElement.dataset.theme }, location.origin === 'null' ? '*' : location.origin));
 </script>
 </body></html>

@@ -86,6 +86,7 @@ button{font:inherit; color:inherit}
 .hs:hover span,.hs.on span,.hs:focus-visible span{opacity:1}
 .hs.on{transform:scale(1.25)}
 @keyframes pulse{from{transform:scale(.6); opacity:.7} to{transform:scale(1.5); opacity:0}}
+.embed body{overflow:hidden} .embed .app{height:100%; min-height:0} .embed #stage{position:absolute; inset:0; height:auto; min-height:0}
 @media (prefers-reduced-motion: reduce){ .hs.live::after{animation:none} .fade{transition:none} }
 
 /* ?embed=1: just the turning skeleton, used as the landing page backdrop */
@@ -140,7 +141,7 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
 
-const V3 = THREE.Vector3;
+const V3 = THREE.Vector3, DEG2 = Math.PI/180;
 const EMBED = new URLSearchParams(location.search).has('embed');
 if (EMBED) document.documentElement.classList.add('embed');
 const $ = id => document.getElementById(id);
@@ -453,6 +454,7 @@ function readTokens(){
   glow.set(cs.getPropertyValue('--accent').trim());
 }
 function applyTheme(t){ document.documentElement.dataset.theme = t; try { localStorage.setItem('myotrek-theme', t); } catch {} readTokens(); }
+addEventListener('message', e => { if (e.origin === location.origin && (e.data?.theme === 'light' || e.data?.theme === 'dark')) applyTheme(e.data.theme); });
 $('themeBtn').onclick = () => applyTheme(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark');
 let saved = null; try { saved = localStorage.getItem('myotrek-theme'); } catch {}
 applyTheme(saved || 'light');
@@ -463,8 +465,13 @@ function resize(){
   renderer.setSize(w, h, false); labelRenderer.setSize(w, h);
   camera.aspect = w / h; camera.updateProjectionMatrix();
   homeDist = 40 * Math.max(1, .75 / camera.aspect);
+  if (EMBED && typeof embedDist === 'function'){ const d = camera.position.clone().sub(controls.target); if (d.lengthSq() > 0) camera.position.copy(controls.target).addScaledVector(d.normalize(), embedDist()); }
 }
-function resetView(){ controls.target.copy(HOME_TARGET); camera.position.set(0, EMBED ? 9.2 : 10.5, EMBED ? homeDist*.82 : homeDist); }
+const embedDist = () => { const t = Math.tan(camera.fov*DEG2/2); return Math.max(20.8/(2*t), 7/(2*t*camera.aspect)); };
+function resetView(){
+  if (EMBED){ controls.target.set(0, 8.5, 0); camera.position.set(0, 8.5, embedDist()); return; }
+  controls.target.copy(HOME_TARGET); camera.position.set(0, 10.5, homeDist);
+}
 new ResizeObserver(resize).observe(stage); resize(); resetView();
 
 const clock = new THREE.Clock();
