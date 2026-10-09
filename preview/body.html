@@ -193,7 +193,23 @@ const camera = new THREE.PerspectiveCamera(30, 1, .1, 200);
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true; controls.enablePan = false; controls.minDistance = 6; controls.maxDistance = 60;
 controls.autoRotate = !reduceMotion; controls.autoRotateSpeed = EMBED ? 1.1 : .6;
-if (EMBED){ controls.enabled = false; controls.enableZoom = false; }
+if (EMBED){
+  // landing backdrop: drag sideways to turn it, nothing else; a plain click opens the full skeleton page
+  controls.enableZoom = false; controls.enablePan = false; controls.minPolarAngle = controls.maxPolarAngle = Math.PI/2;
+  renderer.domElement.style.touchAction = 'pan-y';          // vertical swipes still scroll the landing page on phones
+  renderer.domElement.style.cursor = 'grab';
+  let down = null, moved = 0;
+  renderer.domElement.addEventListener('pointerdown', e => { down = [e.screenX, e.screenY]; moved = 0; renderer.domElement.style.cursor = 'grabbing'; });
+  renderer.domElement.addEventListener('pointermove', e => { if (down) moved = Math.max(moved, Math.hypot(e.screenX - down[0], e.screenY - down[1])); });
+  renderer.domElement.addEventListener('pointerup', () => { renderer.domElement.style.cursor = 'grab'; down = null; });
+  renderer.domElement.addEventListener('click', () => {
+    if (moved > 6) return;                                     // that was a drag, not a click
+    const url = new URL('body.html', location.href).href;
+    try { window.top.location.assign(url); } catch { location.assign(url); }
+  });
+  // mouse-wheel over the backdrop scrolls the landing page, as if the frame were not there
+  addEventListener('wheel', e => { try { window.parent.scrollBy(0, e.deltaY); } catch {} }, { passive:true });
+}
 // keep the slow turn: dragging pauses it, and it picks up again a few seconds after you let go
 let resumeTimer = null;
 controls.addEventListener('start', () => { controls.autoRotate = false; clearTimeout(resumeTimer); });
