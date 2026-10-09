@@ -1,0 +1,695 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Myotrek joint (preview)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+/* Shared rough page for every joint after the knee: one layout, each joint described by data below. */
+:root{
+  --bg:#E9EEF1; --bg-2:#F7FAFB; --panel:rgba(255,255,255,.88); --panel-solid:#FFFFFF;
+  --line:rgba(22,44,60,.11); --fg:#16222C; --fg-2:#4C5B68; --fg-3:#7C8994;
+  --accent:#0B6B70; --accent-soft:#D6EBEB; --accent-fg:#FFFFFF;
+  --con:#D9472B; --ecc:#4F55D0; --iso:#C88A10; --rest:#C49590;
+  --bone:#ECE5D5; --skin:#E6C2AC; --shadow:0 10px 30px -12px rgba(20,40,60,.25), 0 1px 2px rgba(20,40,60,.06);
+  --font-display:"Bricolage Grotesque", ui-sans-serif, system-ui, sans-serif;
+  --font-body:"Atkinson Hyperlegible", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono:"JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#0E1318; --bg-2:#1A222B; --panel:rgba(22,29,37,.9); --panel-solid:#18202A;
+  --line:rgba(255,255,255,.09); --fg:#E6ECF1; --fg-2:#A7B3BE; --fg-3:#76838F;
+  --accent:#4FC2C3; --accent-soft:rgba(79,194,195,.15); --accent-fg:#06272A;
+  --con:#FF6A4D; --ecc:#8C90FF; --iso:#F0B43C; --rest:#A97F7B;
+  --bone:#D6CEBD; --skin:#C9A28C; --shadow:0 14px 34px -14px rgba(0,0,0,.6); color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#0E1318; --bg-2:#1A222B; --panel:rgba(22,29,37,.9); --panel-solid:#18202A;
+  --line:rgba(255,255,255,.09); --fg:#E6ECF1; --fg-2:#A7B3BE; --fg-3:#76838F;
+  --accent:#4FC2C3; --accent-soft:rgba(79,194,195,.15); --accent-fg:#06272A;
+  --con:#FF6A4D; --ecc:#8C90FF; --iso:#F0B43C; --rest:#A97F7B;
+  --bone:#D6CEBD; --skin:#C9A28C; --shadow:0 14px 34px -14px rgba(0,0,0,.6); color-scheme:dark }
+
+html,body{height:100%; margin:0}
+body{background:var(--bg); color:var(--fg); font:15px/1.5 var(--font-body); overflow:hidden}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+button,input{font:inherit; color:inherit}
+:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
+.app{position:relative; height:100%; background:radial-gradient(ellipse 60% 70% at 52% 46%, var(--bg-2), var(--bg) 75%)}
+#stage{position:absolute; inset:0}
+#stage canvas{display:block; width:100%; height:100%; touch-action:none}
+.labels{position:absolute; inset:0; pointer-events:none; z-index:1}
+
+.top{position:absolute; top:16px; left:16px; right:16px; display:flex; align-items:center; justify-content:space-between; gap:12px; pointer-events:none; z-index:5}
+.top > *{pointer-events:auto}
+.brand{display:flex; align-items:center; gap:10px}
+.brand b{font:700 21px/1 var(--font-display)}
+.crumb{color:var(--fg-3); font-size:13px}
+.crumb strong{color:var(--fg-2)}
+.backlink{display:inline-flex; align-items:center; gap:4px; padding:6px 11px; border-radius:999px; border:1px solid var(--line); background:var(--panel); color:var(--fg); font-weight:700; font-size:13px; text-decoration:none}
+.backlink:hover{border-color:var(--accent); color:var(--accent)}
+.draft{font:700 11px/1 var(--font-body); letter-spacing:.06em; text-transform:uppercase; color:var(--fg-3); background:var(--accent-soft); padding:4px 8px; border-radius:999px}
+.top-right{display:flex; gap:8px; align-items:center}
+.seg{display:inline-flex; background:var(--panel); border:1px solid var(--line); border-radius:999px; padding:3px}
+.seg button{border:0; background:transparent; padding:6px 12px; border-radius:999px; cursor:pointer; font-size:13px; color:var(--fg-2)}
+.seg button[aria-pressed="true"]{background:var(--accent); color:var(--accent-fg); font-weight:700}
+.seg.block{display:flex; border-radius:10px}
+.seg.block button{flex:1; border-radius:8px; padding:7px 6px; display:flex; flex-direction:column; align-items:center; gap:1px}
+.seg.block small{font-size:11px; opacity:.8}
+.iconbtn{width:36px; height:36px; display:grid; place-items:center; border-radius:999px; border:1px solid var(--line); background:var(--panel); cursor:pointer}
+.iconbtn svg{width:18px; height:18px}
+
+.panel{background:var(--panel); border:1px solid var(--line); border-radius:16px; box-shadow:var(--shadow)}
+.controls{position:absolute; left:16px; top:72px; width:290px; max-height:calc(100% - 88px); overflow:auto; padding:16px; display:flex; flex-direction:column; gap:18px; z-index:4}
+.info{position:absolute; right:16px; top:72px; bottom:16px; width:340px; overflow:auto; padding:14px 16px; z-index:4; display:flex; flex-direction:column; gap:12px}
+h3{margin:0 0 8px; font:700 11px/1.2 var(--font-body); letter-spacing:.09em; text-transform:uppercase; color:var(--fg-3)}
+.readout{display:flex; align-items:baseline; gap:8px; margin-bottom:6px; flex-wrap:wrap}
+.readout .num{font:500 40px/1 var(--font-mono); font-variant-numeric:tabular-nums}
+.readout .deg{font:500 22px/1 var(--font-mono); color:var(--fg-3); margin-left:-6px}
+.pill{display:inline-flex; align-items:center; gap:6px; padding:3px 9px; border-radius:999px; font-size:12px; font-weight:700; background:var(--accent-soft); white-space:nowrap}
+.pill i{width:8px; height:8px; border-radius:50%; background:var(--fg-3)}
+input[type=range]{width:100%; accent-color:var(--accent); margin:6px 0 2px}
+.scale{display:flex; justify-content:space-between; font-size:11.5px; color:var(--fg-3)}
+.btnrow{display:flex; gap:6px; margin-top:10px}
+.btn{flex:1; border:1px solid var(--line); background:var(--panel-solid); padding:8px 6px; border-radius:10px; cursor:pointer; font-size:13.5px; font-weight:700}
+.btn:hover{border-color:var(--accent)}
+.btn[aria-pressed="true"]{background:var(--accent); color:var(--accent-fg); border-color:transparent}
+.note{font-size:12.5px; color:var(--fg-3); margin:0}
+
+.mrow{display:grid; grid-template-columns:12px 1fr auto; gap:4px 10px; align-items:center; text-align:left; padding:9px 10px; border:1px solid var(--line); border-radius:11px; background:var(--panel-solid); cursor:pointer; width:100%; margin-bottom:6px}
+.mrow:hover{border-color:var(--accent)}
+.mrow .dot{width:12px; height:12px; border-radius:50%; background:var(--rest); grid-row:span 2}
+.mrow .nm{font-weight:700; font-size:14px}
+.mrow .role{font-size:11.5px; color:var(--fg-2)}
+.mrow .st{font-size:12.5px; color:var(--fg-2)}
+.mrow .bar{grid-column:2 / 4; height:4px; border-radius:2px; background:var(--line); overflow:hidden}
+.mrow .bar span{display:block; height:100%; width:0; border-radius:2px}
+.detail h2{font:700 22px/1.15 var(--font-display); margin:0}
+.kv{display:grid; gap:8px; margin:0}
+.kv dt{font:700 11px/1.3 var(--font-body); letter-spacing:.08em; text-transform:uppercase; color:var(--fg-3)}
+.kv dd{margin:0; font-size:14px}
+.linkbtn{border:0; background:none; color:var(--accent); font-weight:700; cursor:pointer; padding:0; font-size:13px; align-self:flex-start}
+.legend{display:grid; grid-template-columns:1fr 1fr; gap:6px 12px; font-size:12.5px; color:var(--fg-2); padding-top:10px; border-top:1px solid var(--line)}
+.legend span{display:flex; align-items:center; gap:7px}
+.legend i{width:10px; height:10px; border-radius:50%}
+
+.caption{position:absolute; left:322px; right:372px; bottom:16px; display:flex; justify-content:center; z-index:6; pointer-events:none}
+.caption .panel{pointer-events:auto; height:52px; width:100%; max-width:600px; padding:0 16px; display:flex; align-items:center}
+.caption p{margin:0; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+.tag{pointer-events:auto; cursor:pointer; border:1px solid var(--line); background:var(--panel-solid); color:var(--fg); font:700 11.5px/1 var(--font-body); padding:5px 8px; border-radius:999px; white-space:nowrap; box-shadow:var(--shadow)}
+.tag.on{border-color:var(--accent); color:var(--accent)}
+.tag.dim{opacity:.35}
+
+@media (max-width: 900px){
+  body{overflow:auto}
+  .app{height:auto; min-height:100%}
+  #stage{position:relative; height:58vh; min-height:340px}
+  .crumb{display:none}
+  .controls,.info{position:static; width:auto; max-height:none; margin:0 16px 12px}
+  .caption{position:static; margin:0 16px 12px}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <div id="stage"></div>
+  <header class="top">
+    <div class="brand">
+      <a class="backlink" href="./">← Body</a>
+      <b>Myotrek</b>
+      <span class="crumb"><span id="regionTxt"></span> / <strong id="jointTxt"></strong> <span id="sideTxt"></span></span>
+      <span class="draft">Rough draft</span>
+    </div>
+    <div class="top-right">
+      <div class="seg" role="group" aria-label="Explanation level">
+        <button id="modeSimple" aria-pressed="false">Simple</button>
+        <button id="modeClinical" aria-pressed="true">Clinical</button>
+      </div>
+      <button class="iconbtn" id="themeBtn" aria-label="Switch light or dark theme" title="Light / dark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v3M12 20v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M1 12h3M20 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/></svg></button>
+    </div>
+  </header>
+
+  <aside class="controls panel" aria-label="Controls">
+    <section>
+      <h3>Exercise</h3>
+      <div class="seg block" role="group" aria-label="Exercise" id="exButtons"></div>
+    </section>
+    <section>
+      <h3 id="angleTitle">Joint angle</h3>
+      <div class="readout"><span class="num" id="angleVal">0</span><span class="deg">°</span><span class="pill" id="pill"><i></i><span>Resting</span></span></div>
+      <input type="range" id="angle" step="1" aria-label="Joint angle in degrees">
+      <div class="scale"><span id="scaleMin"></span><span id="scaleMax"></span></div>
+      <div class="btnrow">
+        <button class="btn" id="btnPos"></button>
+        <button class="btn" id="btnNeg"></button>
+        <button class="btn" id="btnLoop" aria-pressed="true">Repeat</button>
+      </div>
+    </section>
+    <p class="note">Rough first draft, following the knee's layout. Content not yet reviewed.</p>
+  </aside>
+
+  <aside class="info panel" aria-label="Muscles">
+    <div id="paneList"></div>
+    <div id="paneDetail" hidden></div>
+  </aside>
+
+  <div class="caption"><div class="panel"><p id="headTxt"></p></div></div>
+</div>
+
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+}}
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
+
+const V3 = THREE.Vector3, DEG = Math.PI / 180;
+const $ = id => document.getElementById(id);
+const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* ------------------------------------------------------------------ joint descriptions (rough drafts, unreviewed)
+   Every joint is a hinge about the z axis at the origin. The angle θ turns the distal part by -θ, so positive θ swings
+   it toward -y; muscles on the -y side ("pos") make θ bigger, muscles on the +y side ("neg") make it smaller.
+   Points and meshes carry a fraction f: 0 = fixed (proximal), 1 = moves fully with the distal part, 0.5 = half
+   (tissue wrapping round the joint, or vertebrae in the middle of a spinal segment).
+   Bones: ['cap', f, a, b, r] capsule · ['ell', f, centre, scale] ellipsoid · ['ghost', f, centre, scale] faint outline.
+   Exercise rot turns the whole joint in space (degrees); gravity on the load decides which group works.     */
+const caps = (f, list, r) => list.map(([a, b]) => ['cap', f, a, b, r]);
+const JOINTS = {
+  wrist: {
+    name:'Wrist', region:'Upper limb', paired:true, range:[-60,75], scale:[['bent back','extension'],['bent forward','flexion']],
+    moves:{ pos:['Bending the palm in','Flexion'], neg:['Bending back','Extension'] },
+    groups:{ pos:['Palm side of forearm','Wrist flexors'], neg:['Back of forearm','Wrist extensors'] },
+    load:{ at:[1.0,0,0], kind:'dumbbell' }, view:[.25,.25,1],
+    bones:[
+      ['cap',0,[-2.6,0,.12],[-.2,0,.13],.085], ['ell',0,[-.13,0,.13],[.1,.12,.16]],
+      ['cap',0,[-2.6,0,-.14],[-.24,0,-.14],.07], ['ell',0,[-.17,0,-.16],[.08,.08,.08]],
+      ['ghost',0,[-1.5,0,0],[1.5,.34,.44]],
+      ['ell',1,[.22,0,0],[.22,.12,.32]],
+      ...[.2,.07,-.07,-.2].flatMap(z => [['cap',1,[.45,0,z],[1.25,0,z*1.05],.045], ['cap',1,[1.32,0,z],[1.85,-.08,z*1.05],.035]]),
+      ['cap',1,[.4,-.08,.32],[.9,-.2,.45],.05], ['cap',1,[.95,-.22,.47],[1.25,-.3,.5],.04],
+      ['ghost',1,[1.0,0,0],[1.05,.15,.46]],
+    ],
+    muscles:[
+      { id:'fcr', name:'Flexor carpi radialis', short:'FCR', group:'pos', plain:'Runs down the palm side of the forearm and bends the wrist.',
+        origin:'Medial epicondyle (common flexor origin)', insertion:'Bases of the 2nd and 3rd metacarpals', nerve:'Median nerve (C6–C7)', action:'Wrist flexion, radial deviation',
+        tubes:[{ pts:[[0,-2.5,-.15,.05],[0,-1.2,-.22,.08],[.5,0,-.16,.08],[1,.5,-.1,.1]], r:.09 }], label:.3 },
+      { id:'fcu', name:'Flexor carpi ulnaris', short:'FCU', group:'pos', plain:'On the little-finger side of the palm-side forearm. Bends the wrist.',
+        origin:'Medial epicondyle and olecranon', insertion:'Pisiform, hamate, 5th metacarpal', nerve:'Ulnar nerve (C7–T1)', action:'Wrist flexion, ulnar deviation',
+        tubes:[{ pts:[[0,-2.5,-.12,-.22],[0,-1.2,-.2,-.2],[.5,0,-.15,-.16],[1,.35,-.1,-.24]], r:.09 }], label:.45 },
+      { id:'fds', name:'Flexor digitorum superficialis', short:'Finger flexors', group:'pos', f:.6, plain:'Bends the fingers and helps bend the wrist.',
+        origin:'Medial epicondyle, coronoid process, radius', insertion:'Middle phalanges of fingers 2–5', nerve:'Median nerve (C7–T1)', action:'Finger flexion; assists wrist flexion',
+        tubes:[{ pts:[[0,-2.4,-.2,-.05],[0,-1.1,-.28,-.04],[.5,0,-.2,0],[1,.8,-.1,0]], r:.1 }], label:.2 },
+      { id:'ecr', name:'Extensor carpi radialis longus & brevis', short:'ECRL/B', group:'neg', plain:'On the thumb side of the back of the forearm. Lifts the wrist back.',
+        origin:'Lateral supracondylar ridge and lateral epicondyle', insertion:'Bases of the 2nd and 3rd metacarpals', nerve:'Radial nerve / PIN (C6–C7)', action:'Wrist extension, radial deviation',
+        tubes:[{ pts:[[0,-2.6,.14,.2],[0,-1.2,.2,.18],[.5,0,.16,.14],[1,.5,.1,.12]], r:.09 }], label:.3 },
+      { id:'ecu', name:'Extensor carpi ulnaris', short:'ECU', group:'neg', plain:'On the little-finger side of the back of the forearm. Lifts the wrist back.',
+        origin:'Lateral epicondyle and posterior ulna', insertion:'Base of the 5th metacarpal', nerve:'Posterior interosseous nerve (C7–C8)', action:'Wrist extension, ulnar deviation',
+        tubes:[{ pts:[[0,-2.5,.14,-.2],[0,-1.2,.18,-.2],[.5,0,.15,-.17],[1,.4,.1,-.22]], r:.08 }], label:.45 },
+      { id:'edc', name:'Extensor digitorum', short:'Finger extensors', group:'neg', f:.6, plain:'Straightens the fingers and helps lift the wrist.',
+        origin:'Lateral epicondyle (common extensor origin)', insertion:'Extensor expansions of fingers 2–5', nerve:'Posterior interosseous nerve (C7–C8)', action:'Finger extension; assists wrist extension',
+        tubes:[{ pts:[[0,-2.5,.2,0],[0,-1.1,.26,0],[.5,0,.18,0],[1,.8,.1,0]], r:.09 }], label:.2 },
+    ],
+    exercises:{
+      curl:{ name:'Wrist curl', sub:'palm up · flexors', rot:180, loop:[-40,65], target:[.7,0,0], dist:10 },
+      rev:{ name:'Reverse wrist curl', sub:'palm down · extensors', rot:0, loop:[45,-45], target:[-.7,0,0], dist:10 },
+    },
+  },
+  shoulder: {
+    name:'Shoulder', region:'Upper limb', paired:true, range:[-50,170], scale:[['arm back','extension'],['arm up','flexion']],
+    moves:{ pos:['Raising the arm forward','Flexion'], neg:['Bringing the arm back','Extension'] },
+    groups:{ pos:['Front of shoulder','Shoulder flexors'], neg:['Back of shoulder','Shoulder extensors'] },
+    load:{ at:[6.1,0,0], kind:'dumbbell' }, view:[.35,.2,1],
+    bones:[
+      ['cap',0,[-.15,-.15,0],[-.1,-.7,-1.65],.065], ['ell',0,[-.25,.05,.05],[.08,.25,.2]], ['ell',0,[0,0,-.2],[.22,.2,.08]],
+      ['ell',0,[.9,.55,-.85],[.95,.06,.5]], ['cap',0,[-.15,.3,0],[.4,.65,-1.2],.05],
+      ['ghost',0,[1.9,0,-1.9],[2.3,1.05,1.35]], ['ghost',0,[-2.4,-.2,-1.9],[.9,.85,.75]],
+      ['ell',1,[0,0,0],[.26,.26,.26]], ['cap',1,[.25,0,.02],[3.0,0,0],.13], ['ell',1,[3.1,0,0],[.12,.15,.3]],
+      ['cap',1,[3.25,0,0],[5.7,-.05,0],.1], ['ell',1,[6.1,-.05,0],[.45,.12,.3]],
+    ],
+    muscles:[
+      { id:'adelt', name:'Anterior deltoid', short:'Front deltoid', group:'pos', plain:'The front of the shoulder cap. Lifts the arm forward.',
+        origin:'Lateral third of the clavicle', insertion:'Deltoid tuberosity of the humerus', nerve:'Axillary nerve (C5–C6)', action:'Shoulder flexion, internal rotation',
+        tubes:[{ pts:[[0,-.3,-.45,-.25],[0,.05,-.42,.15],[1,.7,-.22,.2],[1,1.4,-.05,.17]], r:.17 }], label:.4 },
+      { id:'pec', name:'Pectoralis major (clavicular head)', short:'Pec major', group:'pos', f:.6, plain:'The chest muscle. Its upper part helps lift the arm forward.',
+        origin:'Medial clavicle, sternum', insertion:'Lateral lip of the bicipital groove', nerve:'Medial and lateral pectoral nerves (C5–T1)', action:'Flexion (clavicular head), adduction, internal rotation',
+        tubes:[{ pts:[[0,.6,-1.0,-1.7],[0,.4,-.75,-.8],[1,.45,-.25,0],[1,.75,-.12,.05]], r:.2 }], label:.35 },
+      { id:'cb', name:'Coracobrachialis', short:'Coracobrachialis', group:'pos', f:.5, plain:'A small muscle on the inner upper arm that helps lift it forward.',
+        origin:'Coracoid process', insertion:'Medial humeral shaft', nerve:'Musculocutaneous nerve (C5–C7)', action:'Flexion and adduction',
+        tubes:[{ pts:[[0,.05,-.45,-.3],[1,.6,-.2,-.1],[1,1.4,-.08,-.08]], r:.08 }], label:.6 },
+      { id:'pdelt', name:'Posterior deltoid', short:'Rear deltoid', group:'neg', f:.8, plain:'The back of the shoulder cap. Takes the arm back.',
+        origin:'Spine of the scapula', insertion:'Deltoid tuberosity', nerve:'Axillary nerve (C5–C6)', action:'Shoulder extension, external rotation',
+        tubes:[{ pts:[[0,-.15,.45,-.3],[0,.15,.42,.15],[1,.7,.22,.2],[1,1.4,.05,.17]], r:.16 }], label:.4 },
+      { id:'lat', name:'Latissimus dorsi', short:'Lats', group:'neg', plain:'The broad back muscle. Pulls the arm down and back.',
+        origin:'Spinous processes T7–L5, thoracolumbar fascia, iliac crest, lower ribs', insertion:'Floor of the bicipital groove', nerve:'Thoracodorsal nerve (C6–C8)', action:'Extension, adduction, internal rotation',
+        tubes:[{ pts:[[0,3.3,.8,-1.6],[0,1.8,.75,-.9],[1,.8,.15,-.15],[1,.75,-.05,-.08]], r:.22 }], label:.3 },
+      { id:'tmaj', name:'Teres major', short:'Teres major', group:'neg', f:.7, plain:'Runs from the shoulder blade to the arm and helps take it back.',
+        origin:'Inferior angle of the scapula', insertion:'Medial lip of the bicipital groove', nerve:'Lower subscapular nerve (C5–C6)', action:'Extension, adduction, internal rotation',
+        tubes:[{ pts:[[0,1.45,.6,-.95],[0,.9,.35,-.4],[1,.75,0,-.1]], r:.12 }], label:.4 },
+    ],
+    exercises:{
+      raise:{ name:'Front raise', sub:'standing · flexors', rot:-90, loop:[4,95], target:[-1.2,-2.4,0], dist:19 },
+      pull:{ name:'Lying pullover', sub:'on your back · extensors', rot:180, loop:[95,165], target:[1.4,1.6,0], dist:19 },
+    },
+  },
+  hip: {
+    name:'Hip', region:'Lower limb', paired:true, range:[-25,120], scale:[['leg back','extension'],['leg up','flexion']],
+    moves:{ pos:['Lifting the leg forward','Flexion'], neg:['Taking the leg back','Extension'] },
+    groups:{ pos:['Front of hip','Hip flexors'], neg:['Back of hip','Hip extensors'] },
+    load:{ at:[7.9,0,.05], kind:'cuff' }, view:[.3,.25,1],
+    bones:[
+      ['ell',0,[-1.1,.05,-.55],[.85,.6,.12]], ['ell',0,[0,0,-.15],[.3,.3,.15]],
+      ['cap',0,[.15,-.35,-.25],[.25,-.55,-1.0],.09], ['cap',0,[.15,.25,-.3],[.65,.45,-.45],.11],
+      ['ell',0,[-.9,.75,-1.6],[.8,.25,.4]], ['cap',0,[-1.9,.6,-1.7],[-3.2,.5,-1.7],.25], ['ghost',0,[-.8,0,-1.4],[1.5,1.0,1.7]],
+      ['ell',1,[0,0,0],[.22,.22,.22]], ['cap',1,[0,0,0],[.35,0,.3],.12], ['ell',1,[.25,.05,.45],[.25,.15,.15]],
+      ['cap',1,[.4,0,.3],[4.2,0,.05],.15], ['ell',1,[4.35,0,.05],[.2,.3,.4]], ['ell',1,[4.3,-.33,.05],[.18,.06,.13]],
+      ['cap',1,[4.55,0,.05],[8.3,0,.05],.14], ['ell',1,[8.6,-.55,.05],[.15,.75,.3]],
+    ],
+    muscles:[
+      { id:'ilio', name:'Iliopsoas', short:'Iliopsoas', group:'pos', plain:'Deep hip flexor from the spine and pelvis to the thigh bone. Lifts the leg forward.',
+        origin:'Psoas: T12–L5 vertebrae; iliacus: iliac fossa', insertion:'Lesser trochanter of the femur', nerve:'Femoral nerve and L1–L3 ventral rami', action:'Hip flexion',
+        tubes:[{ pts:[[0,-2.4,.1,-1.3],[0,-.6,-.35,-.75],[.5,.05,-.42,-.3],[1,.65,-.08,.1]], r:.2 }], label:.3 },
+      { id:'rf', name:'Rectus femoris', short:'Rectus femoris', group:'pos', f:.7, plain:'The part of the quadriceps that also crosses the hip, so it helps lift the leg.',
+        origin:'Anterior inferior iliac spine', insertion:'Tibial tuberosity via the patella', nerve:'Femoral nerve (L2–L4)', action:'Hip flexion, knee extension',
+        tubes:[{ pts:[[0,-.55,-.55,-.15],[.5,.4,-.45,.1],[1,2.4,-.38,.1],[1,4.25,-.35,.05]], r:.2 }], label:.4 },
+      { id:'gmax', name:'Gluteus maximus', short:'Glute max', group:'neg', plain:'The big buttock muscle. Takes the leg back and powers getting up.',
+        origin:'Posterior ilium, sacrum, coccyx', insertion:'Gluteal tuberosity and iliotibial band', nerve:'Inferior gluteal nerve (L5–S2)', action:'Hip extension, external rotation',
+        tubes:[{ pts:[[0,-.9,.85,-1.2],[0,-.1,.75,-.3],[.5,.35,.5,.25],[1,.9,.15,.35]], r:.3 }], label:.4 },
+      { id:'hams', name:'Hamstrings', short:'Hamstrings', group:'neg', f:.8, plain:'The back of the thigh. They also take the leg back at the hip.',
+        origin:'Ischial tuberosity', insertion:'Fibular head and medial tibia', nerve:'Sciatic nerve (L5–S2)', action:'Hip extension, knee flexion',
+        tubes:[{ pts:[[0,.55,.45,-.45],[1,2.4,.38,0],[1,4.6,.2,.05]], r:.2 }], label:.5 },
+    ],
+    exercises:{
+      slr:{ name:'Straight leg raise', sub:'on your back · flexors', rot:180, loop:[0,65], target:[-2.6,1.6,0], dist:25 },
+      prone:{ name:'Prone hip extension', sub:'face down · extensors', rot:0, loop:[0,-20], target:[2.6,0,0], dist:25 },
+    },
+  },
+  ankle: {
+    name:'Ankle', region:'Lower limb', paired:true, range:[-20,50], scale:[['toes up','dorsiflexion'],['toes down','plantarflexion']],
+    moves:{ pos:['Pointing the foot down','Plantarflexion'], neg:['Pulling the foot up','Dorsiflexion'] },
+    groups:{ pos:['Calf','Plantarflexors'], neg:['Front of shin','Dorsiflexors'] },
+    load:{ at:[.4,1.4,0], kind:'none' }, view:[.35,.15,1],
+    bones:[
+      ['cap',0,[-4.2,0,-.05],[-.25,0,-.05],.14], ['cap',0,[-4.0,-.05,.3],[-.15,-.05,.3],.06],
+      ['ell',0,[-.05,0,-.22],[.12,.08,.06]], ['ell',0,[.05,-.05,.32],[.14,.08,.06]], ['ghost',0,[-2.2,0,0],[2.1,.55,.55]],
+      ['ell',1,[.15,.05,0],[.15,.22,.18]], ['ell',1,[.4,-.35,0],[.22,.32,.2]], ['ell',1,[.3,.55,0],[.13,.3,.3]],
+      ...[-.25,-.12,0,.12,.24].flatMap(z => [['cap',1,[.35,.75,z],[.55,1.6,z*1.2],.05], ['cap',1,[.56,1.66,z*1.2],[.6,2.0,z*1.25],.04]]),
+      ['ghost',1,[.35,.7,0],[.25,1.3,.45]],
+    ],
+    muscles:[
+      { id:'gas', name:'Gastrocnemius', short:'Gastrocnemius', group:'pos', plain:'The calf muscle. Points the foot and lifts you onto your toes.',
+        origin:'Medial and lateral femoral condyles', insertion:'Calcaneus via the Achilles tendon', nerve:'Tibial nerve (S1–S2)', action:'Plantarflexion; assists knee flexion',
+        tubes:[{ pts:[[0,-4.0,-.3,.18],[0,-2.6,-.55,.05],[0,-.9,-.35,0],[1,.35,-.62,0]], r:.28 }], label:.3 },
+      { id:'sol', name:'Soleus', short:'Soleus', group:'pos', f:.8, plain:'Under the gastrocnemius. A steady worker for standing and walking.',
+        origin:'Soleal line of the tibia, posterior fibula', insertion:'Calcaneus via the Achilles tendon', nerve:'Tibial nerve (S1–S2)', action:'Plantarflexion',
+        tubes:[{ pts:[[0,-3.2,-.15,0],[0,-1.8,-.45,0],[1,.35,-.62,0]], r:.24 }], label:.5 },
+      { id:'ta', name:'Tibialis anterior', short:'Tibialis anterior', group:'neg', plain:'Down the front of the shin. Lifts the foot up.',
+        origin:'Lateral tibia and interosseous membrane', insertion:'Medial cuneiform, base of 1st metatarsal', nerve:'Deep fibular nerve (L4–L5)', action:'Dorsiflexion, inversion',
+        tubes:[{ pts:[[0,-3.8,.22,.12],[0,-1.5,.3,.05],[.5,.05,.32,-.05],[1,.3,.6,-.2]], r:.14 }], label:.35 },
+      { id:'edl', name:'Extensor digitorum longus', short:'Toe extensors', group:'neg', f:.5, plain:'Lifts the toes and helps lift the foot.',
+        origin:'Lateral tibial condyle, fibula', insertion:'Toes 2–5', nerve:'Deep fibular nerve (L5–S1)', action:'Toe extension, assists dorsiflexion',
+        tubes:[{ pts:[[0,-3.8,.15,.3],[0,-1.5,.25,.25],[.5,.05,.3,.15],[1,.45,1.5,.1]], r:.08 }], label:.45 },
+    ],
+    exercises:{
+      raise:{ name:'Calf raise', sub:'standing · body weight', rot:-90, pull:-1, loop:[0,40], target:[.8,1.2,0], dist:13 },
+      toe:{ name:'Toe raise', sub:'band · dorsiflexors', rot:-90, pull:1, loop:[25,-15], target:[.8,1.2,0], dist:13 },
+    },
+  },
+  neck: {
+    name:'Neck', region:'Spine', paired:false, range:[-55,55], scale:[['head back','extension'],['chin down','flexion']],
+    moves:{ pos:['Nodding forward','Flexion'], neg:['Tilting back','Extension'] },
+    groups:{ pos:['Front of neck','Neck flexors'], neg:['Back of neck','Neck extensors'] },
+    load:{ at:[2.3,0,0], kind:'none' }, view:[.35,.15,1],
+    bones:[
+      ...[-1.4,-1.1,-.8,-.5,-.2,.1,.4,.7,1.0,1.3].flatMap(x => { const f = Math.min(1, Math.max(0, (x + .5)/1.8));
+        return [['ell',f,[x,0,0],[.11,.2,.2]], ['cap',f,[x,.2,0],[x - .12,.5,0],.04]]; }),
+      ['ghost',0,[-2.5,0,0],[1.8,1.1,1.8]], ['cap',0,[-1.15,-.6,.2],[-1.0,-.3,1.6],.06], ['cap',0,[-1.15,-.6,-.2],[-1.0,-.3,-1.6],.06],
+      ['ell',1,[2.4,-.15,0],[.9,.95,.75]], ['ell',1,[2.05,-.75,0],[.5,.35,.5]], ['ell',1,[1.55,-.65,0],[.2,.4,.45]],
+    ],
+    muscles:[
+      { id:'scm', name:'Sternocleidomastoid', short:'SCM', group:'pos', plain:'The strap on each side of the neck, from behind the ear to the breastbone. Both together bend the neck forward.',
+        origin:'Manubrium and medial clavicle', insertion:'Mastoid process', nerve:'Accessory nerve (CN XI), C2–C3', action:'Bilateral: neck flexion; unilateral: side bend and rotation to the opposite side',
+        tubes:[{ pts:[[0,-1.15,-.75,.15],[.5,.4,-.5,.4],[1,1.9,.15,.55]], r:.14 }], label:.4 },
+      { id:'dnf', name:'Deep neck flexors (longus colli/capitis)', short:'Deep flexors', group:'pos', f:.8, plain:'Small muscles on the front of the spine that tuck the chin.',
+        origin:'Anterior vertebral bodies C3–T3', insertion:'Upper cervical vertebrae and occiput', nerve:'Cervical ventral rami (C1–C6)', action:'Upper-neck flexion (chin tuck), stability',
+        tubes:[{ pts:[[0,-1.2,-.28,.05],[.5,.3,-.32,.05],[1,1.5,-.32,.05]], r:.1 }], label:.5 },
+      { id:'trap', name:'Upper trapezius', short:'Upper trap', group:'neg', f:.8, plain:'From the back of the skull to the shoulder. Helps tilt the head back.',
+        origin:'Occiput, nuchal ligament', insertion:'Lateral clavicle, acromion', nerve:'Accessory nerve (CN XI)', action:'Neck extension, shoulder elevation',
+        tubes:[{ pts:[[0,-1.3,.6,.9],[.5,.4,.75,.35],[1,1.9,.75,.05]], r:.16 }], label:.4 },
+      { id:'spl', name:'Splenius capitis & semispinalis', short:'Neck extensors', group:'neg', plain:'Layers at the back of the neck that tilt the head back.',
+        origin:'Spinous processes C7–T6, nuchal ligament', insertion:'Mastoid process and occiput', nerve:'Cervical dorsal rami', action:'Neck extension',
+        tubes:[{ pts:[[0,-1.2,.5,.1],[.5,.4,.6,.15],[1,1.9,.6,.3]], r:.15 }], label:.6 },
+    ],
+    exercises:{
+      sup:{ name:'Head lift', sub:'on your back · flexors', rot:180, loop:[0,40], target:[-1,0,0], dist:12 },
+      pro:{ name:'Head lift', sub:'face down · extensors', rot:0, loop:[0,-30], target:[1,0,0], dist:12 },
+    },
+  },
+  lowback: {
+    name:'Lower back', region:'Spine', paired:false, range:[-30,70], scale:[['arched','extension'],['bent forward','flexion']],
+    moves:{ pos:['Bending forward','Flexion'], neg:['Straightening up','Extension'] },
+    groups:{ pos:['Abdominals','Trunk flexors'], neg:['Back muscles','Trunk extensors'] },
+    load:{ at:[3.0,0,0], kind:'none' }, view:[.35,.15,1],
+    bones:[
+      ['ell',0,[-1.9,.35,0],[.55,.25,.4]], ['ghost',0,[-1.9,-.2,0],[.9,1.0,1.4]],
+      ...[-1.3,-.85,-.4,.05,.5,.95,1.4].flatMap(x => { const f = Math.min(1, Math.max(0, (x + 1.3)/2.7));
+        return [['ell',f,[x,0,0],[.15,.28,.32]], ['cap',f,[x,.28,0],[x - .05,.75,0],.07]]; }),
+      ...[1.85,2.3,2.75,3.2,3.65,4.1].map(x => ['ell',1,[x,.05,0],[.1,.22,.24]]),
+      ['ghost',1,[3.2,-.6,0],[1.8,1.05,1.35]], ['ghost',1,[6.2,-.4,0],[.8,.8,.7]],
+    ],
+    muscles:[
+      { id:'ra', name:'Rectus abdominis', short:'Rectus abdominis', group:'pos', plain:'The "six-pack" down the front. Curls the trunk forward.',
+        origin:'Pubic crest and symphysis', insertion:'Xiphoid process and costal cartilages 5–7', nerve:'Thoracoabdominal nerves (T7–T12)', action:'Trunk flexion',
+        tubes:[{ pts:[[0,-1.9,-1.3,.25],[.5,0,-1.55,.25],[1,2.3,-1.4,.25]], r:.14 }, { pts:[[0,-1.9,-1.3,-.25],[.5,0,-1.55,-.25],[1,2.3,-1.4,-.25]], r:.14 }], label:.5 },
+      { id:'eo', name:'External oblique', short:'Obliques', group:'pos', f:.6, plain:'Along the sides of the waist. Helps curl and turn the trunk.',
+        origin:'External surfaces of ribs 5–12', insertion:'Iliac crest, linea alba, pubic tubercle', nerve:'Thoracoabdominal nerves (T7–T12)', action:'Trunk flexion, rotation, side bending',
+        tubes:[{ pts:[[0,-1.5,-.8,.95],[.5,.2,-1.15,.95],[1,2.2,-.8,1.05]], r:.16 }], label:.5 },
+      { id:'es', name:'Erector spinae', short:'Erector spinae', group:'neg', plain:'The long columns either side of the spine. Straighten and arch the back.',
+        origin:'Sacrum, iliac crest, lumbar spinous processes', insertion:'Ribs, vertebral processes, occiput', nerve:'Dorsal rami of spinal nerves', action:'Trunk extension, controls bending forward',
+        tubes:[{ pts:[[0,-1.9,.62,.3],[.5,0,.66,.3],[1,2.8,.6,.32]], r:.2 }, { pts:[[0,-1.9,.62,-.3],[.5,0,.66,-.3],[1,2.8,.6,-.32]], r:.2 }], label:.5 },
+      { id:'mf', name:'Multifidus', short:'Multifidus', group:'neg', f:.6, plain:'Small deep muscles hugging the spine. Keep each level steady.',
+        origin:'Sacrum and transverse processes', insertion:'Spinous processes 2–4 levels above', nerve:'Dorsal rami', action:'Segmental extension and stability',
+        tubes:[{ pts:[[0,-1.7,.45,.1],[.5,0,.5,.1],[1,1.6,.45,.1]], r:.1 }], label:.4 },
+    ],
+    exercises:{
+      ext:{ name:'Back extension', sub:'face down · extensors', rot:0, loop:[40,-10], target:[2,0,0], dist:17 },
+      curl:{ name:'Curl-up', sub:'on your back · flexors', rot:180, loop:[0,35], target:[-2,0,0], dist:17 },
+    },
+  },
+};
+
+/* ------------------------------------------------------------------ setup */
+const params = new URLSearchParams(location.search);
+const JID = JOINTS[params.get('j')] ? params.get('j') : 'wrist', J = JOINTS[JID];
+const SIDE = J.paired ? (params.get('side') === 'left' ? 'left' : 'right') : null;
+document.title = `Myotrek ${J.name} (preview)`;
+$('regionTxt').textContent = J.region; $('jointTxt').textContent = J.name; $('sideTxt').textContent = SIDE ? `(${SIDE})` : '';
+const EXK = Object.keys(J.exercises);
+const [MIN, MAX] = J.range;
+const state = { theta:0, goal:0, vel:0, anim:null, loop:true, loopDir:1, hold:0, ex:EXK[0], rot:J.exercises[EXK[0]].rot,
+  mode:'clinical', phase:'rest', workGroup:'pos', workType:'con', demand:0, selected:null };
+
+const stage = $('stage');
+const renderer = new THREE.WebGLRenderer({ antialias:true, alpha:true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2)); renderer.toneMapping = THREE.ACESFilmicToneMapping;
+stage.appendChild(renderer.domElement);
+const labelRenderer = new CSS2DRenderer(); labelRenderer.domElement.className = 'labels'; stage.appendChild(labelRenderer.domElement);
+const scene = new THREE.Scene();
+scene.environment = new THREE.PMREMGenerator(renderer).fromScene(new RoomEnvironment(renderer), .04).texture;
+scene.add(new THREE.HemisphereLight(0xffffff, 0x9aa8b2, .9));
+const zs = SIDE === 'left' ? -1 : 1;
+const key = new THREE.DirectionalLight(0xffffff, 1.5); key.position.set(5, 7, 9*zs); scene.add(key);
+const camera = new THREE.PerspectiveCamera(32, 1, .1, 200);
+const controls = new OrbitControls(camera, renderer.domElement); controls.enableDamping = true; controls.minDistance = 3; controls.maxDistance = 45;
+const mirror = new THREE.Group(); mirror.scale.z = zs; scene.add(mirror);      // left side = mirror image of the right
+const rig = new THREE.Group(); mirror.add(rig);
+const segs = new Map();                                                          // fraction → group turned by -θ·f
+const seg = f => { if (!segs.has(f)){ const g = new THREE.Group(); g.userData.f = f; rig.add(g); segs.set(f, g); } return segs.get(f); };
+
+const boneMat = new THREE.MeshPhysicalMaterial({ roughness:.55, clearcoat:.15, envMapIntensity:.6 });
+const ghostMat = new THREE.MeshPhysicalMaterial({ roughness:.6, transparent:true, opacity:.18, depthWrite:false });
+for (const [type, f, a, b, r] of J.bones){
+  let m;
+  if (type === 'cap'){
+    const A = new V3(...a), B = new V3(...b);
+    m = new THREE.Mesh(new THREE.CapsuleGeometry(r, A.distanceTo(B), 6, 14), boneMat);
+    m.position.copy(A).add(B).multiplyScalar(.5); m.quaternion.setFromUnitVectors(new V3(0,1,0), B.clone().sub(A).normalize());
+  } else { m = new THREE.Mesh(new THREE.SphereGeometry(1, 28, 20), type === 'ghost' ? ghostMat : boneMat); m.position.set(...a); m.scale.set(...b); }
+  seg(f).add(m);
+}
+// load: dumbbell, ankle cuff, or nothing (body weight); arrow shows its pull
+const loadObj = new THREE.Group(); seg(1).add(loadObj); loadObj.position.set(...J.load.at);
+const metal = new THREE.MeshStandardMaterial({ color:0x3b434c, metalness:.5, roughness:.4 });
+if (J.load.kind === 'dumbbell'){
+  const bar = new THREE.Mesh(new THREE.CylinderGeometry(.05,.05,.9,16), metal); bar.rotation.x = Math.PI/2; loadObj.add(bar);
+  for (const z of [-.38,.38]){ const p = new THREE.Mesh(new THREE.CylinderGeometry(.2,.2,.12,24), metal); p.rotation.x = Math.PI/2; p.position.z = z; loadObj.add(p); }
+} else if (J.load.kind === 'cuff'){ const c = new THREE.Mesh(new THREE.TorusGeometry(.3,.12,12,28), metal); c.rotation.y = Math.PI/2; loadObj.add(c); }
+const loadArrow = new THREE.ArrowHelper(new V3(0,-1,0), new V3(), 1, 0x888888, .22, .14); scene.add(loadArrow);
+
+/* ------------------------------------------------------------------ muscles (same tube + stripe technique as the elbow) */
+function muscleMaterial(){
+  const m = new THREE.MeshPhysicalMaterial({ roughness:.42, clearcoat:.35, sheen:.4, envMapIntensity:.55, transparent:true });
+  m.userData.u = { uTime:{value:0}, uFlow:{value:0}, uActive:{value:0}, uStripe:{value:new THREE.Color()} };
+  m.onBeforeCompile = sh => {
+    Object.assign(sh.uniforms, m.userData.u);
+    sh.vertexShader = sh.vertexShader.replace('#include <common>', 'attribute float along;\nvarying float vAlong;\n#include <common>')
+      .replace('#include <begin_vertex>', '#include <begin_vertex>\nvAlong = along;');
+    sh.fragmentShader = sh.fragmentShader.replace('#include <common>', 'uniform float uTime; uniform float uFlow; uniform float uActive; uniform vec3 uStripe;\nvarying float vAlong;\n#include <common>')
+      .replace('#include <emissivemap_fragment>', `#include <emissivemap_fragment>
+        float stripe = smoothstep(0.35, 0.95, 0.5 + 0.5 * sin(abs(vAlong - 0.5) * 46.0 + uTime * uFlow * 5.0));
+        float glow = (abs(uFlow) < 0.5) ? (0.18 + 0.22 * (0.5 + 0.5 * sin(uTime * 3.5))) : (0.12 + 0.5 * stripe);
+        totalEmissiveRadiance += uStripe * uActive * glow;`);
+  };
+  return m;
+}
+const SEGS = 56, RAD = 18;
+function makeTube(){
+  const g = new THREE.BufferGeometry(), n = (SEGS+1)*(RAD+1), along = new Float32Array(n), idx = [];
+  g.setAttribute('position', new THREE.BufferAttribute(new Float32Array(n*3), 3));
+  g.setAttribute('normal', new THREE.BufferAttribute(new Float32Array(n*3), 3));
+  for (let i=0;i<=SEGS;i++) for (let j=0;j<=RAD;j++) along[i*(RAD+1)+j] = i/SEGS;
+  for (let i=0;i<SEGS;i++) for (let j=0;j<RAD;j++){ const a=i*(RAD+1)+j, b=a+RAD+1; idx.push(a,a+1,b, a+1,b+1,b); }
+  g.setAttribute('along', new THREE.BufferAttribute(along, 1)); g.setIndex(idx); return g;
+}
+const _T = new V3(), _N = new V3(), _B = new V3(), _ref = new V3(0,0,1);
+function updateTube(g, curve, rFn){
+  const pos = g.attributes.position.array, nor = g.attributes.normal.array, pts = curve.getSpacedPoints(SEGS); let k = 0;
+  for (let i=0;i<=SEGS;i++){
+    curve.getTangentAt(i/SEGS, _T); _N.crossVectors(_ref, _T); if (_N.lengthSq() < 1e-6) _N.set(1,0,0); _N.normalize(); _B.crossVectors(_T, _N);
+    const r = rFn(i/SEGS), P = pts[i];
+    for (let j=0;j<=RAD;j++){ const a = j/RAD*Math.PI*2, c = Math.cos(a), s = Math.sin(a);
+      const nx = c*_N.x+s*_B.x, ny = c*_N.y+s*_B.y, nz = c*_N.z+s*_B.z;
+      pos[k*3]=P.x+r*nx; pos[k*3+1]=P.y+r*ny; pos[k*3+2]=P.z+r*nz; nor[k*3]=nx; nor[k*3+1]=ny; nor[k*3+2]=nz; k++; }
+  }
+  g.attributes.position.needsUpdate = g.attributes.normal.needsUpdate = true; g.computeBoundingSphere();
+}
+const belly = (u, r) => .04 + (r - .04) * Math.pow(Math.sin(Math.PI * Math.min(1, Math.max(0, (u - .05) / .85))), .8);
+// a point that moves with fraction f of the joint angle
+function resolve([f, x, y, z], out){ const a = -state.theta*DEG*f, c = Math.cos(a), s = Math.sin(a); return out.set(x*c - y*s, x*s + y*c, z); }
+const muscleMeshes = [];
+for (const m of J.muscles){
+  m.f ??= 1; m.act = 0; m.contraction = 'rel'; m.role = null;
+  m.tubeObjs = m.tubes.map(t => { const mat = muscleMaterial(), geo = makeTube(), mesh = new THREE.Mesh(geo, mat);
+    mesh.userData.muscle = m; rig.add(mesh); muscleMeshes.push(mesh); return { t, mat, geo, pts:t.pts.map(() => new V3()), L0:1, curve:null }; });
+  const el = document.createElement('button'); el.className = 'tag'; el.textContent = m.short;
+  el.onclick = e => { e.stopPropagation(); select(m); };
+  m.labelEl = el; m.label3d = new CSS2DObject(el); rig.add(m.label3d);
+}
+function updateTransforms(){ rig.rotation.z = state.rot*DEG; for (const [f, g] of segs) g.rotation.z = -state.theta*DEG*f; }
+function updateMuscles(){
+  for (const m of J.muscles){
+    for (const o of m.tubeObjs){
+      o.t.pts.forEach((p, i) => resolve(p, o.pts[i]));
+      o.curve = new THREE.CatmullRomCurve3(o.pts, false, 'centripetal');
+      const r = o.t.r * THREE.MathUtils.clamp(Math.pow(o.L0 / o.curve.getLength(), .8), .75, 1.5) * (1 + .15 * m.act * (m.contraction === 'rel' ? 0 : 1));
+      updateTube(o.geo, o.curve, u => belly(u, r));
+    }
+    m.label3d.position.copy(m.tubeObjs[0].curve.getPointAt(m.label));
+  }
+}
+updateTransforms();
+for (const m of J.muscles) for (const o of m.tubeObjs){ o.t.pts.forEach((p, i) => resolve(p, o.pts[i])); o.L0 = new THREE.CatmullRomCurve3(o.pts, false, 'centripetal').getLength(); }
+
+/* ------------------------------------------------------------------ physiology: the load's pull decides which group works */
+const OPPOSITE = { con:'ecc', ecc:'con', iso:'iso' };
+const _p = new V3();
+// > 0: the load pulls toward a bigger angle (so the "neg" group must resist); < 0: toward a smaller angle
+function loadPull(){
+  const E = J.exercises[state.ex];
+  if (E.pull) return E.pull * .8;                                                 // body weight or a band: steady pull
+  resolve([1, ...J.load.at], _p).applyAxisAngle(new V3(0,0,1), state.rot*DEG);    // gravity on the load
+  return _p.x / Math.max(.001, Math.hypot(_p.x, _p.y));
+}
+function updatePhysiology(dt){
+  const v = state.vel, moving = Math.abs(v) > 4, pull = loadPull();
+  let phase = moving ? (v > 0 ? 'pos' : 'neg') : 'hold';
+  const workGroup = pull > 0 ? 'neg' : 'pos';
+  if (phase === 'hold' && Math.abs(pull) < .12) phase = 'rest';
+  const type = phase === 'hold' ? 'iso' : phase === workGroup ? 'con' : 'ecc';
+  const demand = phase === 'rest' ? 0 : (.18 + .82*Math.abs(pull)) * (type === 'ecc' ? .72 : 1);
+  Object.assign(state, { phase, workGroup, workType:type });
+  state.demand += (demand - state.demand) * (1 - Math.exp(-dt*8));
+  const coact = .06 + .04*demand;
+  for (const m of J.muscles){
+    let target = .02, c = 'rel', role = null;
+    if (phase !== 'rest'){
+      if (m.group === workGroup){ target = demand*m.f; c = type; role = m.f >= .95 ? 'prime' : 'syn'; }
+      else { target = coact; c = OPPOSITE[type]; role = 'ant'; }
+    }
+    m.act += (target - m.act) * (1 - Math.exp(-dt*8)); m.contraction = c; m.role = role;
+  }
+}
+
+/* ------------------------------------------------------------------ appearance, motion */
+const C = {}, _col = new THREE.Color(), _v = new V3(), _v2 = new V3();
+function readTokens(){
+  const cs = getComputedStyle(document.documentElement);
+  for (const k of ['con','ecc','iso','rest','bone','skin','fg-3']) C[k] = new THREE.Color(cs.getPropertyValue('--'+k).trim());
+  boneMat.color.copy(C.bone); ghostMat.color.copy(C.skin); loadArrow.setColor(C['fg-3']);
+}
+function updateAppearance(time){
+  for (const m of J.muscles){
+    const sc = m.contraction === 'rel' ? C.rest : C[m.contraction], faded = state.selected && state.selected !== m;
+    for (const o of m.tubeObjs){
+      const u = o.mat.userData.u;
+      o.mat.color.copy(_col.copy(C.rest).lerp(sc, Math.min(1, m.act*1.25) * .9));
+      u.uTime.value = reduceMotion ? 0 : time; u.uFlow.value = m.contraction === 'con' ? 1 : m.contraction === 'ecc' ? -1 : 0;
+      u.uActive.value = m.contraction === 'rel' ? 0 : Math.min(1, m.act*1.2); u.uStripe.value.copy(sc);
+      o.mat.opacity = faded ? .16 : 1; o.mat.depthWrite = !faded;
+    }
+    m.labelEl.classList.toggle('dim', !!faded); m.labelEl.classList.toggle('on', state.selected === m);
+  }
+  scene.updateMatrixWorld(true);
+  loadObj.getWorldPosition(_v);
+  const E = J.exercises[state.ex];
+  if (E.pull){   // steady pull: draw it along the direction it turns the joint
+    const d = Math.sign(E.pull);
+    resolve([1, ...J.load.at], _v2); const a = _v2.clone(); state.theta += d; resolve([1, ...J.load.at], _v2); state.theta -= d;
+    const dir = _v2.sub(a).applyAxisAngle(new V3(0,0,1), state.rot*DEG); dir.z *= zs; dir.normalize();
+    loadArrow.position.copy(_v).addScaledVector(dir, -.9); loadArrow.setDirection(dir); loadArrow.setLength(.85, .22, .14);
+  } else { loadArrow.position.copy(_v).add(new V3(0,-.4,0)); loadArrow.setDirection(new V3(0,-1,0)); loadArrow.setLength(.8 + .5*state.demand, .22, .14); }
+}
+function playTo(to){ state.anim = { to }; state.hold = 0; }
+function stepMotion(dt){
+  if (state.hold > 0) state.hold -= dt;
+  else if (state.anim){
+    const d = state.anim.to - state.goal, s = 50 * THREE.MathUtils.clamp(.3 + Math.abs(d)/35, .3, 1) * dt;
+    if (Math.abs(d) <= s){
+      state.goal = state.anim.to;
+      if (state.loop){ const [a, b] = J.exercises[state.ex].loop; state.loopDir *= -1; state.anim = { to: state.loopDir > 0 ? b : a }; state.hold = .8; }
+      else { state.anim = null; syncButtons(); }
+    } else state.goal += Math.sign(d) * s;
+  }
+  const prev = state.theta;
+  state.theta += (state.goal - state.theta) * (1 - Math.exp(-dt*14));
+  state.vel += ((state.theta - prev) / Math.max(dt, 1e-3) - state.vel) * (1 - Math.exp(-dt*12));
+  let target = J.exercises[state.ex].rot, d = ((target - state.rot + 540) % 360) - 180;     // turn the short way round
+  state.rot += d * (1 - Math.exp(-dt*3.2));
+}
+
+/* ------------------------------------------------------------------ camera */
+let tween = null, camScale = 1;
+const viewDir = new V3(J.view[0], J.view[1], J.view[2]*zs).normalize();
+const homeTarget = () => new V3(...J.exercises[state.ex].target).multiply(new V3(1,1,zs));
+const homeDist = () => J.exercises[state.ex].dist * camScale;
+function flyHome(){ tween = { t:0, t0:controls.target.clone(), t1:homeTarget(), p0:camera.position.clone() }; tween.p1 = tween.t1.clone().addScaledVector(viewDir, homeDist()); }
+function stepTween(dt){
+  if (!tween) return;
+  tween.t = Math.min(1, tween.t + dt/.9); const e = tween.t < .5 ? 4*tween.t**3 : 1 - Math.pow(-2*tween.t + 2, 3)/2;
+  controls.target.lerpVectors(tween.t0, tween.t1, e); camera.position.lerpVectors(tween.p0, tween.p1, e);
+  if (tween.t >= 1) tween = null;
+}
+
+/* ------------------------------------------------------------------ UI */
+const WORDS = {
+  simple:{ con:'Shortening', ecc:'Lengthening to control', iso:'Holding', rel:'Resting', prime:'Main mover', syn:'Helper', ant:'Opposite side', hold:'Holding', rest:'Resting', coact:'Lightly on, steadying' },
+  clinical:{ con:'Concentric', ecc:'Eccentric', iso:'Isometric', rel:'Relaxed', prime:'Prime mover', syn:'Synergist', ant:'Antagonist', hold:'Isometric hold', rest:'At rest', coact:'Low-level co-activation' },
+};
+const L = () => state.mode === 'clinical' ? 1 : 0;
+const W = () => WORDS[state.mode];
+const phaseWord = p => p === 'pos' || p === 'neg' ? J.moves[p][L()] : W()[p];
+function select(m){ state.selected = m; renderDetail(); }
+renderer.domElement.addEventListener('click', e => {
+  const r = renderer.domElement.getBoundingClientRect(), ray = new THREE.Raycaster();
+  ray.setFromCamera(new THREE.Vector2(((e.clientX-r.left)/r.width)*2-1, -((e.clientY-r.top)/r.height)*2+1), camera);
+  const hit = ray.intersectObjects(muscleMeshes, false)[0]; select(hit ? hit.object.userData.muscle : null);
+});
+function statusText(m){ const w = W(); if (!m.role) return w.rel; if (m.role === 'ant') return m.act > .04 ? w.coact : w.rel; return w[m.contraction]; }
+const colorVar = m => m.contraction === 'rel' || (m.role === 'ant' && m.act <= .04) ? 'var(--rest)' : `var(--${m.contraction})`;
+function renderList(){
+  const w = W();
+  $('paneList').innerHTML = ['pos','neg'].map(g => `<h3>${J.groups[g][L()]}</h3>` + J.muscles.filter(m => m.group === g).map(m => `
+    <button class="mrow" data-id="${m.id}"><i class="dot"></i><span class="nm">${m.name}</span><span class="role"></span><span class="st"></span><span class="bar"><span></span></span></button>`).join('')).join('') + `
+    <div class="legend"><span><i style="background:var(--con)"></i>${w.con}</span><span><i style="background:var(--ecc)"></i>${w.ecc}</span>
+    <span><i style="background:var(--iso)"></i>${w.iso}</span><span><i style="background:var(--rest)"></i>${w.rel}</span></div>`;
+  document.querySelectorAll('.mrow').forEach(b => b.onclick = () => select(J.muscles.find(m => m.id === b.dataset.id)));
+}
+function renderDetail(){
+  const m = state.selected; $('paneDetail').hidden = !m; $('paneList').hidden = !!m;
+  if (!m) return;
+  $('paneDetail').innerHTML = `<button class="linkbtn" id="back">← All muscles</button>
+    <div class="detail"><h2>${m.name}</h2></div><p style="margin:0">${m.plain}</p>
+    ${L() ? `<dl class="kv"><dt>Origin</dt><dd>${m.origin}</dd><dt>Insertion</dt><dd>${m.insertion}</dd><dt>Innervation</dt><dd>${m.nerve}</dd><dt>Action</dt><dd>${m.action}</dd></dl>` : ''}
+    <p class="note">Draft content, not yet reviewed.</p>`;
+  $('back').onclick = () => select(null);
+}
+function renderControls(){
+  $('exButtons').innerHTML = EXK.map(k => `<button data-ex="${k}" aria-pressed="${k === state.ex}">${J.exercises[k].name}<small>${J.exercises[k].sub}</small></button>`).join('');
+  $('exButtons').querySelectorAll('button').forEach(b => b.onclick = () => setExercise(b.dataset.ex));
+  $('angleTitle').textContent = `${J.name} angle`;
+  $('scaleMin').textContent = `${MIN}° ${J.scale[0][L()]}`; $('scaleMax').textContent = `${MAX}° ${J.scale[1][L()]}`;
+  $('btnPos').textContent = J.moves.pos[L()]; $('btnNeg').textContent = J.moves.neg[L()];
+}
+function updateHUD(){
+  const w = W();
+  $('angleVal').textContent = Math.round(state.theta);
+  if (document.activeElement !== $('angle')) $('angle').value = Math.round(state.goal);
+  $('pill').querySelector('i').style.background = state.phase === 'rest' ? 'var(--rest)' : `var(--${state.workType})`;
+  $('pill').querySelector('span').textContent = phaseWord(state.phase);
+  for (const m of J.muscles){
+    const row = document.querySelector(`.mrow[data-id="${m.id}"]`); if (!row) continue;
+    row.querySelector('.dot').style.background = colorVar(m);
+    row.querySelector('.role').textContent = m.role ? w[m.role] : '';
+    row.querySelector('.st').textContent = statusText(m);
+    const bar = row.querySelector('.bar span'); bar.style.width = Math.round(Math.min(1, m.act)*100) + '%'; bar.style.background = colorVar(m);
+  }
+  const head = state.phase === 'rest' ? w.rest : `${phaseWord(state.phase)} · ${J.groups[state.workGroup][L()].toLowerCase()} ${w[state.workType].toLowerCase()}`;
+  if ($('headTxt').textContent !== head) $('headTxt').textContent = head;
+}
+function syncButtons(){ $('btnLoop').setAttribute('aria-pressed', state.loop); }
+function stopAnim(){ state.anim = null; state.loop = false; syncButtons(); }
+$('angle').min = MIN; $('angle').max = MAX;
+$('angle').addEventListener('input', e => { stopAnim(); state.goal = +e.target.value; });
+$('btnPos').onclick = () => { state.loop = false; syncButtons(); playTo(MAX); };
+$('btnNeg').onclick = () => { state.loop = false; syncButtons(); playTo(MIN); };
+$('btnLoop').onclick = () => {
+  if (state.loop) return stopAnim();
+  const [, b] = J.exercises[state.ex].loop; state.loop = true; state.loopDir = 1; playTo(b); syncButtons();
+};
+function setExercise(ex){
+  state.ex = ex; renderControls();
+  const [a] = J.exercises[ex].loop; state.loop = true; state.loopDir = -1; playTo(a); syncButtons(); flyHome();
+}
+function setMode(mode){
+  state.mode = mode;
+  $('modeSimple').setAttribute('aria-pressed', mode === 'simple'); $('modeClinical').setAttribute('aria-pressed', mode === 'clinical');
+  renderControls(); renderList(); renderDetail();
+}
+$('modeSimple').onclick = () => setMode('simple');
+$('modeClinical').onclick = () => setMode('clinical');
+function applyTheme(t){ document.documentElement.dataset.theme = t; try { localStorage.setItem('myotrek-theme', t); } catch {} readTokens(); }
+$('themeBtn').onclick = () => applyTheme(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark');
+let saved = null; try { saved = localStorage.getItem('myotrek-theme'); } catch {}
+applyTheme(saved || 'light');
+
+function resize(){
+  const w = stage.clientWidth, h = stage.clientHeight;
+  renderer.setSize(w, h, false); labelRenderer.setSize(w, h);
+  camera.aspect = w / h; camera.updateProjectionMatrix();
+  camScale = Math.max(1, (innerWidth > 900 ? 1.1 : .85) / camera.aspect);
+}
+new ResizeObserver(resize).observe(stage); resize();
+controls.target.copy(homeTarget()); camera.position.copy(homeTarget()).addScaledVector(viewDir, homeDist());
+setMode('clinical');
+{ const [a, b] = J.exercises[state.ex].loop; state.theta = state.goal = a; if (reduceMotion){ state.loop = false; syncButtons(); } else { state.loopDir = 1; playTo(b); } }
+
+const clock = new THREE.Clock(); let hudT = 0;
+renderer.setAnimationLoop(() => {
+  const dt = Math.min(clock.getDelta(), .05), t = clock.elapsedTime;
+  stepMotion(dt); updateTransforms(); updatePhysiology(dt); updateMuscles(); updateAppearance(t);
+  stepTween(dt); controls.update();
+  renderer.render(scene, camera); labelRenderer.render(scene, camera);
+  if ((hudT += dt) > .08){ hudT = 0; updateHUD(); }
+});
+window.myotrekJoint = { state, J };
+</script>
+</body>
+</html>

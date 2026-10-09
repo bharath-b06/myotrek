@@ -10,10 +10,10 @@
 <style>
 /* Home: the whole skeleton with joint hotspots. Live joints zoom in and open their own page. */
 :root{
-  --bg:#E9EEF1; --bg-2:#F7FAFB; --panel:rgba(255,255,255,.88); --panel-solid:#FFFFFF;
+  --bg:#DCE3E8; --bg-2:#F3F6F8; --panel:rgba(255,255,255,.88); --panel-solid:#FFFFFF;
   --line:rgba(22,44,60,.11); --fg:#16222C; --fg-2:#4C5B68; --fg-3:#7C8994;
   --accent:#0B6B70; --accent-soft:#D6EBEB; --accent-fg:#FFFFFF;
-  --bone:#ECE5D5; --soon:#9AA6B0; --shadow:0 10px 30px -12px rgba(20,40,60,.25), 0 1px 2px rgba(20,40,60,.06);
+  --bone:#D8C9AD; --soon:#8995A0; --shadow:0 10px 30px -12px rgba(20,40,60,.25), 0 1px 2px rgba(20,40,60,.06);
   --font-display:"Bricolage Grotesque", ui-sans-serif, system-ui, sans-serif;
   --font-body:"Atkinson Hyperlegible", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
   --font-mono:"JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
@@ -74,6 +74,8 @@ button{font:inherit; color:inherit}
 .card ul{margin:0; padding-left:18px; font-size:13.5px; color:var(--fg-2)}
 .card .go{display:flex; gap:8px}
 .btn{flex:1; border:0; background:var(--accent); color:var(--accent-fg); font-weight:700; padding:9px 10px; border-radius:10px; cursor:pointer}
+.zoom{position:absolute; right:352px; top:72px; display:flex; flex-direction:column; gap:6px; z-index:4}
+.zoom .iconbtn{width:40px; height:40px; box-shadow:var(--shadow)}
 .hint{position:absolute; left:50%; bottom:18px; transform:translateX(-50%); font-size:13px; color:var(--fg-3); z-index:3; pointer-events:none}
 
 /* joint hotspots on the 3D skeleton */
@@ -93,12 +95,19 @@ button{font:inherit; color:inherit}
   .crumb{display:none}
   .list,.card{position:static; width:auto; max-height:none; margin:0 16px 12px}
   .hint{display:none}
+  .zoom{right:12px; top:auto; bottom:12px}
 }
 </style>
 </head>
 <body>
 <div class="app">
-  <div id="stage"><div class="fade" id="fade"></div></div>
+  <div id="stage"><div class="fade" id="fade"></div>
+    <div class="zoom" role="group" aria-label="Zoom">
+      <button class="iconbtn" id="zoomIn" aria-label="Zoom in" title="Zoom in (+)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
+      <button class="iconbtn" id="zoomOut" aria-label="Zoom out" title="Zoom out (−)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M5 12h14"/></svg></button>
+      <button class="iconbtn" id="resetView" aria-label="Reset view" title="Reset view"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></svg></button>
+    </div>
+  </div>
   <header class="top">
     <div class="brand">
       <svg viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="15" fill="var(--accent)"/><path d="M11 6v10a5 5 0 0 0 5 5h9" stroke="var(--accent-fg)" stroke-width="3.2" fill="none" stroke-linecap="round"/><circle cx="11" cy="16" r="2.6" fill="var(--accent-fg)"/></svg>
@@ -135,28 +144,28 @@ const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
    Positions are for the person's right side; x is mirrored for the left.
    The person faces the camera (+z), so their right side is at -x.        */
 const JOINTS = [
-  { id:'neck', name:'Neck', region:'Spine', pos:[0,15.6,-.3], both:false,
+  { id:'neck', name:'Neck', region:'Spine', pos:[0,15.6,-.3], both:false, page:'joint.html?j=neck', blurb:'Nodding forward and tilting back. Head lifts lying on your back and face down. Rough draft.',
     clinical:'Cervical spine: atlanto-occipital, atlanto-axial and facet joints',
     plan:['Flexion, extension, rotation, side bending','Deep neck flexors, sternocleidomastoid, upper trapezius'] },
-  { id:'shoulder', name:'Shoulder', region:'Upper limb', pos:[1.85,14.4,0], both:true,
+  { id:'shoulder', name:'Shoulder', region:'Upper limb', pos:[1.85,14.4,0], both:true, page:'joint.html?j=shoulder', blurb:'Raising the arm forward and taking it back. Front raise and lying pullover. Rough draft.',
     clinical:'Glenohumeral, acromioclavicular, sternoclavicular and scapulothoracic',
     plan:['Flexion, abduction, rotation; scapular movement','Rotator cuff, deltoid, pectoralis major, latissimus dorsi'] },
   { id:'elbow', name:'Elbow', region:'Upper limb', pos:[2.15,11.4,0], both:true, page:'elbow.html',
     clinical:'Humeroulnar, humeroradial and proximal radioulnar joints',
     blurb:'Bend and straighten, turn the palm. Biceps curls and triceps exercises, with every muscle shown working.' },
-  { id:'wrist', name:'Wrist & hand', region:'Upper limb', pos:[2.32,9.0,.05], both:true,
+  { id:'wrist', name:'Wrist & hand', region:'Upper limb', pos:[2.32,9.0,.05], both:true, page:'joint.html?j=wrist', blurb:'Bending the wrist forward and back. Wrist curl and reverse wrist curl. Rough draft.',
     clinical:'Radiocarpal, midcarpal and the joints of the hand',
     plan:['Flexion, extension, radial and ulnar deviation, grip','Wrist flexors and extensors, finger flexors'] },
-  { id:'lowback', name:'Lower back', region:'Spine', pos:[0,11.0,-.45], both:false,
+  { id:'lowback', name:'Lower back', region:'Spine', pos:[0,11.0,-.45], both:false, page:'joint.html?j=lowback', blurb:'Bending forward and straightening. Back extension and curl-up. Rough draft.',
     clinical:'Lumbar spine: intervertebral and facet joints',
     plan:['Flexion, extension, side bending, rotation','Erector spinae, multifidus, abdominals'] },
-  { id:'hip', name:'Hip', region:'Lower limb', pos:[.9,9.0,0], both:true,
+  { id:'hip', name:'Hip', region:'Lower limb', pos:[.9,9.0,0], both:true, page:'joint.html?j=hip', blurb:'Lifting the leg forward and taking it back. Straight leg raise and prone hip extension. Rough draft.',
     clinical:'Acetabulofemoral joint',
     plan:['Flexion, extension, abduction, rotation','Gluteals, iliopsoas, adductors, hamstrings'] },
   { id:'knee', name:'Knee', region:'Lower limb', pos:[.75,4.9,.12], both:true, page:'knee.html',
     clinical:'Tibiofemoral and patellofemoral joints',
     blurb:'Bend and straighten. Seated knee extension and a hamstring curl. A rough first draft.' },
-  { id:'ankle', name:'Ankle & foot', region:'Lower limb', pos:[.7,.8,0], both:true,
+  { id:'ankle', name:'Ankle & foot', region:'Lower limb', pos:[.7,.8,0], both:true, page:'joint.html?j=ankle', blurb:'Pointing the foot down and pulling it up. Calf raise and toe raise. Rough draft.',
     clinical:'Talocrural, subtalar and the joints of the foot',
     plan:['Dorsiflexion, plantarflexion, inversion, eversion','Calf muscles, tibialis anterior, peroneals'] },
 ];
@@ -170,11 +179,12 @@ stage.appendChild(renderer.domElement);
 const labelRenderer = new CSS2DRenderer(); labelRenderer.domElement.className = 'labels'; stage.appendChild(labelRenderer.domElement);
 const scene = new THREE.Scene();
 scene.environment = new THREE.PMREMGenerator(renderer).fromScene(new RoomEnvironment(renderer), .04).texture;
-scene.add(new THREE.HemisphereLight(0xffffff, 0x9aa8b2, .9));
-const key = new THREE.DirectionalLight(0xffffff, 1.4); key.position.set(4, 8, 10); scene.add(key);
+scene.add(new THREE.HemisphereLight(0xffffff, 0x7d8a96, .75));
+const key = new THREE.DirectionalLight(0xffffff, 1.7); key.position.set(5, 9, 10); scene.add(key);
+const rim = new THREE.DirectionalLight(0xdfe9ff, .9); rim.position.set(-6, 5, -8); scene.add(rim);     // edge light so bones separate from the background
 const camera = new THREE.PerspectiveCamera(30, 1, .1, 200);
 const controls = new OrbitControls(camera, renderer.domElement);
-controls.enableDamping = true; controls.enablePan = false; controls.minDistance = 12; controls.maxDistance = 60;
+controls.enableDamping = true; controls.enablePan = false; controls.minDistance = 6; controls.maxDistance = 60;
 controls.autoRotate = !reduceMotion; controls.autoRotateSpeed = .6;
 controls.addEventListener('start', () => controls.autoRotate = false);
 const HOME_TARGET = new V3(0, 8.9, 0);
@@ -388,13 +398,30 @@ function choose(j, s, cardOnly = false){
 let leaving = null;
 function go(j, s){
   if (leaving) return;
-  const url = `${j.page}${s === 'mid' ? '' : `?side=${s}`}`;
+  const url = s === 'mid' ? j.page : `${j.page}${j.page.includes('?') ? '&' : '?'}side=${s}`;
   if (reduceMotion){ location.href = url; return; }
   controls.autoRotate = false;
   leaving = { t:0, t0:controls.target.clone(), t1:posFor(j, s), p0:camera.position.clone(), url };
   const dir = camera.position.clone().sub(controls.target).normalize();
   leaving.p1 = leaving.t1.clone().addScaledVector(dir, 4.5);
 }
+// zoom buttons and reset: short camera glides; reset returns to the front view and stays still
+let glide = null;
+function glideTo(target, pos){ controls.autoRotate = false; glide = { t:0, t0:controls.target.clone(), t1:target, p0:camera.position.clone(), p1:pos }; }
+function zoom(f){
+  const dir = camera.position.clone().sub(controls.target), d = THREE.MathUtils.clamp(dir.length()*f, controls.minDistance, controls.maxDistance);
+  glideTo(controls.target.clone(), controls.target.clone().addScaledVector(dir.normalize(), d));
+}
+function stepGlide(dt){
+  if (!glide) return;
+  glide.t = Math.min(1, glide.t + dt/.45); const e = 1 - Math.pow(1 - glide.t, 3);
+  controls.target.lerpVectors(glide.t0, glide.t1, e); camera.position.lerpVectors(glide.p0, glide.p1, e);
+  if (glide.t >= 1) glide = null;
+}
+$('zoomIn').onclick = () => zoom(.75);
+$('zoomOut').onclick = () => zoom(1.33);
+$('resetView').onclick = () => glideTo(HOME_TARGET.clone(), new V3(0, 10.5, homeDist));
+addEventListener('keydown', e => { if (e.key === '+' || e.key === '=') zoom(.75); else if (e.key === '-' || e.key === '_') zoom(1.33); });
 function stepLeave(dt){
   if (!leaving) return;
   leaving.t = Math.min(1, leaving.t + dt/.85);
@@ -433,7 +460,7 @@ new ResizeObserver(resize).observe(stage); resize(); resetView();
 const clock = new THREE.Clock();
 renderer.setAnimationLoop(() => {
   const dt = Math.min(clock.getDelta(), .05);
-  stepLeave(dt);
+  stepLeave(dt); stepGlide(dt);
   if (!leaving) controls.update();
   renderer.render(scene, camera); labelRenderer.render(scene, camera);
 });
