@@ -165,8 +165,8 @@ input[type=range]{width:100%; accent-color:var(--accent); margin:6px 0 2px}
 .seg.block.sub button[aria-pressed="true"]{background:var(--accent-soft); color:var(--accent)}
 .slider90{position:relative}
 .slider90 input{position:relative; z-index:1}
-/* centre of the range thumb at 90/145 of the track (thumb ≈ 16px) */
-.mark90{position:absolute; left:calc(8px + (100% - 16px) * 90 / 145); top:100%; transform:translate(-50%, 2px); z-index:2;
+/* centre of the range thumb at 90/135 of the track (thumb ≈ 16px) */
+.mark90{position:absolute; left:calc(8px + (100% - 16px) * 90 / 135); top:100%; transform:translate(-50%, 2px); z-index:2;
   border:1px solid var(--accent); background:var(--panel-solid); color:var(--accent); font:700 11px/1 var(--font-mono); padding:3px 6px; border-radius:999px; cursor:pointer}
 .mark90::before{content:""; position:absolute; left:50%; bottom:100%; width:1px; height:9px; background:var(--accent); transform:translateX(-50%)}
 .mark90:hover{background:var(--accent); color:var(--accent-fg)}
@@ -382,10 +382,10 @@ const MUSCLES = [
     palpation:'Anterior thigh during resisted extension. Vastus medialis (VMO) is the teardrop just above and medial to the patella.',
     clinical:['Patellar reflex (knee jerk): L3–L4, mainly L4.','Quadriceps inhibition and wasting follow knee injury or surgery quickly; VMO often appears to waste first.','Extension lag: the knee straightens passively but not actively in the last degrees.','Patellofemoral pain is often load-sensitive in deep squats and on stairs.'],
     tubes:[
-      { pts:[['P',-.6,4.85,-.25],['H',-.66,3.9,-.08],['H',-.6,2.3,0],['H',-.52,.85,0],['W',-1,.48,.32,0],['F',-.27,-.62,0]], r:.21, t0:.06, t1:.82, peak:.5, rt:.05, head:'Rectus femoris', headId:'rf' },
-      { pts:[['H',-.1,3.75,.36],['H',-.36,2.5,.44],['H',-.44,1.0,.34],['W',-1,.46,.28,.12],['F',-.27,-.62,.03]], r:.24, t0:.03, t1:.8, peak:.5, rt:.05, head:'Vastus lateralis', headId:'vl' },
-      { pts:[['H',-.12,2.6,-.3],['H',-.36,1.2,-.4],['H',-.44,.5,-.3],['W',-1,.46,.26,-.12],['F',-.27,-.62,-.03]], r:.24, t0:.03, t1:.8, peak:.68, rt:.05, head:'Vastus medialis', headId:'vm' },
-      { pts:[['H',-.16,3.5,.02],['H',-.3,2.0,.02],['H',-.36,.8,0],['W',-1,.44,.26,0],['F',-.27,-.62,0]], r:.18, t0:.03, t1:.8, peak:.45, rt:.04, head:'Vastus intermedius', headId:'vi' } ],
+      { pts:[['P',-.6,4.85,-.25],['H',-.66,3.9,-.08],['H',-.6,2.3,0],['H',-.52,.85,0],['W',-1,.48,.32,0],['F',-.27,-.62,0]], r:.21, t0:.06, t1:.82, peak:.5, rt:.05, head:'Rectus femoris', headId:'rf', lab:.3 },
+      { pts:[['H',-.1,3.75,.36],['H',-.36,2.5,.44],['H',-.44,1.0,.34],['W',-1,.46,.28,.12],['F',-.27,-.62,.03]], r:.24, t0:.03, t1:.8, peak:.5, rt:.05, head:'Vastus lateralis', headId:'vl', lab:.45 },
+      { pts:[['H',-.12,2.6,-.3],['H',-.36,1.2,-.4],['H',-.44,.5,-.3],['W',-1,.46,.26,-.12],['F',-.27,-.62,-.03]], r:.24, t0:.03, t1:.8, peak:.68, rt:.05, head:'Vastus medialis', headId:'vm', lab:.72 },
+      { pts:[['H',-.16,3.5,.02],['H',-.3,2.0,.02],['H',-.36,.8,0],['W',-1,.44,.26,0],['F',-.27,-.62,0]], r:.18, t0:.03, t1:.8, peak:.45, rt:.04, head:'Vastus intermedius', headId:'vi', lab:.55 } ],
     label:.42 },
   { id:'bfem', name:'Biceps femoris', short:'Biceps femoris', group:'flexor', lever:1,
     plain:'The outer hamstring at the back of your thigh. It bends your knee and turns your shin out.',
@@ -401,8 +401,8 @@ const MUSCLES = [
     palpation:'Lateral tendon at the back of the knee during resisted flexion.',
     clinical:['The most commonly strained hamstring, usually the long head during sprinting.','The common fibular nerve runs just medial to its tendon near the fibular head.'],
     tubes:[
-      { pts:[['P',.5,4.1,-.62],['H',.46,3.0,-.08],['H',.42,1.5,.22],['H',.32,.45,.36],['R',.14,-.52,.4,1]], r:.2, t0:.08, t1:.8, peak:.45, rt:.045, head:'Long head', headId:'long' },
-      { pts:[['H',.18,2.3,.2],['H',.32,1.1,.3],['H',.28,.4,.38],['R',.14,-.52,.4,1]], r:.15, t0:.03, t1:.85, peak:.55, rt:.04, head:'Short head', headId:'short' } ],
+      { pts:[['P',.5,4.1,-.62],['H',.46,3.0,-.08],['H',.42,1.5,.22],['H',.32,.45,.36],['R',.14,-.52,.4,1]], r:.2, t0:.08, t1:.8, peak:.45, rt:.045, head:'Long head', headId:'long', tag:'Biceps femoris long head', lab:.35 },
+      { pts:[['H',.18,2.3,.2],['H',.32,1.1,.3],['H',.28,.4,.38],['R',.14,-.52,.4,1]], r:.15, t0:.03, t1:.85, peak:.55, rt:.04, head:'Short head', headId:'short', tag:'Biceps femoris short head', lab:.5 } ],
     label:.45 },
   { id:'semiten', name:'Semitendinosus', short:'Semitendinosus', group:'flexor', lever:.9,
     plain:'An inner hamstring with a long, cord-like tendon. It bends your knee and turns your shin in.',
@@ -445,8 +445,8 @@ const MUSCLES = [
     palpation:'Posterior calf during resisted plantarflexion.',
     clinical:['Ankle reflex: S1.','Calf tears ("tennis leg") are usually at the medial head.'],
     tubes:[
-      { pts:[['H',.22,.42,-.24],['F',.58,-1.2,-.22],['F',.48,-2.4,-.08],['F',.36,-3.7,-.02],['F',.36,-4.12,0]], r:.26, t0:.04, t1:.6, peak:.35, rt:.05, head:'Medial head', headId:'med' },
-      { pts:[['H',.22,.42,.24],['F',.54,-1.2,.22],['F',.46,-2.4,.08],['F',.36,-3.7,.02],['F',.36,-4.12,0]], r:.22, t0:.04, t1:.55, peak:.35, rt:.05, head:'Lateral head', headId:'lat' } ],
+      { pts:[['H',.22,.42,-.24],['F',.58,-1.2,-.22],['F',.48,-2.4,-.08],['F',.36,-3.7,-.02],['F',.36,-4.12,0]], r:.26, t0:.04, t1:.6, peak:.35, rt:.05, head:'Medial head', headId:'med', tag:'Gastrocnemius medial head', lab:.3 },
+      { pts:[['H',.22,.42,.24],['F',.54,-1.2,.22],['F',.46,-2.4,.08],['F',.36,-3.7,.02],['F',.36,-4.12,0]], r:.22, t0:.04, t1:.55, peak:.35, rt:.05, head:'Lateral head', headId:'lat', tag:'Gastrocnemius lateral head', lab:.45 } ],
     label:.3 },
   { id:'popliteus', name:'Popliteus', short:'Popliteus', group:'other', flexAssist:.15,
     plain:'A small deep muscle behind the knee. It "unlocks" the straight knee so it can start to bend.',
@@ -514,6 +514,10 @@ const JOINT = {
     ['Menisci','Medial (C-shaped, attached to MCL, less mobile) and lateral (more circular, more mobile); load sharing, stability, proprioception'],
     ['Common conditions','Osteoarthritis, ACL and meniscal tears, patellofemoral pain, patellar tendinopathy, MCL sprain, Osgood–Schlatter in adolescents'],
   ],
+};
+const HAMS_TEXT = {
+  patient:'Three muscles at the back of your thigh. They bend your knee and help straighten your hip.',
+  learner:'Biceps femoris, semitendinosus and semimembranosus. All but the short head of biceps femoris cross both hip and knee: knee flexion and hip extension. The medial two rotate the tibia internally; biceps femoris rotates it externally.'
 };
 const PATELLO = {
   patient: [
@@ -891,6 +895,24 @@ for (const m of MUSCLES){
   const el = document.createElement('button'); el.className = 'tag'; el.textContent = m.short;
   el.addEventListener('click', e => { e.stopPropagation(); select(m); });
   m.labelEl = el; m.label3d = new CSS2DObject(el); leg.add(m.label3d);
+  // one label per head, shown when the muscle is isolated
+  for (const o of m.tubeObjs) if (o.t.headId){
+    const h = document.createElement('button'); h.className = 'tag'; h.textContent = o.t.tag || o.t.head;
+    h.addEventListener('click', e => { e.stopPropagation(); select(m); });
+    o.labelEl = h; o.label3d = new CSS2DObject(h); o.label3d.visible = false; leg.add(o.label3d);
+  }
+}
+// the hamstrings share one label until they are isolated; then each muscle gets its own
+const HAMS = { isGroup:true, id:'hams', name:'Hamstrings', members:['bfem','semiten','semimem'].map(id => MUSCLES.find(m => m.id === id)) };
+{ const el = document.createElement('button'); el.className = 'tag'; el.textContent = 'Hamstrings';
+  el.addEventListener('click', e => { e.stopPropagation(); select(HAMS); });
+  HAMS.labelEl = el; HAMS.label3d = new CSS2DObject(el); leg.add(HAMS.label3d); }
+const isHam = m => HAMS.members.includes(m);
+const inSel = m => !state.selected || state.selected === m || (state.selected === HAMS && isHam(m));
+const hamsSplit = () => state.selected === HAMS || isHam(state.selected);
+function labelPoint(s){
+  if (s !== HAMS) return s.tubeObjs[0].curve.getPointAt(s.label);
+  const p = new V3(); for (const m of HAMS.members) p.add(labelPoint(m)); return p.divideScalar(HAMS.members.length);
 }
 const shinRange = () => THREE.MathUtils.clamp((state.theta - 12) / 50, 0, 1);   // the shin only turns with the knee bent
 const phiEff = () => state.phi * shinRange();
@@ -932,7 +954,9 @@ function updateMuscleGeometry(){
       updateTube(o.geo, o.curve, SEGS, RAD, u => profile(u, o.t, belly));
     }
     m.label3d.position.copy(m.tubeObjs[0].curve.getPointAt(m.label));
+    for (const o of m.tubeObjs) if (o.label3d) o.label3d.position.copy(o.curve.getPointAt(o.t.lab ?? m.label));
   }
+  HAMS.label3d.position.copy(labelPoint(HAMS));
 }
 // rest lengths: standing, knee straight
 state.pose = POSTURES.curlStand.pose(0, 0); state.pose.sh = 0;
@@ -1029,9 +1053,9 @@ function updatePhysiology(dt){
 /* ------------------------------------------------------------------ appearance */
 const _col = new THREE.Color();
 function updateAppearance(time){
-  const sel = state.selected;
+  const sel = state.selected, split = hamsSplit();
   for (const m of MUSCLES){
-    const faded = sel && sel !== m;
+    const faded = !inSel(m);
     for (const o of m.tubeObjs){
       const ct = o.ctype || m.contraction, sc = ct === 'rel' ? C.rest : C[ct];
       const mat = o.mat, u = mat.userData.u;
@@ -1043,10 +1067,14 @@ function updateAppearance(time){
       mat.opacity = faded ? .16 : 1; mat.depthWrite = !faded;
       mat.emissive.setScalar(state.hovered === m && !faded ? .07 : 0);
     }
-    m.labelEl.classList.toggle('dim', !!faded);
+    const heads = sel === m && m.tubeObjs.some(o => o.label3d);
+    m.labelEl.classList.toggle('dim', faded);
     m.labelEl.classList.toggle('on', sel === m);
-    m.label3d.visible = showLabels || sel === m;
+    m.label3d.visible = !heads && (!isHam(m) || split) && (showLabels || !faded && !!sel);
+    for (const o of m.tubeObjs) if (o.label3d) o.label3d.visible = heads;
   }
+  HAMS.labelEl.classList.toggle('dim', !!sel && !split);
+  HAMS.label3d.visible = !split && showLabels;
   const P = POSTURES[posture()], lk = loadKind(), settled = state.settle <= 0;
   cuff.visible = lk === 'weight';
   for (const [k, g] of Object.entries(SURF)) g.visible = showBody && settled && P.surface === k;
@@ -1123,7 +1151,7 @@ function setRay(e){
   ray.setFromCamera(ndc, camera);
 }
 function pick(){
-  const objs = [...muscleMeshes.filter(m => !state.selected || m.userData.muscle === state.selected), ...(showBones ? boneParts : []), cuff, footSkin];
+  const objs = [...muscleMeshes.filter(o => inSel(o.userData.muscle)), ...(showBones ? boneParts : []), cuff, footSkin];
   return ray.intersectObjects(objs.filter(o => o.visible), false)[0] || null;
 }
 function onShin(hit){
@@ -1154,7 +1182,7 @@ renderer.domElement.addEventListener('pointermove', e => {
 });
 renderer.domElement.addEventListener('pointerup', e => {
   const moved = down ? Math.hypot(e.clientX - down.x, e.clientY - down.y) : 99;
-  if (moved < 5 && down){ const m = down.hit?.object.userData.muscle; if (m) select(m); else if (!down.hit) select(null); }
+  if (moved < 5 && down){ const m = down.hit?.object.userData.muscle; if (m) select(isHam(m) && !hamsSplit() ? HAMS : m); else if (!down.hit) select(null); }
   if (dragging){ dragging = false; controls.enabled = true; renderer.domElement.style.cursor = ''; }
   down = null;
 });
@@ -1203,9 +1231,10 @@ const words = () => WORDS[state.mode];
 let showBones = true, showBody = true, showLabels = true;
 
 function select(m){
+  state.backTo = state.selected === HAMS && isHam(m) ? HAMS : null;
   state.selected = m;
   if (m){
-    const p = leg.localToWorld(m.tubeObjs[0].curve.getPointAt(m.label));
+    const p = leg.localToWorld(labelPoint(m));
     flyTo(p.lerp(homeTarget(), .45), Math.min(camera.position.distanceTo(controls.target), 11));
     showTab('detail');
   } else if (activeTab === 'detail') showTab('muscles');
@@ -1273,9 +1302,21 @@ function renderDetail(){
   const m = state.selected, pane = $('paneDetail');
   if (!m){ pane.innerHTML = ''; return; }
   const L = state.mode === 'learner';
+  if (m === HAMS){
+    pane.innerHTML = `
+    <button class="linkbtn back" id="backBtn">← All muscles</button>
+    <div class="detail" style="display:grid;gap:8px"><h2>Hamstrings</h2><p class="lede">${HAMS_TEXT[L ? 'learner' : 'patient']}</p></div>
+    <div class="mlist">${HAMS.members.map(x => `
+      <button class="mrow" data-sub="${x.id}"><i class="dot"></i><span class="nm">${x.name}</span><span class="role"></span><span class="st"></span></button>`).join('')}</div>
+    <p class="note">Tap a muscle here or in the 3D view for its details.</p>
+    <p class="note">Draft content for physiotherapist review.</p>`;
+    pane.querySelectorAll('[data-sub]').forEach(b => b.onclick = () => select(HAMS.members.find(x => x.id === b.dataset.sub)));
+    $('backBtn').onclick = () => select(null);
+    updateDetailStatus(); return;
+  }
   const list = a => `<ul>${a.map(x => `<li>${x}</li>`).join('')}</ul>`;
   pane.innerHTML = `
-    <button class="linkbtn back" id="backBtn">← All muscles</button>
+    <button class="linkbtn back" id="backBtn">${state.backTo ? '← Hamstrings' : '← All muscles'}</button>
     <div class="detail" style="display:grid;gap:8px"><h2>${m.name}</h2><p class="lede">${m.plain}</p></div>
     <div class="statusbox" id="detailStatus"><i></i><span></span></div>
     <dl class="kv">
@@ -1294,12 +1335,21 @@ function renderDetail(){
       <div><dt>Good to know</dt><dd>${m.posNote}</dd></div>`}
     </dl>
     <p class="note">Draft content for physiotherapist review.</p>`;
-  $('backBtn').onclick = () => select(null);
+  $('backBtn').onclick = () => select(state.backTo);
   updateDetailStatus();
 }
 function updateDetailStatus(){
-  const m = state.selected, box = $('detailStatus'); if (!m || !box) return;
-  const w = words();
+  const m = state.selected, w = words();
+  if (m === HAMS){
+    for (const x of HAMS.members){
+      const row = $('paneDetail').querySelector(`[data-sub="${x.id}"]`); if (!row) continue;
+      row.querySelector('.dot').style.background = stateColorVar(x);
+      row.querySelector('.role').textContent = x.role ? w[x.role] : '';
+      row.querySelector('.st').textContent = statusText(x);
+    }
+    return;
+  }
+  const box = $('detailStatus'); if (!m || !box) return;
   box.querySelector('i').style.background = stateColorVar(m);
   box.querySelector('span').textContent = `Right now: ${m.role ? w[m.role].toLowerCase() + ', ' : ''}${statusText(m).toLowerCase()}`;
 }
@@ -1447,13 +1497,26 @@ function closeMore(){ $('moreBox').hidden = true; $('moreBtn').setAttribute('ari
 $('moreBtn').onclick = () => $('moreBox').hidden ? openMore() : closeMore();
 $('moreClose').onclick = closeMore;
 
+// labels of the isolated muscle (or its heads) always show, nudged up or down if they overlap; other labels hide when they clash
 function declutterLabels(){
-  const placed = [];
-  const order = [...MUSCLES].sort((a,b) => (b === state.selected) - (a === state.selected) || b.act - a.act);
-  for (const m of order){
-    const el = m.labelEl; if (!m.label3d.visible) continue;
-    const r = el.getBoundingClientRect();
-    const hit = placed.some(q => r.left < q.right + 2 && r.right > q.left - 2 && r.top < q.bottom + 2 && r.bottom > q.top - 2);
+  const placed = [], sel = state.selected, items = [];
+  for (const m of MUSCLES){
+    items.push({ l:m, must:!!sel && inSel(m), p:(inSel(m) ? 2 : 0) + m.act });
+    for (const o of m.tubeObjs) if (o.label3d) items.push({ l:o, must:true, p:3 + o.act });
+  }
+  items.push({ l:HAMS, must:false, p:(sel ? 0 : 2) + Math.max(...HAMS.members.map(m => m.act)) });
+  items.sort((a, b) => b.must - a.must || b.p - a.p);
+  const clashes = r => placed.some(q => r.left < q.right + 2 && r.right > q.left - 2 && r.top < q.bottom + 2 && r.bottom > q.top - 2);
+  for (const { l, must } of items){
+    const el = l.labelEl; if (!l.label3d.visible) continue;
+    el.style.marginTop = '';
+    let r = el.getBoundingClientRect(), hit = clashes(r);
+    if (hit && must){
+      for (const dy of [24, -24, 48, -48, 72, -72]){
+        const r2 = new DOMRect(r.x, r.y + dy, r.width, r.height);
+        if (!clashes(r2)){ el.style.marginTop = dy + 'px'; r = r2; hit = false; break; }
+      }
+    }
     el.classList.toggle('clash', hit);
     if (!hit) placed.push(r);
   }
