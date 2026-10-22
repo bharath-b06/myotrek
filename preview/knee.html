@@ -264,18 +264,8 @@ input[type=range]{width:100%; accent-color:var(--accent); margin:6px 0 2px}
     <section id="exSection">
       <h3>Exercise</h3>
       <div class="seg block" role="group" aria-label="Muscle group">
-        <button id="grpQ" aria-pressed="true">Quadriceps<small data-l="Knee extensors">front of thigh</small></button>
-        <button id="grpH" aria-pressed="false">Hamstrings<small data-l="Knee flexors">back of thigh</small></button>
-      </div>
-      <div class="seg block sub" role="group" aria-label="Quadriceps exercises" id="subQ">
-        <button data-ex="ext">Knee extension<small data-l="Open chain">seated</small></button>
-        <button data-ex="squat">Squat<small data-l="Closed chain">standing</small></button>
-        <button data-ex="slr">Leg raise<small data-l="Straight leg raise">lying</small></button>
-      </div>
-      <div class="seg block sub" role="group" aria-label="Hamstring exercises" id="subH" hidden>
-        <button data-ex="curl">Prone curl<small data-l="Prone, hip neutral">face down</small></button>
-        <button data-ex="curlStand">Standing curl<small data-l="Standing">on one leg</small></button>
-        <button data-ex="nordic">Nordic<small data-l="Eccentric, kneeling">kneeling</small></button>
+        <button id="grpQ" aria-pressed="true">Quadriceps<small data-l="Seated knee extension">seated knee extension</small></button>
+        <button id="grpH" aria-pressed="false">Hamstrings<small data-l="Prone knee curl">lying face down</small></button>
       </div>
     </section>
     <section>
@@ -850,7 +840,8 @@ const POSTURES = {
   nordic:    { pose: th => ({ tilt:th - 90, sh:0, foot:85, oHip:0, oKnee:th, oFoot:85, armF:Math.max(0, 75 - th*.6) }),
                anchor:'knee', anchorAt:[0,-3.8], surface:'mat', group:'flexor', loop:[88,22], load:'body', zoom:2.35, dir:[0,.15,1] },
 };
-const QUADS_EX = ['ext','squat','slr'], HAMS_EX = ['curl','curlStand','nordic'];
+// squat, leg raise, standing curl and Nordic are kept in POSTURES for the future exercise library
+const QUADS_EX = ['ext'], HAMS_EX = ['curl'];
 const posture = () => state.move === 'rotate' ? 'ext' : state.ex;
 const isCurl = () => state.ex === 'curl' || state.ex === 'curlStand';
 const loadKind = () => state.move === 'rotate' ? 'none' : POSTURES[state.ex].load === 'body' ? 'body' : isCurl() ? state.load : 'weight';
@@ -1326,7 +1317,7 @@ function renderJoint(){
     <dl class="kv">${PATELLO[L ? 'learner' : 'patient'].map(([k,v]) => `<div><dt>${k}</dt><dd>${v}</dd></div>`).join('')}</dl>
     <div style="border-top:1px solid var(--line);padding-top:12px">
       <h3>Coming next</h3>
-      <ul class="note" style="padding-left:18px;margin:0;display:grid;gap:3px"><li>Ligaments and menisci in 3D</li><li>Hip and ankle muscles in the squat</li><li>Quiz mode</li></ul>
+      <ul class="note" style="padding-left:18px;margin:0;display:grid;gap:3px"><li>Ligaments and menisci in 3D</li><li>Exercise library: squats, leg raises, Nordics and more</li><li>Quiz mode</li></ul>
     </div>
     <p class="note">Draft content for physiotherapist review.</p>`;
 }
@@ -1336,7 +1327,7 @@ const CH = { w:258, h:132, l:8, r:8, t:16, b:22 };
 const cx = th => CH.l + th / MAXF * (CH.w - CH.l - CH.r);
 const cy = v => CH.t + (1 - v) / 2 * (CH.h - CH.t - CH.b);       // +1 top (quadriceps), -1 bottom (hamstrings)
 const EX_LABEL = { ext:'Extension', squat:'Squat', curl:'Prone curl', curlStand:'Standing curl', nordic:'Nordic', slr:'Leg raise' };
-const CHART_EX = ['ext','squat','curl','curlStand','nordic'];
+const CHART_EX = ['ext','curl'];
 const chartCurve = ex => th => kneeLoad(ex, th);
 function drawChart(){
   const svg = $('echartSvg'); if (!svg || $('echart').hidden) return;
@@ -1521,9 +1512,8 @@ function setMove(mv){
   flyHome(); syncButtons();
 }
 function syncSections(){
-  const rotate = state.move === 'rotate', quads = QUADS_EX.includes(state.ex);
+  const rotate = state.move === 'rotate';
   $('exSection').hidden = rotate;
-  $('subQ').hidden = !quads; $('subH').hidden = quads;
   $('rotSection').hidden = !rotate; $('loadRotate').hidden = !rotate;
   $('loadKnee').hidden = rotate || !isCurl();
   $('kneeBtns').hidden = false;
