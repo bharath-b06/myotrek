@@ -257,8 +257,8 @@ input[type=range]{width:100%; accent-color:var(--accent); margin:6px 0 2px}
     <section>
       <h3>Movement</h3>
       <div class="seg block" role="group" aria-label="Movement">
-        <button id="mvKnee" aria-pressed="true">Bend &amp; straighten<small data-l="Flexion / extension">the knee</small></button>
-        <button id="mvRotate" aria-pressed="false">Turn the shin<small data-l="Tibial rotation">knee bent</small></button>
+        <button id="mvKnee" aria-pressed="true"><span data-lt="Flexion / extension">Bend &amp; straighten</span><small data-l="">the knee</small></button>
+        <button id="mvRotate" aria-pressed="false"><span data-lt="Tibial rotation">Turn the shin</span><small data-l="">knee bent</small></button>
       </div>
     </section>
     <section id="exSection">
@@ -1640,7 +1640,8 @@ function setMode(mode){
   state.mode = mode;
   setPressed(['modePatient','modeLearner'], mode === 'patient' ? 'modePatient' : 'modeLearner');
   const L = mode === 'learner';
-  document.querySelectorAll('small[data-l]').forEach(s => { s.dataset.p ??= s.textContent; s.textContent = L ? s.dataset.l : s.dataset.p; });
+  document.querySelectorAll('small[data-l]').forEach(s => { s.dataset.p ??= s.textContent; s.textContent = L ? s.dataset.l : s.dataset.p; s.style.display = s.textContent ? '' : 'none'; });
+  document.querySelectorAll('[data-lt]').forEach(s => { s.dataset.p ??= s.textContent; s.textContent = L ? s.dataset.lt : s.dataset.p; });
   $('flexTxt').textContent = L ? 'Flex' : 'Bend';
   $('extTxt').textContent = L ? 'Extend' : 'Straighten';
   $('scaleL').textContent = L ? '0° extension' : '0° straight';
