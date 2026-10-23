@@ -114,6 +114,14 @@ input[type=range]{width:100%; accent-color:var(--accent); margin:6px 0 2px}
 .kv dd{margin:0; font-size:14px}
 .kv ul{margin:0; padding-left:18px}
 .kv li{margin:2px 0}
+.kvt{width:100%; border-collapse:collapse; font-size:13px; margin-top:4px}
+.kvt th,.kvt td{text-align:left; vertical-align:top; padding:5px 8px 5px 0; border-bottom:1px solid var(--line)}
+.kvt thead th{font:700 10.5px/1.3 var(--font-body); color:var(--fg-3); padding-top:0}
+.kvt tbody th{font-weight:700}
+.kvt tr:last-child > *{border-bottom:0}
+.special{border:1px solid var(--accent); background:var(--accent-soft); border-radius:12px; padding:12px 14px; display:grid; gap:4px}
+.special b{font-size:13px; color:var(--accent)}
+.special p{margin:0; font-size:13.5px}
 .roots{font-family:var(--font-mono); font-size:12.5px; background:var(--accent-soft); padding:1px 6px; border-radius:6px; margin-left:4px; white-space:nowrap}
 .statusbox{display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:12px; background:var(--accent-soft); font-size:13.5px}
 .statusbox i{width:12px; height:12px; border-radius:50%; flex:none}
@@ -504,20 +512,39 @@ const JOINT = {
   learner: [
     ['Articulations','Tibiofemoral (medial and lateral compartments) and patellofemoral joints, in one capsule'],
     ['Classification','Modified synovial hinge: flexion/extension plus tibial rotation when flexed'],
-    ['Normal ROM','Flexion 0–135/140°. Extension 0° (up to ~5–10° hyperextension). Tibial rotation at 90° flexion: about 30° internal, 40° external'],
-    ['End feel','Flexion: soft (soft-tissue approximation) or firm (quadriceps stretch). Extension: firm (capsular/ligamentous)'],
+    ['Normal ROM',{ head:['Movement','Range'], rows:[
+      ['Flexion','0–135/140°'],
+      ['Extension','0° (up to ~5–10° hyperextension)'],
+      ['Internal tibial rotation','~30° (at 90° flexion)'],
+      ['External tibial rotation','~40° (at 90° flexion)'] ]}],
+    ['End feel',{ head:['Movement','End feel','Why'], rows:[
+      ['Flexion','Soft or firm','Soft-tissue approximation, or quadriceps stretch'],
+      ['Extension','Firm','Capsule and ligaments'],
+      ['Tibial rotation','Firm','Capsule and ligaments'] ]}],
     ['Capsular pattern','Flexion more limited than extension'],
     ['Resting position','~25° flexion'],
     ['Close-packed position','Full extension with external rotation of the tibia'],
-    ['Screw-home mechanism','In the last ~20° of extension the tibia externally rotates on the femur (open chain), locking the knee; popliteus unlocks it'],
-    ['Ligaments','ACL: resists anterior tibial translation and rotation. PCL: resists posterior translation. MCL: valgus. LCL and posterolateral corner: varus and external rotation'],
-    ['Menisci','Medial (C-shaped, attached to MCL, less mobile) and lateral (more circular, more mobile); load sharing, stability, proprioception'],
-    ['Common conditions','Osteoarthritis, ACL and meniscal tears, patellofemoral pain, patellar tendinopathy, MCL sprain, Osgood–Schlatter in adolescents'],
+    ['Ligaments',{ head:['Ligament','Resists'], rows:[
+      ['ACL','Anterior tibial translation; rotation'],
+      ['PCL','Posterior tibial translation'],
+      ['MCL','Valgus stress'],
+      ['LCL and posterolateral corner','Varus stress; external tibial rotation'] ]}],
+    ['Menisci',{ head:['','Medial','Lateral'], rows:[
+      ['Shape','C-shaped','More circular'],
+      ['Attachments','Attached to the MCL','Not attached to the LCL'],
+      ['Mobility','Less mobile','More mobile'],
+      ['Function',{ span:2, text:'Load sharing, stability, proprioception' }] ]}],
+    ['Common conditions','Osteoarthritis, ACL and meniscal tears, MCL sprain, unhappy triad (ACL, MCL and medial meniscus), Osgood–Schlatter in adolescents'],
   ],
 };
 const HAMS_TEXT = {
   patient:'Three muscles at the back of your thigh. They bend your knee and help straighten your hip.',
   learner:'Biceps femoris, semitendinosus and semimembranosus. All but the short head of biceps femoris cross both hip and knee: knee flexion and hip extension. The medial two rotate the tibia internally; biceps femoris rotates it externally.'
+};
+// shown in its own box under the tibiofemoral table (clinical mode)
+const SCREW_HOME = {
+  title:'Screw-home mechanism',
+  text:'In the last ~20° of extension the tibia externally rotates on the femur (open chain; in closed chain the femur internally rotates on the tibia). This locks the knee in its close-packed position. Popliteus unlocks it at the start of flexion.'
 };
 const PATELLO = {
   patient: [
@@ -1353,6 +1380,13 @@ function updateDetailStatus(){
   box.querySelector('i').style.background = stateColorVar(m);
   box.querySelector('span').textContent = `Right now: ${m.role ? w[m.role].toLowerCase() + ', ' : ''}${statusText(m).toLowerCase()}`;
 }
+// a value is either text or a small table: { head:[...], rows:[[...]] }; a cell can be { span, text }
+function kvValue(v){
+  if (typeof v === 'string') return v;
+  const cell = (c, tag) => typeof c === 'string' ? `<${tag}>${c}</${tag}>` : `<${tag} colspan="${c.span}">${c.text}</${tag}>`;
+  return `<table class="kvt"><thead><tr>${v.head.map(h => `<th>${h}</th>`).join('')}</tr></thead>
+    <tbody>${v.rows.map(r => `<tr>${r.map((c, i) => cell(c, i ? 'td' : 'th')).join('')}</tr>`).join('')}</tbody></table>`;
+}
 function renderJoint(){
   const L = state.mode === 'learner';
   $('paneJoint').innerHTML = `
@@ -1360,7 +1394,8 @@ function renderJoint(){
       <h2>The knee</h2>
       <p class="lede">${L ? 'Tibiofemoral joint: femoral condyles on the tibial plateau, with the menisci between.' : 'Where your thigh bone meets your shin bone, with the kneecap in front.'}</p>
     </div>
-    <dl class="kv">${JOINT[L ? 'learner' : 'patient'].map(([k,v]) => `<div><dt>${k}</dt><dd>${v}</dd></div>`).join('')}</dl>
+    <dl class="kv">${JOINT[L ? 'learner' : 'patient'].map(([k,v]) => `<div><dt>${k}</dt><dd>${kvValue(v)}</dd></div>`).join('')}</dl>
+    ${L ? `<div class="special"><b>${SCREW_HOME.title}</b><p>${SCREW_HOME.text}</p></div>` : ''}
     <div class="detail" style="display:grid;gap:6px;border-top:1px solid var(--line);padding-top:14px">
       <h2>${L ? 'Patellofemoral joint' : 'The kneecap'}</h2>
     </div>
