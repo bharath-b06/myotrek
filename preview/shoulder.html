@@ -231,6 +231,7 @@ input[type=range]{width:100%; accent-color:var(--accent); margin:6px 0 2px}
 .planelbl{font:700 11px/1.2 var(--font-body); color:var(--fg-3); background:var(--panel); border:1px dashed var(--line); padding:3px 7px; border-radius:7px; white-space:nowrap; pointer-events:none}
 .planelbl.on,.planelbl.deg,.planelbl.blade{color:var(--accent); border:1px solid var(--accent)}
 .planelbl.deg{font-family:var(--font-mono); font-weight:500; padding:2px 5px}
+.tag.bladetag{border:1px dashed var(--accent); color:var(--accent)}
 .rhythm{font-size:12px; color:var(--fg-2); margin:-2px 0 4px; min-height:1.4em}
 .rhythm b{font-family:var(--font-mono); font-weight:500; color:var(--fg)}
 </style>
@@ -312,7 +313,7 @@ input[type=range]{width:100%; accent-color:var(--accent); margin:6px 0 2px}
         <button class="btn" id="btnNeg"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 20l-7-9h5V4h4v7h5z"/></svg><span id="negTxt"></span></button>
         <button class="btn" id="btnLoop" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M4 12a8 8 0 0 1 14-5.3M20 12a8 8 0 0 1-14 5.3"/><path d="M18 3v4h-4M6 21v-4h4"/></svg>Repeat</button>
       </div>
-      <p class="hint" id="hint">You can also drag the arm in the 3D view.</p>
+      <p class="hint" id="hint">You can also drag the arm in the 3D view. Tap the shoulder blade to see its muscles.</p>
     </section>
     <section id="loadSec" hidden>
       <h3>What's the load?</h3>
@@ -604,6 +605,10 @@ const MUSCLES = [
     label:.5 },
 ];
 
+const BLADE_TEXT = {
+  patient:'These muscles turn and steady your shoulder blade. As the arm goes up, they turn the blade upward on your ribs; when you pull down, others turn it back.',
+  learner:'Scapulothoracic muscles. Upper and lower trapezius with serratus anterior form the upward rotation force couple during elevation; rhomboids and levator scapulae rotate the scapula downward; middle trapezius and rhomboids retract and stabilise it.'
+};
 const CUFF_TEXT = {
   patient:'Four small muscles that wrap round the ball of the shoulder. They keep it centred in the shallow socket while bigger muscles move the arm.',
   learner:'Supraspinatus, infraspinatus, teres minor and subscapularis (SITS). They compress the humeral head into the glenoid and steer it, so the deltoid can elevate the arm without the head riding up. Supraspinatus also initiates abduction.'
@@ -890,10 +895,12 @@ addBone(trunkBones, ellip([1.0, .2, MID_Z - 1.92 + .3], [.12,.12,.12], ghostMat)
   for (let i = 0; i < pos.count; i++){ const u = pos.getX(i), v = pos.getY(i), w = pos.getZ(i); pos.setXYZ(i, -.86 + (u + 1.35)*Math.tan(SCAP_PLANE*DEG) + w, v, u); }
   g.computeVertexNormals();
   addBone(scapG, new THREE.Mesh(g, boneMat)); }
+const scapParts = boneParts.slice(-1);
 addBone(scapG, capsule([-.95, 0, -1.3], [-.42, .32, -.25], .07, boneMat));                     // spine of the scapula
 addBone(scapG, ellip([-.12, .43, .0], [.3,.06,.19], boneMat));                                   // acromion
 addBone(scapG, capsule([-.36, .15, -.45], [.3, .12, -.28], .055, boneMat));                     // coracoid
 addBone(scapG, ellip([-.2, -.02, -.3], [.12,.22,.1], boneMat));                                  // glenoid
+scapG.children.forEach(m => { if (!scapParts.includes(m)) scapParts.push(m); });
 
 // humerus, forearm (elbow straight), hand; all in the arm frame (origin at the joint centre, arm pointing down)
 addBone(armG, ellip([0, 0, 0], [.26,.27,.26], boneMat), true);
@@ -1107,10 +1114,19 @@ const CUFF = { isGroup:true, id:'cuffG', name:'Rotator cuff', members:MUSCLES.fi
 { const el = document.createElement('button'); el.className = 'tag'; el.textContent = 'Rotator cuff';
   el.addEventListener('click', e => { e.stopPropagation(); select(CUFF); });
   CUFF.labelEl = el; CUFF.label3d = new CSS2DObject(el); body.add(CUFF.label3d); }
-const isCuff = m => CUFF.members.includes(m);
-const inSel = m => !state.selected || state.selected === m || (state.selected === CUFF && isCuff(m));
+// the shoulder blade muscles stay hidden until the scapula (or its tag) is tapped; then they show and the arm muscles fade
+const BLADE = { isGroup:true, id:'bladeG', name:'Shoulder blade muscles', members:MUSCLES.filter(m => m.group === 'blade') };
+const BLADE_C = new V3(-.85, -.55, -1.12);                                       // middle of the blade, in scapula coordinates
+{ const el = document.createElement('button'); el.className = 'tag bladetag'; el.textContent = 'Shoulder blade';
+  el.addEventListener('click', e => { e.stopPropagation(); select(BLADE); });
+  BLADE.labelEl = el; BLADE.label3d = new CSS2DObject(el); body.add(BLADE.label3d); }
+const isCuff = m => CUFF.members.includes(m), isBlade = m => BLADE.members.includes(m);
+const groupOf = m => isCuff(m) ? CUFF : isBlade(m) ? BLADE : null;
+const inSel = m => !state.selected || state.selected === m || (state.selected.isGroup && state.selected.members.includes(m));
 const cuffSplit = () => state.selected === CUFF || isCuff(state.selected);
+const bladeOpen = () => state.selected === BLADE || isBlade(state.selected);
 function labelPoint(s){
+  if (s === BLADE) return BLADE_C.clone().applyMatrix4(mS);
   if (s !== CUFF) return s.tubeObjs[0].curve.getPointAt(s.label);
   const p = new V3(); for (const m of CUFF.members) p.add(labelPoint(m)); return p.divideScalar(CUFF.members.length);
 }
@@ -1130,6 +1146,7 @@ function updateMuscleGeometry(){
     m.label3d.position.copy(m.tubeObjs[0].curve.getPointAt(m.label));
   }
   CUFF.label3d.position.copy(labelPoint(CUFF));
+  BLADE.label3d.position.copy(labelPoint(BLADE));
 }
 // rest lengths: standing, arm by the side
 state.pose = { tilt:0, oArm:0 };
@@ -1199,9 +1216,10 @@ function updatePhysiology(dt){
 /* ------------------------------------------------------------------ appearance */
 const _col = new THREE.Color();
 function updateAppearance(time){
-  const sel = state.selected, split = cuffSplit();
+  const sel = state.selected, split = cuffSplit(), blade = bladeOpen();
   for (const m of MUSCLES){
-    const faded = !inSel(m);
+    const hidden = isBlade(m) && !blade, faded = !inSel(m) || (blade && !isBlade(m));
+    for (const o of m.tubeObjs) o.mesh.visible = !hidden;
     for (const o of m.tubeObjs){
       const ct = o.ctype, sc = ct === 'rel' ? C.rest : C[ct];
       const mat = o.mat, u = mat.userData.u;
@@ -1216,11 +1234,12 @@ function updateAppearance(time){
     const heads = sel === m && m.tubeObjs.some(o => o.label3d);
     m.labelEl.classList.toggle('dim', faded);
     m.labelEl.classList.toggle('on', sel === m);
-    m.label3d.visible = !heads && (!isCuff(m) || split) && (showLabels || !faded && !!sel);
+    m.label3d.visible = !hidden && !heads && (!isCuff(m) || split) && !(blade && !isBlade(m)) && (showLabels || !faded && !!sel);
     for (const o of m.tubeObjs) if (o.label3d) o.label3d.visible = heads;
   }
   CUFF.labelEl.classList.toggle('dim', !!sel && !split);
-  CUFF.label3d.visible = !split && showLabels;
+  CUFF.label3d.visible = !split && !blade && showLabels;
+  BLADE.label3d.visible = !blade;
   const P = POSTURES[posture()], settled = state.settle <= 0;
   dumbbell.visible = P.load === 'db';
   for (const [k, g] of Object.entries(SURF)) g.visible = showBody && settled && P.surface === k;
@@ -1308,11 +1327,14 @@ renderer.domElement.addEventListener('pointermove', e => {
   if (e.buttons) return;
   const hit = pick(), m = hit?.object.userData.muscle || null;
   state.hovered = m;
-  renderer.domElement.style.cursor = onArm(hit) ? 'grab' : m ? 'pointer' : '';
+  renderer.domElement.style.cursor = onArm(hit) ? 'grab' : m || (hit && scapParts.includes(hit.object)) ? 'pointer' : '';
 });
 renderer.domElement.addEventListener('pointerup', e => {
   const moved = down ? Math.hypot(e.clientX - down.x, e.clientY - down.y) : 99;
-  if (moved < 5 && down && !dragging){ const m = down.hit?.object.userData.muscle; if (m) select(isCuff(m) && !cuffSplit() ? CUFF : m); else if (!down.hit) select(null); }
+  if (moved < 5 && down && !dragging){ const m = down.hit?.object.userData.muscle; const g = m && groupOf(m);
+    if (m) select(g === CUFF && !cuffSplit() ? CUFF : m);
+    else if (down.hit && scapParts.includes(down.hit.object) && !bladeOpen()) select(BLADE);
+    else if (!down.hit || (bladeOpen() && armParts.includes(down.hit.object))) select(null); }
   if (dragging){ dragging = false; controls.enabled = true; renderer.domElement.style.cursor = ''; }
   down = null;
 });
@@ -1363,13 +1385,24 @@ const L1 = () => state.mode === 'learner' ? 1 : 0;
 let showBones = true, showBody = true, showLabels = true;
 
 function select(m){
-  state.backTo = state.selected === CUFF && isCuff(m) ? CUFF : null;
+  const prev = state.selected;
+  state.backTo = prev && prev.isGroup && prev.members.includes(m) ? prev : null;
   state.selected = m;
-  if (m){
-    const p = body.localToWorld(labelPoint(m));
-    flyTo(p.lerp(homeTarget(), .45), Math.min(camera.position.distanceTo(controls.target), 16));
+  if (m === BLADE){
+    // swing round behind the shoulder to look at the blade
+    const t = body.localToWorld(labelPoint(BLADE).add(new V3(0, .3, .5)));
+    tweenWait = null;
+    tween = { t:0, dur:1.1, t0:controls.target.clone(), t1:t, dir:camera.position.clone().sub(controls.target).normalize(),
+              dir1:new V3(-1, .35, .55).transformDirection(body.matrixWorld).normalize(), d0:camera.position.distanceTo(controls.target), d1:Math.min(Math.max(camera.position.distanceTo(controls.target), 15), 20) };
     showTab('detail');
-  } else if (activeTab === 'detail') showTab('muscles');
+  } else if (m){
+    const p = body.localToWorld(labelPoint(m));
+    if (!(isBlade(m) && prev === BLADE)) flyTo(p.lerp(homeTarget(), .45), Math.min(camera.position.distanceTo(controls.target), 16));
+    showTab('detail');
+  } else {
+    if (activeTab === 'detail') showTab('muscles');
+    if (prev === BLADE || isBlade(prev)) flyHome();                              // back from the blade view: return to the exercise view
+  }
   renderDetail();
 }
 let activeTab = 'muscles';
@@ -1404,7 +1437,11 @@ function renderMuscleList(){
       <h3 style="margin-bottom:4px">Working right now</h3>
       <p class="note">${L ? 'Select a muscle for attachments, innervation and clinical notes.' : 'Tap a muscle to learn about it.'}</p>
     </div>
-    ${grp('gh')}${grp('cuff')}${grp('blade')}
+    ${grp('gh')}${grp('cuff')}
+    <div class="group-h"><h3>${w.blade}</h3></div>
+    <div class="mlist"><button class="mrow" data-group="blade"><i class="dot"></i><span class="nm">${L ? 'Scapulothoracic muscles' : 'Shoulder blade muscles'}</span><span class="role"></span>
+      <span class="st"></span><span class="bar"><span></span></span></button></div>
+    <p class="note">${L ? 'Trapezius, serratus anterior, rhomboids, levator scapulae. Select, or tap the scapula, to show them.' : 'Hidden to keep the view clear. Tap here or on the shoulder blade to see them.'}</p>
     <div class="legend" aria-label="Colour key">
       <span><i style="background:var(--con)"></i>${w.con}</span>
       <span><i style="background:var(--ecc)"></i>${w.ecc}</span>
@@ -1412,10 +1449,15 @@ function renderMuscleList(){
       <span><i style="background:var(--rest)"></i>${w.rel}</span>
     </div>
     <p class="note">${L ? 'Stripe flow: inward for concentric, outward for eccentric, pulsing for isometric. Activation levels are illustrative, not EMG data.' : 'Moving stripes show the direction: inward when a muscle shortens, outward when it lengthens.'}</p>`;
-  pane.querySelectorAll('.mrow').forEach(b => b.onclick = () => select(MUSCLES.find(m => m.id === b.dataset.id)));
+  pane.querySelectorAll('.mrow[data-id]').forEach(b => b.onclick = () => select(MUSCLES.find(m => m.id === b.dataset.id)));
+  pane.querySelector('[data-group="blade"]').onclick = () => select(BLADE);
 }
 function updateMuscleList(){
   const w = words();
+  { const row = document.querySelector('.mrow[data-group="blade"]'), top = BLADE.members.reduce((a, b) => b.act > a.act ? b : a);
+    if (row){ row.querySelector('.dot').style.background = stateColorVar(top); row.querySelector('.role').textContent = top.role ? w[top.role] : '';
+      row.querySelector('.st').textContent = top.role ? `${top.short}: ${statusText(top).toLowerCase()}` : w.rel;
+      const bar = row.querySelector('.bar span'); bar.style.width = Math.round(Math.min(1, top.act) * 100) + '%'; bar.style.background = stateColorVar(top); } }
   for (const m of MUSCLES){
     const row = document.querySelector(`.mrow[data-id="${m.id}"]`); if (!row) continue;
     row.querySelector('.dot').style.background = stateColorVar(m);
@@ -1434,21 +1476,23 @@ function renderDetail(){
   const m = state.selected, pane = $('paneDetail');
   if (!m){ pane.innerHTML = ''; return; }
   const L = state.mode === 'learner';
-  if (m === CUFF){
+  if (m.isGroup){
+    const blade = m === BLADE;
     pane.innerHTML = `
-    <button class="linkbtn back" id="backBtn">← All muscles</button>
-    <div class="detail" style="display:grid;gap:8px"><h2>Rotator cuff</h2><p class="lede">${CUFF_TEXT[L ? 'learner' : 'patient']}</p></div>
-    <div class="mlist">${CUFF.members.map(x => `
+    <button class="linkbtn back" id="backBtn">${blade ? '← Arm muscles' : '← All muscles'}</button>
+    <div class="detail" style="display:grid;gap:8px"><h2>${blade && L ? 'Scapulothoracic muscles' : m.name}</h2><p class="lede">${(blade ? BLADE_TEXT : CUFF_TEXT)[L ? 'learner' : 'patient']}</p></div>
+    ${blade ? '<div class="statusbox" id="bladeStatus"><i style="background:var(--accent)"></i><span></span></div>' : ''}
+    <div class="mlist">${m.members.map(x => `
       <button class="mrow" data-sub="${x.id}"><i class="dot"></i><span class="nm">${x.name}</span><span class="role"></span><span class="st"></span></button>`).join('')}</div>
     <p class="note">Tap a muscle here or in the 3D view for its details.</p>
     <p class="note">Draft content for physiotherapist review.</p>`;
-    pane.querySelectorAll('[data-sub]').forEach(b => b.onclick = () => select(CUFF.members.find(x => x.id === b.dataset.sub)));
+    pane.querySelectorAll('[data-sub]').forEach(b => b.onclick = () => select(m.members.find(x => x.id === b.dataset.sub)));
     $('backBtn').onclick = () => select(null);
     updateDetailStatus(); return;
   }
   const list = a => `<ul>${a.map(x => `<li>${x}</li>`).join('')}</ul>`;
   pane.innerHTML = `
-    <button class="linkbtn back" id="backBtn">${state.backTo ? '← Rotator cuff' : '← All muscles'}</button>
+    <button class="linkbtn back" id="backBtn">${state.backTo ? '← ' + state.backTo.name : '← All muscles'}</button>
     <div class="detail" style="display:grid;gap:8px"><h2>${m.name}</h2><p class="lede">${m.plain}</p></div>
     <div class="statusbox" id="detailStatus"><i></i><span></span></div>
     <dl class="kv">
@@ -1472,8 +1516,10 @@ function renderDetail(){
 }
 function updateDetailStatus(){
   const m = state.selected, w = words();
-  if (m === CUFF){
-    for (const x of CUFF.members){
+  if (m && m.isGroup){
+    if (m === BLADE && $('bladeStatus')) $('bladeStatus').querySelector('span').textContent = state.mode === 'learner'
+      ? `Right now: scapular upward rotation ${Math.round(state.st)}°` : `Right now: shoulder blade turned up ${Math.round(state.st)}°`;
+    for (const x of m.members){
       const row = $('paneDetail').querySelector(`[data-sub="${x.id}"]`); if (!row) continue;
       row.querySelector('.dot').style.background = stateColorVar(x);
       row.querySelector('.role').textContent = x.role ? w[x.role] : '';
@@ -1608,6 +1654,7 @@ function declutterLabels(){
     items.push({ l:m, must:!!sel && inSel(m), p:(inSel(m) ? 2 : 0) + m.act });
     for (const o of m.tubeObjs) if (o.label3d) items.push({ l:o, must:true, p:3 + o.act });
   }
+  items.push({ l:BLADE, must:true, p:9 });
   items.push({ l:CUFF, must:false, p:(sel ? 0 : 2) + Math.max(...CUFF.members.map(m => m.act)) });
   items.sort((a, b) => b.must - a.must || b.p - a.p);
   const clashes = r => placed.some(q => r.left < q.right + 2 && r.right > q.left - 2 && r.top < q.bottom + 2 && r.bottom > q.top - 2);
