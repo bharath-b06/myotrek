@@ -232,6 +232,7 @@ input[type=range]{width:100%; accent-color:var(--accent); margin:6px 0 2px}
 .planelbl.on,.planelbl.deg,.planelbl.blade{color:var(--accent); border:1px solid var(--accent)}
 .planelbl.deg{font-family:var(--font-mono); font-weight:500; padding:2px 5px}
 .tag.bladetag{border:1px dashed var(--accent); color:var(--accent)}
+.tag.bladetag.on{border-style:solid; background:var(--accent); color:var(--accent-fg)}
 .rhythm{font-size:12px; color:var(--fg-2); margin:-2px 0 4px; min-height:1.4em}
 .rhythm b{font-family:var(--font-mono); font-weight:500; color:var(--fg)}
 </style>
@@ -313,7 +314,7 @@ input[type=range]{width:100%; accent-color:var(--accent); margin:6px 0 2px}
         <button class="btn" id="btnNeg"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 20l-7-9h5V4h4v7h5z"/></svg><span id="negTxt"></span></button>
         <button class="btn" id="btnLoop" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M4 12a8 8 0 0 1 14-5.3M20 12a8 8 0 0 1-14 5.3"/><path d="M18 3v4h-4M6 21v-4h4"/></svg>Repeat</button>
       </div>
-      <p class="hint" id="hint">You can also drag the arm in the 3D view. Tap the shoulder blade to see its muscles.</p>
+      <p class="hint" id="hint">You can also drag the arm in the 3D view. Tap the shoulder blade to show or hide its muscles.</p>
     </section>
     <section id="loadSec" hidden>
       <h3>What's the load?</h3>
@@ -1118,7 +1119,7 @@ const CUFF = { isGroup:true, id:'cuffG', name:'Rotator cuff', members:MUSCLES.fi
 const BLADE = { isGroup:true, id:'bladeG', name:'Shoulder blade muscles', members:MUSCLES.filter(m => m.group === 'blade') };
 const BLADE_C = new V3(-.85, -.55, -1.12);                                       // middle of the blade, in scapula coordinates
 { const el = document.createElement('button'); el.className = 'tag bladetag'; el.textContent = 'Shoulder blade';
-  el.addEventListener('click', e => { e.stopPropagation(); select(BLADE); });
+  el.addEventListener('click', e => { e.stopPropagation(); select(bladeOpen() ? null : BLADE); });   // tapping again goes back to the arm muscles
   BLADE.labelEl = el; BLADE.label3d = new CSS2DObject(el); body.add(BLADE.label3d); }
 const isCuff = m => CUFF.members.includes(m), isBlade = m => BLADE.members.includes(m);
 const groupOf = m => isCuff(m) ? CUFF : isBlade(m) ? BLADE : null;
@@ -1239,7 +1240,8 @@ function updateAppearance(time){
   }
   CUFF.labelEl.classList.toggle('dim', !!sel && !split);
   CUFF.label3d.visible = !split && !blade && showLabels;
-  BLADE.label3d.visible = !blade;
+  BLADE.label3d.visible = true; BLADE.labelEl.classList.toggle('on', blade);
+  BLADE.labelEl.title = blade ? 'Tap to go back to the arm muscles' : 'Tap to see the shoulder blade muscles';
   const P = POSTURES[posture()], settled = state.settle <= 0;
   dumbbell.visible = P.load === 'db';
   for (const [k, g] of Object.entries(SURF)) g.visible = showBody && settled && P.surface === k;
@@ -1333,7 +1335,7 @@ renderer.domElement.addEventListener('pointerup', e => {
   const moved = down ? Math.hypot(e.clientX - down.x, e.clientY - down.y) : 99;
   if (moved < 5 && down && !dragging){ const m = down.hit?.object.userData.muscle; const g = m && groupOf(m);
     if (m) select(g === CUFF && !cuffSplit() ? CUFF : m);
-    else if (down.hit && scapParts.includes(down.hit.object) && !bladeOpen()) select(BLADE);
+    else if (down.hit && scapParts.includes(down.hit.object)) select(bladeOpen() ? null : BLADE);
     else if (!down.hit || (bladeOpen() && armParts.includes(down.hit.object))) select(null); }
   if (dragging){ dragging = false; controls.enabled = true; renderer.domElement.style.cursor = ''; }
   down = null;
