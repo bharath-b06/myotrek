@@ -228,6 +228,9 @@ input[type=range]{width:100%; accent-color:var(--accent); margin:6px 0 2px}
 .seg.block.grid2 button{grid-column:span 2; font-size:12.5px; padding:7px 3px; hyphens:manual}
 .seg.block.grid2 button:nth-child(n+4){grid-column:span 3}
 .seg.block button:disabled{opacity:.45; cursor:not-allowed}
+.planelbl{font:700 11px/1.2 var(--font-body); color:var(--fg-3); background:var(--panel); border:1px dashed var(--line); padding:3px 7px; border-radius:7px; white-space:nowrap; pointer-events:none}
+.planelbl.on,.planelbl.deg,.planelbl.blade{color:var(--accent); border:1px solid var(--accent)}
+.planelbl.deg{font-family:var(--font-mono); font-weight:500; padding:2px 5px}
 .rhythm{font-size:12px; color:var(--fg-2); margin:-2px 0 4px; min-height:1.4em}
 .rhythm b{font-family:var(--font-mono); font-weight:500; color:var(--fg)}
 </style>
@@ -241,6 +244,7 @@ input[type=range]{width:100%; accent-color:var(--accent); margin:6px 0 2px}
           <label class="vrow"><input type="checkbox" data-t="labels" checked> Labels</label>
           <label class="vrow"><input type="checkbox" data-t="bones" checked> Bones</label>
           <label class="vrow"><input type="checkbox" data-t="arc" checked> Angle arc</label>
+          <label class="vrow"><input type="checkbox" data-t="planes" checked> Planes (scaption)</label>
           <label class="vrow"><input type="checkbox" data-t="body" checked> Body</label>
         </div>
       </div>
@@ -759,6 +763,7 @@ function readTokens(){
   for (const k of ['con','ecc','iso','rest','bone','skin','accent','fg-3']) C[k] = new THREE.Color(cs.getPropertyValue('--'+k).trim());
   boneMat.color.copy(C.bone); ghostMat.color.copy(C.bone); ribMat.color.copy(C.bone); skinMat.color.copy(C.skin); silMat.color.copy(C.skin); benchMat.color.copy(C['fg-3']);
   arcMat.color.copy(C.accent); arcLineMat.color.copy(C['fg-3']); bandMat.color.copy(C.iso);
+  planeOnMat.color.copy(C.accent); planeOffMat.color.copy(C['fg-3']); planeOnLine.color.copy(C.accent); planeOffLine.color.copy(C['fg-3']);
   loadArrow.setColor(C['fg-3']);
 }
 
@@ -882,7 +887,7 @@ addBone(trunkBones, ellip([1.0, .2, MID_Z - 1.92 + .3], [.12,.12,.12], ghostMat)
   sh.moveTo(...P[0]); P.slice(1).forEach(p => sh.lineTo(...p)); sh.closePath();
   const g = new THREE.ExtrudeGeometry(sh, { depth:.05, bevelEnabled:true, bevelThickness:.02, bevelSize:.03, bevelSegments:2 });
   const pos = g.attributes.position;
-  for (let i = 0; i < pos.count; i++){ const u = pos.getX(i), v = pos.getY(i), w = pos.getZ(i); pos.setXYZ(i, -.86 + (u + 1.35)*.45 + w, v, u); }
+  for (let i = 0; i < pos.count; i++){ const u = pos.getX(i), v = pos.getY(i), w = pos.getZ(i); pos.setXYZ(i, -.86 + (u + 1.35)*Math.tan(SCAP_PLANE*DEG) + w, v, u); }
   g.computeVertexNormals();
   addBone(scapG, new THREE.Mesh(g, boneMat)); }
 addBone(scapG, capsule([-.95, 0, -1.3], [-.42, .32, -.25], .07, boneMat));                     // spine of the scapula
@@ -956,7 +961,56 @@ function buildArc(){
   arcGroup.rotation.set(0, arcPlane === 'abd' ? -Math.PI/2 : arcPlane === 'scap' ? (SCAP_PLANE - 90)*DEG : 0, 0);
   arcStatic.position.z = sector.position.z = degLabel.position.z = arcPlane === 'flex' ? .75 : -.95;
 }
+/* ------------------------------------------------------------------ scaption aids: the three planes of elevation, and the line of the shoulder blade */
+const planeOnMat = new THREE.MeshBasicMaterial({ transparent:true, opacity:.1, side:THREE.DoubleSide, depthWrite:false });
+const planeOffMat = new THREE.MeshBasicMaterial({ transparent:true, opacity:.05, side:THREE.DoubleSide, depthWrite:false });
+const planeOnLine = new THREE.LineBasicMaterial({ transparent:true, opacity:.7 });
+const planeOffLine = new THREE.LineDashedMaterial({ dashSize:.18, gapSize:.12, transparent:true, opacity:.45 });
+const planeAid = new THREE.Group(); body.add(planeAid);
+const planeLabels = [];
+function planeTag(cls, pos, parent, key){
+  const el = document.createElement('div'); el.className = cls;
+  const o = new CSS2DObject(el); o.position.copy(pos); parent.add(o); planeLabels.push({ o, el, key }); return o;
+}
+const PLANE_R = 6.6;
+// a half-disc standing on the joint, opening outward at angle alpha from the frontal plane (0 = out to the side, 90 = straight ahead)
+for (const [alpha, on, key, la] of [[0, false, 'frontal', -66], [90, false, 'sagittal', -66], [SCAP_PLANE, true, 'scapular', -34]]){
+  const g = new THREE.Group(); g.rotation.y = (alpha - 90)*DEG; planeAid.add(g);
+  g.add(new THREE.Mesh(new THREE.CircleGeometry(PLANE_R, 48, -Math.PI/2, Math.PI), on ? planeOnMat : planeOffMat));
+  const pts = [];
+  for (let a = -90; a <= 90; a += 3) pts.push(new V3(Math.cos(a*DEG)*PLANE_R, Math.sin(a*DEG)*PLANE_R, 0));
+  pts.push(new V3(0, -PLANE_R, 0));
+  const l = new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), on ? planeOnLine : planeOffLine); l.computeLineDistances(); g.add(l);
+  planeTag(on ? 'planelbl on' : 'planelbl', new V3(Math.cos(la*DEG)*PLANE_R*.88, Math.sin(la*DEG)*PLANE_R*.88, 0), g, key);
+}
+// the 30° between the frontal and scapular planes, drawn level with the joint
+{ const pts = [];
+  for (let a = 0; a <= SCAP_PLANE; a += 1) pts.push(new V3(Math.sin(a*DEG)*3, 0, Math.cos(a*DEG)*3));
+  planeAid.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), planeOnLine));
+  const fan = new THREE.Mesh(new THREE.CircleGeometry(3, 16, 0, SCAP_PLANE*DEG), planeOnMat); fan.rotation.x = -Math.PI/2; fan.rotation.z = -Math.PI/2; planeAid.add(fan);
+  planeTag('planelbl deg', new V3(Math.sin(SCAP_PLANE/2*DEG)*3.4, 0, Math.cos(SCAP_PLANE/2*DEG)*3.4), planeAid, 'deg'); }
+// the line of the shoulder blade, from its inner border out through the joint, in the direction the arm rises
+const bladeLine = (() => {
+  const d = new V3(Math.sin(SCAP_PLANE*DEG), 0, Math.cos(SCAP_PLANE*DEG)), p0 = new V3(-.86, -.35, -1.35);
+  const l = new THREE.Line(new THREE.BufferGeometry().setFromPoints([p0, p0.clone().addScaledVector(d, 7.2)]), new THREE.LineDashedMaterial({ color:0x888888, dashSize:.16, gapSize:.1 }));
+  l.computeLineDistances(); body.add(l);
+  planeTag('planelbl blade', p0.clone().addScaledVector(d, -.1).add(new V3(0, -.6, 0)), body, 'blade');
+  return l;
+})();
+const PLANE_TXT = {
+  frontal:['Straight out to the side','Frontal plane (abduction)'], sagittal:['Straight ahead','Sagittal plane (flexion)'],
+  scapular:['In line with the shoulder blade','Scapular plane (scaption)'], deg:['30°','30°'], blade:['Shoulder blade line','Plane of the scapula'],
+};
+let showPlanes = true;
+function updatePlaneAid(){
+  const on = plane() === 'scap' && showPlanes;
+  planeAid.visible = bladeLine.visible = on;
+  planeAid.position.copy(state.ghPos);
+  bladeLine.material.color.copy(C.accent);
+  for (const { o, el, key } of planeLabels){ o.visible = on; const t = PLANE_TXT[key][L1()]; if (el.textContent !== t) el.textContent = t; }
+}
 function updateArc(){
+  updatePlaneAid();
   if (arcPlane !== plane()) buildArc();
   arcGroup.position.copy(state.ghPos);
   if (sectorTheta !== null && Math.abs(sectorTheta - state.theta) < .2) return;
@@ -1638,6 +1692,7 @@ addEventListener('keydown', e => {
 const TOGGLES = {
   labels: on => { showLabels = on; },
   bones:  on => { showBones = on; boneParts.forEach(b => b.visible = on); },
+  planes: on => { showPlanes = on; },
   arc:    on => { showArc = on; arcGroup.traverse(o => { if (o === arcGroup || o.isCSS2DObject) o.visible = on; }); },
   body:   on => { showBody = on; silhouette.visible = on; armSkin.forEach(m => m.visible = on); handSkin.visible = on; },
 };
