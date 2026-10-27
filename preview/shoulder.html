@@ -1362,8 +1362,8 @@ const homeDistance = () => homeDist * POSTURES[posture()].zoom;
 const homeDir = () => { const d = POSTURES[posture()].dir; return new V3(d[0], d[1], d[2]*zs).normalize(); };
 // scaption intro: look down from above first, so the 30° between the planes reads, then settle into the raised front view
 function flyIntro(){
-  tween = { t:0, dur:.7, t0:controls.target.clone(), t1:homeTarget(), dir:camera.position.clone().sub(controls.target).normalize(), dir1:new V3(.12, 1, .1*zs).normalize(),
-            d0:camera.position.distanceTo(controls.target), d1:homeDistance(), then:{ wait:.4, go:() => tween = { ...homeTween(), dur:.9 } } };
+  tween = { t:0, dur:.7, ease:'in', t0:controls.target.clone(), t1:homeTarget(), dir:camera.position.clone().sub(controls.target).normalize(), dir1:new V3(.12, 1, .1*zs).normalize(),
+            d0:camera.position.distanceTo(controls.target), d1:homeDistance(), then:{ wait:0, go:() => tween = { ...homeTween(), dur:.9, ease:'out' } } };   // speeds up into the top view and straight back out, without stopping
 }
 const homeTween = () => ({ t:0, t0:controls.target.clone(), t1:homeTarget(), dir:camera.position.clone().sub(controls.target).normalize(), dir1:homeDir(), d0:camera.position.distanceTo(controls.target), d1:homeDistance() });
 let tweenWait = null;
@@ -1372,7 +1372,7 @@ function stepTween(dt){
   if (tweenWait){ if ((tweenWait.wait -= dt) <= 0){ const go = tweenWait.go; tweenWait = null; go(); } return; }
   if (!tween) return;
   tween.t = Math.min(1, tween.t + dt/(tween.dur || .9));
-  const e = tween.t < .5 ? 4*tween.t**3 : 1 - Math.pow(-2*tween.t + 2, 3)/2;
+  const x = tween.t, e = tween.ease === 'in' ? x*x : tween.ease === 'out' ? 1 - (1 - x)**2 : x < .5 ? 4*x**3 : 1 - Math.pow(-2*x + 2, 3)/2;
   controls.target.lerpVectors(tween.t0, tween.t1, e);
   const dir = tween.dir1 ? tween.dir.clone().lerp(tween.dir1, e).normalize() : tween.dir;
   camera.position.copy(controls.target).addScaledVector(dir, THREE.MathUtils.lerp(tween.d0, tween.d1, e));
