@@ -695,10 +695,10 @@ const CAPTIONS = {
   takeover:['Past this point the load pulls the arm the other way, so the opposite muscles take over.','Here the load reverses its moment about the shoulder, so the antagonist group takes over.'],
 };
 CAPTIONS.erSide = {
-  rest:['Lying on your side, elbow bent, forearm across your belly, holding a light weight.','Side-lying, arm at the side, elbow 90°: at rest.'],
-  pos:['Turning your arm out: the weight lifts toward the ceiling. The muscles on the back of your shoulder blade (infraspinatus and teres minor) shorten.','External rotation against gravity: infraspinatus and teres minor concentric, with posterior deltoid. Torque is greatest with the forearm horizontal, pointing forward.'],
-  neg:['Lowering back across your belly: the same muscles lengthen to control it.','Eccentric external rotators.'],
-  hold:['Holding: the outward turners work without moving.','Isometric external rotators.'],
+  rest:['Band relaxed.','At rest.'],
+  pos:['Pulling the band outward, elbow by your side: the muscles on the back of your shoulder blade (infraspinatus and teres minor) shorten.','External rotation against elastic resistance, arm at the side: infraspinatus and teres minor concentric, with posterior deltoid.'],
+  neg:['Letting the band pull your hand back in across your belly: the same muscles lengthen to control it.','Eccentric external rotators.'],
+  hold:['Holding against the band: the outward turners work without moving.','Isometric external rotators.'],
 };
 CAPTIONS.irSide = {
   rest:['Band relaxed.','At rest.'],
@@ -707,9 +707,9 @@ CAPTIONS.irSide = {
   hold:['Holding against the band: the inward turners work without moving.','Isometric internal rotators.'],
 };
 CAPTIONS.er90 = {
-  rest:['Lying face down, arm out to the side at shoulder height, forearm hanging straight down. The weight pulls straight down, so the turners rest.','Prone, 90° abduction, forearm vertical: no torque about the long axis of the humerus.'],
-  pos:['Turning your arm out: the forearm lifts forward toward your head. Infraspinatus and teres minor shorten, while the shoulder and shoulder blade muscles hold the arm out.','External rotation at 90° abduction against gravity: infraspinatus and teres minor concentric, posterior deltoid assisting; middle deltoid, supraspinatus and the scapular muscles stabilise. Torque peaks at 90° ER, forearm horizontal.'],
-  neg:['Lowering back down: the same muscles lengthen to control it.','Eccentric external rotators.'],
+  rest:['Standing with your arm out at shoulder height, elbow bent, forearm pointing forward, holding a weight.','Standing, 90° abduction, elbow 90°, forearm horizontal.'],
+  pos:['Turning your arm out: the forearm lifts from pointing forward to pointing up. Infraspinatus and teres minor shorten, while the shoulder and shoulder blade muscles hold the arm out.','External rotation at 90° abduction against gravity: infraspinatus and teres minor concentric, posterior deltoid assisting; middle deltoid, supraspinatus and the scapular muscles stabilise. Torque is greatest with the forearm horizontal and falls toward vertical.'],
+  neg:['Lowering the forearm back down to point forward: the same muscles lengthen to control it.','Eccentric external rotators.'],
   hold:['Holding: the outward turners work without moving. It is hardest with the forearm level.','Isometric external rotators.'],
 };
 CAPTIONS.ir90 = {
@@ -738,9 +738,9 @@ const WHY = {
   pull:['The band pulls your arm up, so your chest and back muscles work in both directions.','Elastic resistance keeps an adduction demand throughout: concentric pulling down, eccentric return.'],
   scapRaise:['Raising in line with the shoulder blade usually feels the most comfortable way to lift your arm: the tendons on top of the shoulder have more room, and the arm needs to turn outward less to get overhead.','The scapular plane aligns the humerus with the glenoid: the capsule is less twisted and the greater tubercle clears the acromion with less external rotation, which helps preserve the subacromial space. Full can (thumb up) is generally preferred to empty can for strengthening.'],
   scapPull:['The band pulls your arm up, so your chest and back muscles work in both directions.','Elastic resistance keeps an adduction demand throughout: concentric pulling down, eccentric return.'],
-  erSide:['Hardest with your forearm pointing straight forward, level with the floor. Near the top the weight sits over the elbow and it gets easier.','Torque about the humeral axis peaks with the forearm horizontal (0° rotation) and falls toward vertical. Infraspinatus is the main external rotator with the arm at the side.'],
+  erSide:['The band pulls the whole time, so the outward turners work in both directions. Keep the elbow tucked in at your side.','Elastic resistance keeps an external rotation demand throughout. Infraspinatus is the main external rotator with the arm at the side.'],
   irSide:['The band pulls the whole time, so the inward turners work in both directions.','Elastic resistance keeps an internal rotation demand throughout. Subscapularis is the key internal rotator, with pectoralis major and latissimus dorsi as strong synergists.'],
-  er90:['Hardest when your forearm is level, pointing toward your head. The shoulder also has to keep your arm out at shoulder height.','Torque peaks at 90° ER. The 90/90 position loads the posterior cuff in a throwing-like position; teres minor contributes more with the arm elevated.'],
+  er90:['Hardest at the start, with your forearm pointing forward; easier as it comes up to vertical. The shoulder also has to keep your arm out at shoulder height.','Torque peaks at 0° (forearm horizontal) and falls to zero at 90° ER. The 90/90 position loads the posterior cuff in a throwing-like position; teres minor contributes more with the arm elevated.'],
   ir90:['The band pulls the whole time, so the inward turners work in both directions, with the arm held out at shoulder height.','Elastic resistance keeps an internal rotation demand throughout the 90/90 range; deltoid, supraspinatus and the scapular muscles hold the elevation.'],
 };
 WHY.lat = ['Hardest with the arm level, at 90°; the load falls again as the arm goes overhead. Supraspinatus is most active at the start; the middle deltoid takes over as the arm rises. Above about 90° the arm bone turns outward so it can clear the bony roof of the shoulder.','Torque peaks at 90° of abduction and falls toward 180°. Supraspinatus initiates and stabilises; the deltoid dominates mid-range; the trapezius–serratus force couple rotates the scapula upward. Beyond ~90° the humerus externally rotates so the greater tubercle clears the coracoacromial arch.'];
@@ -752,7 +752,7 @@ const PHASE_NAMES = {
   pull: { pos:['Band lifts the arm','Abduction'], neg:['Pulling down','Adduction'], order:['rest','neg','hold','pos'] },
   scapRaise:{ pos:['Raising','Scaption'], neg:['Lowering','Return to side'], order:['rest','pos','hold','neg'] },
   scapPull: { pos:['Band lifts the arm','Scaption'], neg:['Pulling down','Return to side'], order:['rest','neg','hold','pos'] },
-  erSide:{ pos:['Turning out','External rotation'], neg:['Turning back in','Internal rotation'], order:['rest','pos','hold','neg'] },
+  erSide:{ pos:['Pulling out','External rotation'], neg:['Band turns the arm in','Internal rotation'], order:['rest','pos','hold','neg'] },
   irSide:{ pos:['Band turns the arm out','External rotation'], neg:['Pulling in','Internal rotation'], order:['rest','neg','hold','pos'] },
   er90:  { pos:['Turning out','External rotation'], neg:['Turning back down','Internal rotation'], order:['rest','pos','hold','neg'] },
   ir90:  { pos:['Band turns the arm back','External rotation'], neg:['Pulling forward','Internal rotation'], order:['rest','neg','hold','pos'] },
@@ -760,8 +760,8 @@ const PHASE_NAMES = {
 const EX_TITLE = {
   front:['Front raise','Front raise (standing)'], extP:['Arm lift, face down','Prone shoulder extension'], extB:['Band pull-back','Band shoulder extension'],
   lat:['Side raise','Lateral raise (standing)'], pull:['Band pull-down','Band pull-down (adduction)'],
-  erSide:['Side-lying turn out','Side-lying external rotation'], irSide:['Band turn in','Band internal rotation (arm at side)'],
-  er90:['Face-down turn out, arm out','Prone external rotation at 90/90'], ir90:['Band turn in, arm out','Band internal rotation at 90/90'],
+  erSide:['Band turn out','Band external rotation (arm at side)'], irSide:['Band turn in','Band internal rotation (arm at side)'],
+  er90:['Turn out, arm out','Standing external rotation at 90/90'], ir90:['Band turn in, arm out','Band internal rotation at 90/90'],
   scapRaise:['Thumb-up raise at an angle','Full can scaption'], scapPull:['Band pull-down at an angle','Band pull-down (scapular plane)'],
 };
 // muscle-group buttons for each movement: [simple name, clinical name, simple exercise, clinical exercise]
@@ -769,8 +769,8 @@ const GROUP_BTN = {
   flex:{ A:['Lifting forward','Flexors','front raise','Front raise'], B:['Pulling back','Extensors','arm lift','Extension'] },
   abd: { A:['Lifting out','Abductors','side raise','Lateral raise'], B:['Pulling down','Adductors','band pull-down','Band pull-down'] },
   scap:{ A:['Lifting at an angle','Raising','thumb-up raise','Full can raise'], B:['Pulling down','Lowering','band pull-down','Band pull-down'] },
-  side: { A:['Turning out','External rotators','lying on your side','Side-lying ER'], B:['Turning in','Internal rotators','band, standing','Band IR'] },
-  abd90:{ A:['Turning out','External rotators','face down, arm out','Prone 90/90 ER'], B:['Turning in','Internal rotators','band, arm out','Band IR at 90/90'] },
+  side: { A:['Turning out','External rotators','band, standing','Band ER'], B:['Turning in','Internal rotators','band, standing','Band IR'] },
+  abd90:{ A:['Turning out','External rotators','weight, arm out','Standing 90/90 ER'], B:['Turning in','Internal rotators','band, arm out','Band IR at 90/90'] },
 };
 
 /* ------------------------------------------------------------------ state */
@@ -994,9 +994,6 @@ function slab(cx, cy, cz, sx, sy, sz, parent){ const m = new THREE.Mesh(new THRE
 const SURF = {
   bench: (() => { const g = new THREE.Group(); mirror.add(g); slab(-4.4, -1.35, -2.05, 15.2, .4, 3.1, g);
     for (const [x, z] of [[-11.5,-3.3],[-11.5,-.8],[2.6,-3.3],[2.6,-.8]]) slab(x, -4.3, z, .2, 5.5, .2, g); return g; })(),
-  // lying on the other side: the trunk rests on its far side, the head toward −z
-  side: (() => { const g = new THREE.Group(); mirror.add(g); slab(0, -3.95, 5, 3.6, .4, 19, g);
-    for (const [x, z] of [[-1.5,-4],[1.5,-4],[-1.5,14],[1.5,14]]) slab(x, -6.9, z, .2, 5.5, .2, g); return g; })(),
 };
 
 /* ------------------------------------------------------------------ range-of-motion arc (in the plane of the movement, at the joint) */
@@ -1101,9 +1098,9 @@ const POSTURES = {
   lat:   { plane:'abd',  group:'pos', tilt:0,   oArm:0,  loop:[4, 175],   load:'db',   zoom:1.9, dir:[1,.12,.3] },
   pull:  { plane:'abd',  group:'neg', tilt:0,   oArm:0,  loop:[178, 8],   load:'band', zoom:1.9, dir:[1,.12,.3], anchor:[.4, 7.8, 3.6] },
   scapRaise:{ plane:'scap', group:'pos', tilt:0, oArm:0, loop:[4, 175],   load:'db',   zoom:1.9, dir:[.55,.72,.35] },
-  erSide: { plane:'rot', group:'pos', tilt:0, roll:-90, oArm:90, loop:[-55, 62], load:'db', zoom:1.45, dir:[.45,.55,-.75], surface:'side' },
-  irSide: { plane:'rot', group:'neg', tilt:0, oArm:0, loop:[50, -65], load:'band', zoom:1.4, dir:[.85,.5,.75], anchor:[2.9, -3.1, 4.6] },
-  er90:   { plane:'rot', group:'pos', tilt:-90, oArm:0, loop:[0, 85], load:'db', zoom:1.5, dir:[.55,.5,1], surface:'bench' },
+  erSide: { plane:'rot', group:'pos', tilt:0, oArm:0, loop:[-55, 62], load:'band', zoom:1.4, dir:[.7,.75,.5], anchor:[3.3, -3.1, -2.4] },
+  irSide: { plane:'rot', group:'neg', tilt:0, oArm:0, loop:[50, -65], load:'band', zoom:1.4, dir:[.7,.75,.5], anchor:[2.9, -3.1, 4.6] },
+  er90:   { plane:'rot', group:'pos', tilt:0, oArm:0, loop:[0, 85], load:'db', zoom:1.55, dir:[.75,.4,.9] },
   ir90:   { plane:'rot', group:'neg', tilt:0, oArm:0, loop:[85, -45], load:'band', zoom:1.55, dir:[.75,.4,.9], anchor:[-1.2, 3.9, 3.4] },
   scapPull: { plane:'scap', group:'neg', tilt:0, oArm:0, loop:[178, 8],   load:'band', zoom:1.9, dir:[.55,.72,.35], anchor:[1.9, 7.8, 3.3] },
 };
@@ -1233,8 +1230,8 @@ function exLoad(k, th){
     case 'front': case 'lat': case 'scapRaise': return Math.sin(th*DEG);                           // dumbbell, standing
     case 'extP': return Math.sin((th - 90)*DEG);                                 // dumbbell, lying face down
     case 'extB': return clamp(-.85 + .35*Math.sin(th*DEG), -1, 1);               // band pulling the arm forward, simplified
-    case 'erSide': return Math.cos(th*DEG);                                      // side-lying: lever is the horizontal part of the forearm
-    case 'er90': return Math.sin(th*DEG);                                        // prone 90/90: forearm hangs straight down at 0°
+    case 'erSide': return .85;                                                   // band pulling into internal rotation, simplified
+    case 'er90': return Math.cos(th*DEG);                                        // standing 90/90: lever is the horizontal part of the forearm
     case 'irSide': case 'ir90': return -.85;                                     // band pulling into external rotation, simplified
     case 'pull': case 'scapPull': return clamp(-1 + .45*Math.sin(th*DEG), -1, 1);                 // band pulling the arm up and out, minus the arm's weight
   }
@@ -1644,8 +1641,8 @@ const rng = () => rangeOf(plane());
 const cx = th => { const [lo, hi] = rng(); return CH.l + (th - lo) / (hi - lo) * (CH.w - CH.l - CH.r); };
 const cy = v => CH.t + (1 - v) / 2 * (CH.h - CH.t - CH.b);
 const chartKeys = () => exOf().map(ex => ex === 'ext' ? (state.load === 'band' ? 'extB' : 'extP') : ex);
-const CHART_LBL = { erSide:[0,1], irSide:[20,-1], er90:[45,1], ir90:[40,-1], front:[40,1], extP:[20,-1], extB:[150,-1], lat:[40,1], pull:[120,-1], scapRaise:[40,1], scapPull:[120,-1] };
-const CHART_NAME = { erSide:'Side-lying ER', irSide:'Band IR', er90:'Prone 90/90 ER', ir90:'Band IR 90/90', front:'Front raise', extP:'Prone extension', extB:'Band extension', lat:'Lateral raise', pull:'Band pull-down', scapRaise:'Full can scaption', scapPull:'Band pull-down' };
+const CHART_LBL = { erSide:[20,1], irSide:[20,-1], er90:[20,1], ir90:[40,-1], front:[40,1], extP:[20,-1], extB:[150,-1], lat:[40,1], pull:[120,-1], scapRaise:[40,1], scapPull:[120,-1] };
+const CHART_NAME = { erSide:'Band ER', irSide:'Band IR', er90:'90/90 ER', ir90:'Band IR 90/90', front:'Front raise', extP:'Prone extension', extB:'Band extension', lat:'Lateral raise', pull:'Band pull-down', scapRaise:'Full can scaption', scapPull:'Band pull-down' };
 function drawChart(){
   const svg = $('echartSvg'); if (!svg || $('echart').hidden) return;
   const [lo, hi] = rng(), cur = posture();
@@ -1699,8 +1696,8 @@ function phaseList(){
   const L = L1(), w = words(), key = posture(), N = PHASE_NAMES[key], grp = POSTURES[key].group;
   const typeFor = ph => ph === 'hold' ? 'iso' : ph === grp ? 'con' : 'ecc';
   const list = N.order.map(k => ({ k, t: k === 'rest' ? w.rest : k === 'hold' ? w.hold : N[k][L], type: k === 'rest' ? 'rel' : typeFor(k), text:CAPTIONS[key][k][L] }));
-  if (POSTURES[key].load === 'db' && (POSTURES[key].plane === 'flex' || key === 'er90')) list.push(   // where the weight can pull the other way
-    { k:'takeover', t: L ? 'Load reverses' : key === 'front' ? 'Arm behind you' : key === 'er90' ? 'Past hanging straight down' : 'Past straight down', type:'con', text:CAPTIONS.takeover[L] });
+  if (POSTURES[key].load === 'db' && POSTURES[key].plane === 'flex') list.push(   // where the weight can pull the other way
+    { k:'takeover', t: L ? 'Load reverses' : key === 'front' ? 'Arm behind you' : 'Past straight down', type:'con', text:CAPTIONS.takeover[L] });
   return list;
 }
 function liveKey(){
