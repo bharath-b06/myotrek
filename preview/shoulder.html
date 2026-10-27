@@ -989,7 +989,7 @@ for (const [alpha, on, key, la] of [[0, false, 'frontal', -66], [90, false, 'sag
   for (let a = -90; a <= 90; a += 3) pts.push(new V3(Math.cos(a*DEG)*PLANE_R, Math.sin(a*DEG)*PLANE_R, 0));
   pts.push(new V3(0, -PLANE_R, 0));
   const l = new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), on ? planeOnLine : planeOffLine); l.computeLineDistances(); g.add(l);
-  planeTag(on ? 'planelbl on' : 'planelbl', new V3(Math.cos(la*DEG)*PLANE_R*.88, Math.sin(la*DEG)*PLANE_R*.88, 0), g, key);
+  if (on) planeTag('planelbl on', new V3(Math.cos(la*DEG)*PLANE_R*.88, Math.sin(la*DEG)*PLANE_R*.88, 0), g, key);
 }
 // the 30° between the frontal and scapular planes, drawn level with the joint
 { const pts = [];
@@ -1002,7 +1002,6 @@ const bladeLine = (() => {
   const d = new V3(Math.sin(SCAP_PLANE*DEG), 0, Math.cos(SCAP_PLANE*DEG)), p0 = new V3(-.86, -.35, -1.35);
   const l = new THREE.Line(new THREE.BufferGeometry().setFromPoints([p0, p0.clone().addScaledVector(d, 7.2)]), new THREE.LineDashedMaterial({ color:0x888888, dashSize:.16, gapSize:.1 }));
   l.computeLineDistances(); body.add(l);
-  planeTag('planelbl blade', p0.clone().addScaledVector(d, -.1).add(new V3(0, -.6, 0)), body, 'blade');
   return l;
 })();
 const PLANE_TXT = {
@@ -1392,10 +1391,10 @@ function select(m){
   state.selected = m;
   if (m === BLADE){
     // swing round behind the shoulder to look at the blade
-    const t = body.localToWorld(labelPoint(BLADE).add(new V3(0, .3, .5)));
+    const t = body.localToWorld(labelPoint(BLADE).add(new V3(0, .2, .25)));
     tweenWait = null;
     tween = { t:0, dur:1.1, t0:controls.target.clone(), t1:t, dir:camera.position.clone().sub(controls.target).normalize(),
-              dir1:new V3(-1, .35, .55).transformDirection(body.matrixWorld).normalize(), d0:camera.position.distanceTo(controls.target), d1:Math.min(Math.max(camera.position.distanceTo(controls.target), 15), 20) };
+              dir1:new V3(-1, .35, .55).transformDirection(body.matrixWorld).normalize(), d0:camera.position.distanceTo(controls.target), d1:10 };
     showTab('detail');
   } else if (m){
     const p = body.localToWorld(labelPoint(m));
