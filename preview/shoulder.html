@@ -224,7 +224,9 @@ input[type=range]{width:100%; accent-color:var(--accent); margin:6px 0 2px}
 @media (max-width: 480px){ .brand b{display:none} }
 @media (prefers-reduced-motion: reduce){ *{transition:none!important} }
 
-.seg.block.grid2{display:grid; grid-template-columns:1fr 1fr; gap:2px}
+.seg.block.grid2{display:grid; grid-template-columns:repeat(6, 1fr); gap:2px}
+.seg.block.grid2 button{grid-column:span 2; font-size:12.5px; padding:7px 3px; hyphens:manual}
+.seg.block.grid2 button:nth-child(n+4){grid-column:span 3}
 .seg.block button:disabled{opacity:.45; cursor:not-allowed}
 .rhythm{font-size:12px; color:var(--fg-2); margin:-2px 0 4px; min-height:1.4em}
 .rhythm b{font-family:var(--font-mono); font-weight:500; color:var(--fg)}
@@ -272,8 +274,9 @@ input[type=range]{width:100%; accent-color:var(--accent); margin:6px 0 2px}
     <section>
       <h3>Movement</h3>
       <div class="seg block grid2" role="group" aria-label="Movement">
-        <button id="mvFlex" aria-pressed="true"><span data-lt="Flexion / extension">Forward &amp; back</span><small data-l="">arm in front</small></button>
-        <button id="mvAbd" aria-pressed="false"><span data-lt="Abduction / adduction">Out to the side</span><small data-l="">arm sideways</small></button>
+        <button id="mvFlex" aria-pressed="true"><span data-lt="Flexion / extension">Forward &amp; back</span><small data-l="">in front</small></button>
+        <button id="mvAbd" aria-pressed="false"><span data-lt="Abduction / adduction">Out to the side</span><small data-l="">sideways</small></button>
+        <button id="mvScap" aria-pressed="false"><span data-lt="Scaption">At an angle</span><small data-l="scapular plane">in between</small></button>
         <button id="mvRot" aria-pressed="false" disabled><span data-lt="Rotation">Turn the arm</span><small data-l="next stage">next stage</small></button>
         <button id="mvHor" aria-pressed="false" disabled><span data-lt="Horizontal abd / add">Swing across</span><small data-l="next stage">next stage</small></button>
       </div>
@@ -354,7 +357,14 @@ import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer
 
 const V3 = THREE.Vector3, DEG = Math.PI / 180;
 const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
-const RANGE = { flex:[-50, 180], abd:[0, 180] };
+const RANGE = { flex:[-50, 180], abd:[0, 180], scap:[0, 180] };
+const SCAP_PLANE = 30;                      // scaption: elevation in the plane of the scapula, about 30° forward of the frontal plane
+// words that change with the plane of movement: [simple, clinical]
+const PW = {
+  flex:{ grp:[['front of shoulder','back of shoulder'],['flexors','extensors']], pos:['Forward','Flex'], neg:['Back','Extend'], lo:['−50° back','−50° extension'], hi:['180° overhead','180° flexion'] },
+  abd: { grp:[['side of shoulder','chest and back'],['abductors','adductors']], pos:['Up','Abduct'], neg:['Down','Adduct'], lo:['0° by side','0° adducted'], hi:['180° overhead','180° abduction'] },
+  scap:{ grp:[['shoulder','chest and back'],['scaption muscles','adductors']], pos:['Up','Raise'], neg:['Down','Lower'], lo:['0° by side','0° by side'], hi:['180° overhead','180° elevation'] },
+};
 
 /* ------------------------------------------------------------------ content
    Draft clinical content, to be reviewed by a physiotherapist.
@@ -378,8 +388,8 @@ const MUSCLES = [
     palpation:'Each part during resisted flexion, abduction and extension.',
     clinical:['Axillary nerve injury (dislocation, surgical neck fracture): weak abduction and numbness over the "regimental badge" area.','A common site for intramuscular injections.'],
     tubes:[
-      { pts:[['S',.22,.4,-.5],['A',.38,-.1,.12],['A',.27,-.8,.2],['A',.08,-1.42,.19]], r:.17, t0:.04, t1:.86, peak:.4, rt:.05, c:{ f:1, a:.4 }, head:'Anterior', headId:'ant', tag:'Anterior deltoid', lab:.45 },
-      { pts:[['S',-.02,.46,.12],['A',.02,-.12,.46],['A',.04,-.8,.33],['A',.05,-1.45,.2]], r:.19, t0:.04, t1:.86, peak:.4, rt:.05, c:{ f:.3, a:1 }, head:'Middle', headId:'mid', tag:'Middle deltoid', lab:.5 },
+      { pts:[['S',.22,.4,-.5],['A',.38,-.1,.12],['A',.27,-.8,.2],['A',.08,-1.42,.19]], r:.17, t0:.04, t1:.86, peak:.4, rt:.05, c:{ f:1, a:.4, s:.8 }, head:'Anterior', headId:'ant', tag:'Anterior deltoid', lab:.45 },
+      { pts:[['S',-.02,.46,.12],['A',.02,-.12,.46],['A',.04,-.8,.33],['A',.05,-1.45,.2]], r:.19, t0:.04, t1:.86, peak:.4, rt:.05, c:{ f:.3, a:1, s:.9 }, head:'Middle', headId:'mid', tag:'Middle deltoid', lab:.5 },
       { pts:[['S',-.55,.25,-.5],['A',-.38,-.1,.12],['A',-.25,-.8,.2],['A',.02,-1.42,.19]], r:.16, t0:.04, t1:.86, peak:.4, rt:.05, c:{ f:-.8, a:0 }, head:'Posterior', headId:'post', tag:'Posterior deltoid', lab:.45 } ],
     label:.5 },
   { id:'pec', name:'Pectoralis major', short:'Pec major', group:'gh',
@@ -396,8 +406,8 @@ const MUSCLES = [
     palpation:'Anterior axillary fold during resisted adduction.',
     clinical:['Tendon rupture, typically during heavy bench press.','Poland syndrome: congenital absence of the sternocostal head.'],
     tubes:[
-      { pts:[['T',.95,.22,-1.25],['T',.85,.05,-.6],['A',.32,-.45,.02],['A',.16,-.68,.08]], r:.15, t0:.03, t1:.8, peak:.4, rt:.05, c:{ f:.7, a:-.4 }, head:'Clavicular head', headId:'clav', tag:'Pec major clavicular head', lab:.35 },
-      { pts:[['T',1.08,-1.1,-1.8],['T',.95,-.85,-.9],['A',.33,-.38,-.06],['A',.16,-.6,.08]], r:.22, t0:.03, t1:.8, peak:.4, rt:.05, c:{ f:-.5, a:-1 }, fromFlexed:true, head:'Sternocostal head', headId:'stern', tag:'Pec major sternocostal head', lab:.4 } ],
+      { pts:[['T',.95,.22,-1.25],['T',.85,.05,-.6],['A',.32,-.45,.02],['A',.16,-.68,.08]], r:.15, t0:.03, t1:.8, peak:.4, rt:.05, c:{ f:.7, a:-.4, s:.3 }, head:'Clavicular head', headId:'clav', tag:'Pec major clavicular head', lab:.35 },
+      { pts:[['T',1.08,-1.1,-1.8],['T',.95,-.85,-.9],['A',.33,-.38,-.06],['A',.16,-.6,.08]], r:.22, t0:.03, t1:.8, peak:.4, rt:.05, c:{ f:-.5, a:-1, s:-.8 }, fromFlexed:true, head:'Sternocostal head', headId:'stern', tag:'Pec major sternocostal head', lab:.4 } ],
     label:.4 },
   { id:'lat', name:'Latissimus dorsi', short:'Lats', group:'gh',
     plain:'The broad muscle of your back. It pulls your arm down and back.',
@@ -412,7 +422,7 @@ const MUSCLES = [
     posNote:'Strongest when pulling down from overhead.',
     palpation:'Posterior axillary fold, during resisted adduction.',
     clinical:['Used as a flap in reconstructive surgery.','Tightness limits full overhead elevation.'],
-    tubes:[ { pts:[['T',-1.02,-4.3,-1.65],['T',-.95,-2.6,-1.0],['T',-.55,-1.4,-.45],['A',-.22,-.8,-.08],['A',.12,-.45,-.03]], r:.22, t0:.03, t1:.85, peak:.35, rt:.05, c:{ f:-1, a:-1 } } ],
+    tubes:[ { pts:[['T',-1.02,-4.3,-1.65],['T',-.95,-2.6,-1.0],['T',-.55,-1.4,-.45],['A',-.22,-.8,-.08],['A',.12,-.45,-.03]], r:.22, t0:.03, t1:.85, peak:.35, rt:.05, c:{ f:-1, a:-1, s:-1 } } ],
     label:.35 },
   { id:'tmaj', name:'Teres major', short:'Teres major', group:'gh',
     plain:'A thick muscle from the lower corner of your shoulder blade to the arm. It helps the big back muscle.',
@@ -426,7 +436,7 @@ const MUSCLES = [
     posNote:'Works with your big back muscle.',
     palpation:'Lower lateral border of the scapula, during resisted adduction.',
     clinical:['Borders the quadrangular space (axillary nerve) and the triangular interval (radial nerve).'],
-    tubes:[ { pts:[['S',-.88,-1.35,-.82],['S',-.55,-1.0,-.4],['A',-.15,-.68,-.1],['A',.1,-.48,-.04]], r:.13, t0:.04, t1:.82, peak:.45, rt:.04, c:{ f:-.7, a:-.7 } } ],
+    tubes:[ { pts:[['S',-.88,-1.35,-.82],['S',-.55,-1.0,-.4],['A',-.15,-.68,-.1],['A',.1,-.48,-.04]], r:.13, t0:.04, t1:.82, peak:.45, rt:.04, c:{ f:-.7, a:-.7, s:-.7 } } ],
     label:.4 },
   { id:'cb', name:'Coracobrachialis', short:'Coracobrachialis', group:'gh',
     plain:'A small muscle on the inner upper arm that helps lift the arm forward and bring it in.',
@@ -440,7 +450,7 @@ const MUSCLES = [
     posNote:'A small helper.',
     palpation:'Medial arm near the axilla, during resisted flexion and adduction.',
     clinical:['The musculocutaneous nerve passes through it and can be compressed there.'],
-    tubes:[ { pts:[['S',.32,.1,-.3],['A',.2,-.55,-.15],['A',.1,-1.45,-.13]], r:.08, t0:.05, t1:.85, peak:.5, rt:.03, c:{ f:.5, a:-.3 } } ],
+    tubes:[ { pts:[['S',.32,.1,-.3],['A',.2,-.55,-.15],['A',.1,-1.45,-.13]], r:.08, t0:.05, t1:.85, peak:.5, rt:.03, c:{ f:.5, a:-.3, s:.2 } } ],
     label:.6 },
   { id:'biceps', name:'Biceps brachii (long head)', short:'Biceps (long head)', group:'gh',
     plain:'The long head of the biceps starts inside the shoulder joint. At the shoulder it helps lift the arm forward.',
@@ -454,7 +464,7 @@ const MUSCLES = [
     posNote:'Mainly an elbow muscle; a small helper at the shoulder.',
     palpation:'Tendon in the bicipital groove with the arm externally rotated.',
     clinical:['Long head tendinopathy and SLAP lesions of the superior labrum.','"Popeye" deformity after long head rupture.'],
-    tubes:[ { pts:[['S',-.08,.27,-.2],['A',.1,.2,.12],['A',.27,-.25,.12],['A',.32,-1.4,.05],['A',.27,-2.55,0],['A',.1,-3.25,0]], r:.15, t0:.14, t1:.86, peak:.62, rt:.035, c:{ f:.35, a:0 } } ],
+    tubes:[ { pts:[['S',-.08,.27,-.2],['A',.1,.2,.12],['A',.27,-.25,.12],['A',.32,-1.4,.05],['A',.27,-2.55,0],['A',.1,-3.25,0]], r:.15, t0:.14, t1:.86, peak:.62, rt:.035, c:{ f:.35, a:0, s:.2 } } ],
     label:.6 },
   { id:'triceps', name:'Triceps brachii (long head)', short:'Triceps (long head)', group:'gh',
     plain:'The only part of the triceps that crosses the shoulder. It helps pull the arm back and in.',
@@ -468,7 +478,7 @@ const MUSCLES = [
     posNote:'Mainly an elbow muscle; it helps take the arm back.',
     palpation:'Posteromedial arm just below the axilla.',
     clinical:['Separates the quadrangular space from the triangular space and interval.'],
-    tubes:[ { pts:[['S',-.18,-.33,-.22],['A',-.3,-.75,-.08],['A',-.35,-1.8,0],['A',-.27,-2.7,0],['A',-.14,-3.08,0]], r:.16, t0:.08, t1:.85, peak:.5, rt:.04, c:{ f:-.5, a:-.3 } } ],
+    tubes:[ { pts:[['S',-.18,-.33,-.22],['A',-.3,-.75,-.08],['A',-.35,-1.8,0],['A',-.27,-2.7,0],['A',-.14,-3.08,0]], r:.16, t0:.08, t1:.85, peak:.5, rt:.04, c:{ f:-.5, a:-.3, s:-.4 } } ],
     label:.45 },
 
   { id:'supra', name:'Supraspinatus', short:'Supraspinatus', group:'cuff',
@@ -483,7 +493,7 @@ const MUSCLES = [
     posNote:'Most active as you start lifting your arm to the side.',
     palpation:'Supraspinous fossa through trapezius; the tendon just in front of and below the acromion with the arm behind the back.',
     clinical:['The most commonly torn rotator cuff tendon.','Subacromial pain and the painful arc (about 60–120°).','Empty can (Jobe) test.'],
-    tubes:[ { pts:[['S',-.88,.22,-1.12],['S',-.45,.3,-.45],['A',-.02,.24,.1],['A',.03,.08,.26]], r:.12, t0:.04, t1:.8, peak:.35, rt:.04, c:{ f:.3, a:.8 }, init:true, stab:true } ],
+    tubes:[ { pts:[['S',-.88,.22,-1.12],['S',-.45,.3,-.45],['A',-.02,.24,.1],['A',.03,.08,.26]], r:.12, t0:.04, t1:.8, peak:.35, rt:.04, c:{ f:.3, a:.8, s:.9 }, init:true, stab:true } ],
     label:.3 },
   { id:'infra', name:'Infraspinatus', short:'Infraspinatus', group:'cuff',
     plain:'A rotator cuff muscle on the back of the shoulder blade. It turns your arm out and steadies the shoulder.',
@@ -612,6 +622,11 @@ const RHYTHM_BOX = {
         'After the first ~25–30° (setting phase), elevation is shared about 2:1 between glenohumeral and scapulothoracic motion, giving roughly 120° and 60° at full elevation. Upward rotation comes from the trapezius (upper and lower fibres) and serratus anterior force couple. The ratio varies between people, planes and loads.'],
 };
 
+const ER_BOX = {
+  title:['Why the arm turns out overhead','External rotation in elevation'],
+  text:['To lift your arm all the way up out to the side, the arm bone has to turn outward. That moves a bump on the top of the bone (the greater tubercle) out from under the bony roof of the shoulder. Lifting at an angle, in line with the shoulder blade, needs less turning.',
+        'Full abduction in the frontal plane needs humeral external rotation (roughly from 90° upward) so the greater tubercle clears the acromion and coracoacromial arch. Without it, abduction is limited to about 90–120°. Elevation in the scapular plane needs less external rotation. The model shows about 55° of external rotation by full abduction; the real amount varies.'],
+};
 const WORDS = {
   patient:{ prime:'Main mover', syn:'Helper', ant:'Opposite side', stab:'Steadying', scap:'Turning the shoulder blade', scapd:'Turning the shoulder blade down',
     con:'Shortening', ecc:'Lengthening to control', iso:'Holding', rel:'Resting', coact:'Lightly on, steadying',
@@ -657,39 +672,58 @@ const CAPTIONS = {
   },
   takeover:['Past this point the load pulls the arm the other way, so the opposite muscles take over.','Here the load reverses its moment about the shoulder, so the antagonist group takes over.'],
 };
+CAPTIONS.scapRaise = {
+  rest:['Standing with your arm by your side, thumb pointing forward, holding a weight. The muscles rest.','Arm by the side: almost no torque about the shoulder.'],
+  pos:['Raising your arm at an angle, between straight ahead and out to the side, thumb up. The arm moves in line with the shoulder blade, and the shoulder blade turns to help.','Elevation in the scapular plane (~30° anterior to the frontal plane), thumb up (full can): anterior and middle deltoid with supraspinatus concentric. Serratus anterior and trapezius rotate the scapula upward.'],
+  neg:['Lowering slowly: the same muscles lengthen to control the weight.','Eccentric return.'],
+  hold:['Holding your arm up at an angle: the shoulder works without moving. It is hardest with the arm level.','Isometric; torque peaks at 90° of elevation.'],
+};
+CAPTIONS.scapPull = {
+  rest:['Band relaxed.','At rest.'],
+  neg:['Pulling the band down to your side at an angle: your chest and big back muscle shorten.','Return to the side in the scapular plane against elastic resistance: pectoralis major (sternocostal head), latissimus dorsi and teres major concentric. Rhomboids and levator scapulae rotate the scapula downward.'],
+  pos:['Letting the band lift your arm: the same muscles lengthen to control it.','Eccentric adductors.'],
+  hold:['Holding against the band: the muscles work without moving.','Isometric adductors.'],
+};
 const WHY = {
   front:['The weight pulls hardest with your arm level with the floor, at 90°. Watch the shoulder blade: about a third of the movement happens there.','Torque peaks at 90° of flexion. Scapulohumeral rhythm: roughly 2° glenohumeral for every 1° scapulothoracic after the first ~25–30°.'],
   extP:['Hardest when your arm is level with your body, at the top of the lift.','Torque peaks at 0° (arm horizontal when prone). Latissimus dorsi is the prime mover; the scapular retractors stabilise.'],
   extB:['The band pulls the whole time, so the back of your shoulder works in both directions.','Elastic resistance keeps an extension demand throughout the range: concentric pulling, eccentric return.'],
   lat:['Hardest with the arm level, at 90°. Supraspinatus is most active at the start; the middle deltoid takes over as the arm rises.','Torque peaks at 90° of abduction. Supraspinatus initiates and stabilises; the deltoid dominates mid-range. The trapezius–serratus force couple rotates the scapula upward.'],
   pull:['The band pulls your arm up, so your chest and back muscles work in both directions.','Elastic resistance keeps an adduction demand throughout: concentric pulling down, eccentric return.'],
+  scapRaise:['Raising in line with the shoulder blade usually feels the most comfortable way to lift your arm: the tendons on top of the shoulder have more room, and the arm needs to turn outward less to get overhead.','The scapular plane aligns the humerus with the glenoid: the capsule is less twisted and the greater tubercle clears the acromion with less external rotation, which helps preserve the subacromial space. Full can (thumb up) is generally preferred to empty can for strengthening.'],
+  scapPull:['The band pulls your arm up, so your chest and back muscles work in both directions.','Elastic resistance keeps an adduction demand throughout: concentric pulling down, eccentric return.'],
 };
+WHY.lat = ['Hardest with the arm level, at 90°; the load falls again as the arm goes overhead. Supraspinatus is most active at the start; the middle deltoid takes over as the arm rises. Above about 90° the arm bone turns outward so it can clear the bony roof of the shoulder.','Torque peaks at 90° of abduction and falls toward 180°. Supraspinatus initiates and stabilises; the deltoid dominates mid-range; the trapezius–serratus force couple rotates the scapula upward. Beyond ~90° the humerus externally rotates so the greater tubercle clears the coracoacromial arch.'];
 const PHASE_NAMES = {
   front:{ pos:['Raising','Flexion'], neg:['Lowering','Extension'], order:['rest','pos','hold','neg'] },
   extP: { pos:['Lowering','Flexion'], neg:['Lifting back','Extension'], order:['rest','neg','hold','pos'] },
   extB: { pos:['Band pulls forward','Flexion'], neg:['Pulling back','Extension'], order:['rest','neg','hold','pos'] },
   lat:  { pos:['Raising','Abduction'], neg:['Lowering','Adduction'], order:['rest','pos','hold','neg'] },
   pull: { pos:['Band lifts the arm','Abduction'], neg:['Pulling down','Adduction'], order:['rest','neg','hold','pos'] },
+  scapRaise:{ pos:['Raising','Scaption'], neg:['Lowering','Return to side'], order:['rest','pos','hold','neg'] },
+  scapPull: { pos:['Band lifts the arm','Scaption'], neg:['Pulling down','Return to side'], order:['rest','neg','hold','pos'] },
 };
 const EX_TITLE = {
   front:['Front raise','Front raise (standing)'], extP:['Arm lift, face down','Prone shoulder extension'], extB:['Band pull-back','Band shoulder extension'],
   lat:['Side raise','Lateral raise (standing)'], pull:['Band pull-down','Band pull-down (adduction)'],
+  scapRaise:['Thumb-up raise at an angle','Full can scaption'], scapPull:['Band pull-down at an angle','Band pull-down (scapular plane)'],
 };
 // muscle-group buttons for each movement: [simple name, clinical name, simple exercise, clinical exercise]
 const GROUP_BTN = {
   flex:{ A:['Lifting forward','Flexors','front raise','Front raise'], B:['Pulling back','Extensors','arm lift','Extension'] },
   abd: { A:['Lifting out','Abductors','side raise','Lateral raise'], B:['Pulling down','Adductors','band pull-down','Band pull-down'] },
+  scap:{ A:['Lifting at an angle','Raising','thumb-up raise','Full can raise'], B:['Pulling down','Lowering','band pull-down','Band pull-down'] },
 };
 
 /* ------------------------------------------------------------------ state */
 const state = {
-  move:'flex', ex:'front', last:{ flex:'front', abd:'lat' }, load:'db', mode:'patient',
+  move:'flex', ex:'front', last:{ flex:'front', abd:'lat', scap:'scapRaise' }, load:'db', mode:'patient',
   theta:0, goal:0, vel:0, other:0, otherPlane:'abd',
   anim:null, loop:false, hold:0, loopDir:1,
   phase:'rest', demand:0, workSign:1, workType:'con', selected:null, hovered:null, backTo:null,
   pose:null, settle:0, gh:0, st:0,
 };
-const EX_OF = { flex:['front','ext'], abd:['lat','pull'] };
+const EX_OF = { flex:['front','ext'], abd:['lat','pull'], scap:['scapRaise','scapPull'] };
 const posture = () => state.ex === 'ext' ? (state.load === 'band' ? 'extB' : 'extP') : state.ex;
 const plane = () => state.move;
 
@@ -919,8 +953,8 @@ function buildArc(){
     const o = new CSS2DObject(el); o.position.copy(d.multiplyScalar(ARC_R + .34)); o.visible = showArc; arcStatic.add(o);
   }
   // flexion arc beside the arm (lateral); abduction arc in front of it
-  arcGroup.rotation.set(0, arcPlane === 'abd' ? -Math.PI/2 : 0, 0);
-  arcStatic.position.z = sector.position.z = degLabel.position.z = arcPlane === 'abd' ? -.95 : .75;
+  arcGroup.rotation.set(0, arcPlane === 'abd' ? -Math.PI/2 : arcPlane === 'scap' ? (SCAP_PLANE - 90)*DEG : 0, 0);
+  arcStatic.position.z = sector.position.z = degLabel.position.z = arcPlane === 'flex' ? .75 : -.95;
 }
 function updateArc(){
   if (arcPlane !== plane()) buildArc();
@@ -940,38 +974,50 @@ const POSTURES = {
   front: { plane:'flex', group:'pos', tilt:0,   oArm:0,  loop:[4, 95],    load:'db',   zoom:1.3, dir:[.35,.12,1] },
   extP:  { plane:'flex', group:'neg', tilt:-90, oArm:90, loop:[90, -15],  load:'db',   zoom:1.35, dir:[.25,.35,1], surface:'bench' },
   extB:  { plane:'flex', group:'neg', tilt:0,   oArm:0,  loop:[100, -35], load:'band', zoom:1.45, dir:[.35,.12,1], anchor:[7.5, .2, .4] },
-  lat:   { plane:'abd',  group:'pos', tilt:0,   oArm:0,  loop:[4, 90],    load:'db',   zoom:1.3, dir:[1,.12,.3] },
-  pull:  { plane:'abd',  group:'neg', tilt:0,   oArm:0,  loop:[150, 8],   load:'band', zoom:1.5, dir:[1,.12,.3], anchor:[.4, 7.6, 3.6] },
+  lat:   { plane:'abd',  group:'pos', tilt:0,   oArm:0,  loop:[4, 175],   load:'db',   zoom:1.9, dir:[1,.12,.3] },
+  pull:  { plane:'abd',  group:'neg', tilt:0,   oArm:0,  loop:[178, 8],   load:'band', zoom:1.9, dir:[1,.12,.3], anchor:[.4, 7.8, 3.6] },
+  scapRaise:{ plane:'scap', group:'pos', tilt:0, oArm:0, loop:[4, 175],   load:'db',   zoom:1.9, dir:[1,.14,-.15] },
+  scapPull: { plane:'scap', group:'neg', tilt:0, oArm:0, loop:[178, 8],   load:'band', zoom:1.9, dir:[1,.14,-.15], anchor:[1.9, 7.8, 3.3] },
 };
 
 /* ------------------------------------------------------------------ arm and shoulder blade kinematics */
 const PIV_U = new V3(-.8, -.15, -1.0), PIV_G = new V3(0, -.6, MID_Z);
 const mS = new THREE.Matrix4(), mA = new THREE.Matrix4(), _m1 = new THREE.Matrix4(), _m2 = new THREE.Matrix4(), _tmp = new V3();
-const armAngles = () => ({ f: plane() === 'flex' ? state.theta : state.otherPlane === 'flex' ? state.other : 0,
-                           a: plane() === 'abd' ? state.theta : state.otherPlane === 'abd' ? state.other : 0 });
-function armRot(f, a, out = new THREE.Matrix4()){ return out.makeRotationZ(f*DEG).multiply(_m2.makeRotationX(-a*DEG)); }
+const angleIn = pl => plane() === pl ? state.theta : state.otherPlane === pl ? state.other : 0;
+const armAngles = () => ({ f:angleIn('flex'), a:angleIn('abd'), s:angleIn('scap') });
+// the humerus turns outward as the arm goes overhead, so the greater tubercle clears the acromion (less needed in the scapular plane)
+const humeralER = (a, s) => 55*THREE.MathUtils.clamp((a - 80)/90, 0, 1) + 25*THREE.MathUtils.clamp((s - 100)/80, 0, 1);
+const _mr = new THREE.Matrix4(), _mq = new THREE.Matrix4();
+function armRot(f, a, out = new THREE.Matrix4(), s = 0, er = 0){
+  out.makeRotationZ(f*DEG).multiply(_mr.makeRotationX(-a*DEG));
+  if (s) out.multiply(_mr.makeRotationY(SCAP_PLANE*DEG)).multiply(_mq.makeRotationX(-s*DEG)).multiply(_mr.makeRotationY(-SCAP_PLANE*DEG));
+  if (er) out.multiply(_mr.makeRotationY(-er*DEG));
+  return out;
+}
+const planeRot = (pl, th, out) => armRot(pl === 'flex' ? th : 0, pl === 'abd' ? th : 0, out, pl === 'scap' ? th : 0);
 // scapulohumeral rhythm: little scapular motion in the first ~25° (setting phase), then about 1° of upward rotation for every 2° at the glenohumeral joint
 function scapUp(elev){ return elev >= 0 ? (elev < 25 ? elev*.08 : 2 + (elev - 25)*.374) : elev*.15; }
-function elevation(f, a){
-  const d = new V3(0, -1, 0).applyMatrix4(armRot(f, a, _m1));
+function elevation(f, a, s){
+  const d = new V3(0, -1, 0).applyMatrix4(armRot(f, a, _m1, s));
   const e = Math.acos(THREE.MathUtils.clamp(-d.y, -1, 1)) / DEG;
   return f < 0 && a < 5 ? -e : e;
 }
 function updateKinematics(){
-  const { f, a } = armAngles(), elev = elevation(f, a), u = scapUp(elev), g = .1*Math.max(0, f);
-  state.st = u; state.gh = elev - u;
+  const { f, a, s } = armAngles(), elev = elevation(f, a, s), u = scapUp(elev), g = .1*Math.max(0, f) + .05*s, er = humeralER(a, s);
+  state.st = u; state.gh = elev - u; state.er = er;
   // protraction about the trunk's vertical axis, then upward rotation about an axis through the middle of the blade
   mS.makeTranslation(PIV_G.x, PIV_G.y, PIV_G.z).multiply(_m1.makeRotationY(g*DEG)).multiply(_m2.makeTranslation(-PIV_G.x, -PIV_G.y, -PIV_G.z));
   mS.multiply(_m1.makeTranslation(PIV_U.x, PIV_U.y, PIV_U.z)).multiply(_m2.makeRotationX(-u*DEG)).multiply(_m1.makeTranslation(-PIV_U.x, -PIV_U.y, -PIV_U.z));
   scapG.matrix.copy(mS); scapG.matrixWorldNeedsUpdate = true;
   state.ghPos = new V3().applyMatrix4(mS);
-  mA.makeTranslation(state.ghPos.x, state.ghPos.y, state.ghPos.z).multiply(armRot(f, a));
+  mA.makeTranslation(state.ghPos.x, state.ghPos.y, state.ghPos.z).multiply(armRot(f, a, undefined, s, er));
   armG.matrix.copy(mA); armG.matrixWorldNeedsUpdate = true;
   // clavicle: from the sternoclavicular joint to the acromioclavicular joint, which moves with the scapula
   const ac = AC_S.clone().applyMatrix4(mS), L = SC.distanceTo(ac);
   clavicle.position.copy(SC).add(ac).multiplyScalar(.5); clavicle.scale.set(1, L/1.14, 1);
   clavicle.quaternion.setFromUnitVectors(new V3(0,1,0), ac.clone().sub(SC).normalize());
-  dumbbell.rotation.set(plane() === 'abd' ? 0 : Math.PI/2, 0, plane() === 'abd' ? Math.PI/2 : 0);
+  // bar across the hand: side to side for the front raise, front to back for the side raise, in the plane for the thumb-up raise
+  dumbbell.quaternion.setFromUnitVectors(new V3(0,1,0), plane() === 'flex' ? new V3(0,0,1) : plane() === 'abd' ? new V3(1,0,0) : new V3(Math.sin(SCAP_PLANE*DEG), 0, Math.cos(SCAP_PLANE*DEG)));
   body.rotation.z = state.pose.tilt*DEG;
   oArm.rotation.z = state.pose.oArm*DEG;
 }
@@ -1043,10 +1089,10 @@ const clamp = THREE.MathUtils.clamp;
 // (flexors or abductors must work), < 0 pulls it the other way (extensors or adductors must work)
 function exLoad(k, th){
   switch (k){
-    case 'front': case 'lat': return Math.sin(th*DEG);                           // dumbbell, standing
+    case 'front': case 'lat': case 'scapRaise': return Math.sin(th*DEG);                           // dumbbell, standing
     case 'extP': return Math.sin((th - 90)*DEG);                                 // dumbbell, lying face down
     case 'extB': return clamp(-.85 + .35*Math.sin(th*DEG), -1, 1);               // band pulling the arm forward, simplified
-    case 'pull': return clamp(-1 + .45*Math.sin(th*DEG), -1, 1);                 // band pulling the arm up and out, minus the arm's weight
+    case 'pull': case 'scapPull': return clamp(-1 + .45*Math.sin(th*DEG), -1, 1);                 // band pulling the arm up and out, minus the arm's weight
   }
   return 0;
 }
@@ -1064,7 +1110,7 @@ function shoulderPlan(){
   let demand = .18 + .82*Math.abs(tau);
   if (type === 'ecc') demand *= .72;
   const coact = .06 + .06*Math.min(1, Math.abs(v)/150) + .04*demand;
-  const ck = plane() === 'flex' ? 'f' : 'a';
+  const ck = { flex:'f', abd:'a', scap:'s' }[plane()];
   for (const o of TUBES){
     const t = o.t; let c = (t.c && t.c[ck]) || 0, p = null;
     if (t.fromFlexed && ck === 'f' && th < 5) c = 0;                              // sternocostal pec only extends a flexed arm
@@ -1184,14 +1230,15 @@ function onArm(hit){
   return body.worldToLocal(hit.point.clone()).distanceTo(state.ghPos) > 2.4;      // the lower part of the arm, even through a muscle
 }
 function dragPlane(){
-  const n = new V3(plane() === 'flex' ? 0 : 1, 0, plane() === 'flex' ? 1 : 0).transformDirection(body.matrixWorld);
+  const sp = SCAP_PLANE*DEG, n = ({ flex:new V3(0,0,1), abd:new V3(1,0,0), scap:new V3(Math.cos(sp), 0, -Math.sin(sp)) })[plane()].transformDirection(body.matrixWorld);
   return new THREE.Plane().setFromNormalAndCoplanarPoint(n, state.ghPos.clone().applyMatrix4(body.matrixWorld));
 }
 function angleFromRay(){
   const p = new V3(); if (!ray.ray.intersectPlane(dragPlane(), p)) return null;
   body.worldToLocal(p).sub(state.ghPos);
   const [lo, hi] = RANGE[plane()];
-  let a = Math.atan2(plane() === 'flex' ? p.x : p.z, -p.y) / DEG;
+  const sp = SCAP_PLANE*DEG, side = plane() === 'flex' ? p.x : plane() === 'abd' ? p.z : p.x*Math.sin(sp) + p.z*Math.cos(sp);
+  let a = Math.atan2(side, -p.y) / DEG;
   if (a < lo - 20) a = a < -120 ? hi : lo;
   return clamp(a, lo, hi);
 }
@@ -1228,7 +1275,7 @@ function zoom(f){
 // frame the shoulder, the arm at the middle of the movement and the chest
 function homeTarget(){
   const P = POSTURES[posture()];
-  const hand = a => new V3(0, -4.5, 0).applyMatrix4(P.plane === 'flex' ? armRot(a, 0) : armRot(0, a));
+  const hand = a => new V3(0, -4.5, 0).applyMatrix4(planeRot(P.plane, a));
   const c = new V3().add(hand(P.loop[0])).add(hand(P.loop[1])).add(new V3(.3, -1.2, MID_Z*.5)).multiplyScalar(1/4);
   c.applyMatrix4(_m1.makeRotationZ(P.tilt*DEG)); c.z *= zs;
   return c;
@@ -1384,6 +1431,7 @@ function renderJoint(){
     </div>
     <dl class="kv">${JOINT[L ? 'learner' : 'patient'].map(([k,v]) => `<div><dt>${k}</dt><dd>${v}</dd></div>`).join('')}</dl>
     <div class="special"><b>${RHYTHM_BOX.title[i]}</b><p>${RHYTHM_BOX.text[i]}</p></div>
+    <div class="special"><b>${ER_BOX.title[i]}</b><p>${ER_BOX.text[i]}</p></div>
     <div style="border-top:1px solid var(--line);padding-top:12px">
       <h3>Coming in the next stage</h3>
       <ul class="note" style="padding-left:18px;margin:0;display:grid;gap:3px"><li>Rotation and horizontal abduction / adduction</li><li>Glenohumeral tables: ROM, end feel, capsular pattern, ligaments, labrum, common conditions</li><li>AC, SC and scapulothoracic joints; painful arc</li></ul>
@@ -1397,8 +1445,8 @@ const rng = () => RANGE[plane()];
 const cx = th => { const [lo, hi] = rng(); return CH.l + (th - lo) / (hi - lo) * (CH.w - CH.l - CH.r); };
 const cy = v => CH.t + (1 - v) / 2 * (CH.h - CH.t - CH.b);
 const chartKeys = () => EX_OF[plane()].map(ex => ex === 'ext' ? (state.load === 'band' ? 'extB' : 'extP') : ex);
-const CHART_LBL = { front:[40,1], extP:[20,-1], extB:[150,-1], lat:[40,1], pull:[120,-1] };
-const CHART_NAME = { front:'Front raise', extP:'Prone extension', extB:'Band extension', lat:'Lateral raise', pull:'Band pull-down' };
+const CHART_LBL = { front:[40,1], extP:[20,-1], extB:[150,-1], lat:[40,1], pull:[120,-1], scapRaise:[40,1], scapPull:[120,-1] };
+const CHART_NAME = { front:'Front raise', extP:'Prone extension', extB:'Band extension', lat:'Lateral raise', pull:'Band pull-down', scapRaise:'Full can scaption', scapPull:'Band pull-down' };
 function drawChart(){
   const svg = $('echartSvg'); if (!svg || $('echart').hidden) return;
   const [lo, hi] = rng(), cur = posture();
@@ -1417,9 +1465,9 @@ function drawChart(){
     <text class="lbl on" x="${cx(a)}" y="${cy(v) + side*10 + (side > 0 ? 4 : 0)}" text-anchor="middle">${CHART_NAME[cur]}</text>
     <line class="guide" id="chGuide" y1="${CH.t}" y2="${CH.h - CH.b}" visibility="hidden"/>
     <circle class="dot" id="chDot" r="4.5"/>`;
-  const fl = plane() === 'flex';
-  $('keyUp').textContent = `Above the line: ${fl ? 'flexors' : 'abductors'} working`;
-  $('keyDown').textContent = `Below: ${fl ? 'extensors' : 'adductors'} working`;
+  const [up, dn] = PW[plane()].grp[1];
+  $('keyUp').textContent = `Above the line: ${up} working`;
+  $('keyDown').textContent = `Below: ${dn} working`;
   updateChartDot();
 }
 function updateChartDot(){
@@ -1429,9 +1477,9 @@ function updateChartDot(){
   if (!chartHover) $('echartRead').textContent = chartText(state.theta, 'Now');
 }
 function chartText(th, prefix){
-  const v = exLoad(posture(), th), pct = Math.round(Math.abs(v) * 100), fl = plane() === 'flex';
+  const v = exLoad(posture(), th), pct = Math.round(Math.abs(v) * 100), [up, dn] = PW[plane()].grp[1];
   if (pct < 4) return `${prefix} at ${Math.round(th)}°: almost no load on the shoulder`;
-  return `${prefix} at ${Math.round(th)}°: ${pct}% of peak load, ${v > 0 ? (fl ? 'flexors' : 'abductors') : (fl ? 'extensors' : 'adductors')} working`;
+  return `${prefix} at ${Math.round(th)}°: ${pct}% of peak load, ${v > 0 ? up : dn} working`;
 }
 let chartHover = false;
 function chartAngle(e){
@@ -1462,10 +1510,9 @@ function liveKey(){
 }
 const exTitle = () => EX_TITLE[posture()][L1()];
 function shortWho(p){
-  const w = words(), L = state.mode === 'learner', fl = plane() === 'flex', pos = POSTURES[posture()].group === 'pos';
-  if (p.k === 'takeover') return L ? 'antagonists take over' : 'opposite muscles take over';
-  const who = L ? (fl ? (pos ? 'flexors' : 'extensors') : (pos ? 'abductors' : 'adductors'))
-                : (fl ? (pos ? 'front of shoulder' : 'back of shoulder') : (pos ? 'side of shoulder' : 'chest and back'));
+  const w = words(), pos = POSTURES[posture()].group === 'pos';
+  if (p.k === 'takeover') return state.mode === 'learner' ? 'antagonists take over' : 'opposite muscles take over';
+  const who = PW[plane()].grp[L1()][pos ? 0 : 1];
   return `${who} ${w[p.type].toLowerCase()}`;
 }
 let moreKey = '';
@@ -1524,7 +1571,8 @@ function updateHUD(){
   const N = PHASE_NAMES[posture()];
   pill.querySelector('span').textContent = state.phase === 'pos' || state.phase === 'neg' ? N[state.phase][L1()] : w[state.phase] || w.rest;
   const gh = Math.round(state.gh), st = Math.round(state.st);
-  $('rhythm').innerHTML = L ? `Glenohumeral <b>${gh}°</b> · scapulothoracic <b>${st}°</b>` : `Shoulder joint <b>${gh}°</b> + shoulder blade <b>${st}°</b>`;
+  const er = Math.round(state.er || 0), erTxt = er >= 3 ? (L ? ` · humeral ER <b>${er}°</b>` : ` · arm turned out <b>${er}°</b>`) : '';
+  $('rhythm').innerHTML = (L ? `Glenohumeral <b>${gh}°</b> · scapulothoracic <b>${st}°</b>` : `Shoulder joint <b>${gh}°</b> + shoulder blade <b>${st}°</b>`) + erTxt;
   syncExPickers();
   updateCaption();
   $('effortBar').style.width = Math.round(Math.min(1, state.demand) * 100) + '%';
@@ -1534,7 +1582,7 @@ function syncButtons(){ $('btnLoop').setAttribute('aria-pressed', state.loop); }
 function setPressed(ids, on){ ids.forEach(id => $(id).setAttribute('aria-pressed', id === on)); }
 
 $('angle').addEventListener('input', e => { stopAnim(); state.goal = +e.target.value; });
-$('btnPos').onclick = () => { state.loop = false; syncButtons(); playTo(plane() === 'flex' ? 170 : 170); };
+$('btnPos').onclick = () => { state.loop = false; syncButtons(); playTo(175); };
 $('btnNeg').onclick = () => { state.loop = false; syncButtons(); playTo(rng()[0] < 0 ? -45 : 0); };
 $('btnLoop').onclick = () => {
   if (state.loop) return stopAnim();
@@ -1546,19 +1594,17 @@ function setMove(mv){
   if (mv === state.move) return;
   state.otherPlane = state.move; state.other = state.theta;
   state.move = mv; state.theta = state.goal = 0; state.vel = 0;
-  setPressed(['mvFlex','mvAbd'], mv === 'flex' ? 'mvFlex' : 'mvAbd');
+  setPressed(['mvFlex','mvAbd','mvScap'], { flex:'mvFlex', abd:'mvAbd', scap:'mvScap' }[mv]);
   setExercise(state.last[mv]);
 }
 function syncSections(){
-  const [lo, hi] = rng(), L = state.mode === 'learner', fl = plane() === 'flex';
+  const [lo, hi] = rng(), L = state.mode === 'learner', i = L ? 1 : 0, W = PW[plane()];
   $('angle').min = lo; $('angle').max = hi;
   $('go90').style.left = `calc(8px + (100% - 16px) * ${(90 - lo) / (hi - lo)})`;
-  $('scaleL').textContent = fl ? (L ? '−50° extension' : '−50° back') : (L ? '0° adducted' : '0° by side');
-  $('scaleR').textContent = fl ? (L ? '180° flexion' : '180° overhead') : (L ? '180° abduction' : '180° overhead');
-  $('posTxt').textContent = L ? (fl ? 'Flex' : 'Abduct') : (fl ? 'Forward' : 'Up');
-  $('negTxt').textContent = L ? (fl ? 'Extend' : 'Adduct') : (fl ? 'Back' : 'Down');
+  $('scaleL').textContent = W.lo[i]; $('scaleR').textContent = W.hi[i];
+  $('posTxt').textContent = W.pos[i]; $('negTxt').textContent = W.neg[i];
   $('angleH').textContent = L ? 'Shoulder angle' : 'Arm angle';
-  const G = GROUP_BTN[plane()], i = L ? 1 : 0;
+  const G = GROUP_BTN[plane()];
   $('grpAName').textContent = G.A[i]; $('grpASub').textContent = G.A[2 + i];
   $('grpBName').textContent = G.B[i]; $('grpBSub').textContent = G.B[2 + i];
   $('loadSec').hidden = state.ex !== 'ext';
@@ -1579,6 +1625,7 @@ $('grpA').onclick = () => { const ex = EX_OF[plane()][0]; if (state.ex !== ex) s
 $('grpB').onclick = () => { const ex = EX_OF[plane()][1]; if (state.ex !== ex) setExercise(ex); };
 $('mvFlex').onclick = () => setMove('flex');
 $('mvAbd').onclick = () => setMove('abd');
+$('mvScap').onclick = () => setMove('scap');
 function setLoad(l){ state.load = l; setPressed(['loadDb','loadBand'], l === 'db' ? 'loadDb' : 'loadBand'); setExercise('ext'); }
 $('loadDb').onclick = () => { if (state.load !== 'db') setLoad('db'); };
 $('loadBand').onclick = () => { if (state.load !== 'band') setLoad('band'); };
