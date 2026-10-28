@@ -631,14 +631,69 @@ const CUFF_TEXT = {
 const JOINT = {
   patient:[
     ['A ball in a shallow socket','The top of your arm bone is a ball sitting in a small, shallow socket on the shoulder blade. That gives the shoulder more movement than any other joint, but less stability.'],
+    ['How far it moves','Most people can lift the arm all the way up, about 180°, forward or out to the side, and take it back about 50°. With the arm by your side and the elbow bent, the forearm turns out about 70–90° and in until it meets your belly.'],
     ['It works as a team','Lifting your arm uses the shoulder joint and the shoulder blade together. The shoulder blade turns on your ribs as the arm rises.'],
-    ['What holds it together','Mostly muscles, especially the rotator cuff, plus a ring of cartilage (the labrum) and the joint capsule.'],
+    ['What holds it together','Mostly muscles, especially the rotator cuff, plus a ring of cartilage around the socket (the labrum), the joint capsule and its ligaments.'],
+    ['Common problems','Rotator cuff tendon pain and tears, frozen shoulder, dislocation, and wear and tear (arthritis).'],
   ],
   learner:[
     ['Shoulder complex','Glenohumeral, acromioclavicular and sternoclavicular joints, plus the scapulothoracic articulation'],
     ['Glenohumeral joint','Synovial ball-and-socket; the glenoid is about a third the size of the humeral head and is deepened by the labrum'],
-    ['Stability','Mainly dynamic (rotator cuff, long head of biceps); static: labrum, capsule, glenohumeral and coracohumeral ligaments'],
+    ['Normal ROM',{ head:['Movement','Range'], rows:[
+      ['Flexion','0–180°'],
+      ['Extension','0–50/60°'],
+      ['Abduction','0–180°'],
+      ['Adduction','0° (to ~30–50° across the front of the body)'],
+      ['External rotation','0–90° (at 90° abduction)'],
+      ['Internal rotation','0–70° (at 90° abduction)'],
+      ['Horizontal adduction','0–130°'],
+      ['Horizontal abduction','0–45°'] ]}],
+    ['End feel',{ head:['Movement','End feel','Why'], rows:[
+      ['Flexion','Firm','Posterior capsule, ligaments, muscles'],
+      ['Extension','Firm','Anterior capsule, coracohumeral ligament'],
+      ['Abduction','Firm (may be hard)','Inferior capsule; greater tubercle on the acromion if not externally rotated'],
+      ['External rotation','Firm','Anterior capsule, glenohumeral and coracohumeral ligaments'],
+      ['Internal rotation','Firm','Posterior capsule'],
+      ['Horizontal adduction','Soft or firm','Soft-tissue approximation; posterior capsule'],
+      ['Horizontal abduction','Firm','Anterior capsule, ligaments'] ]}],
+    ['Capsular pattern','External rotation most limited, then abduction, then internal rotation (ER > Abd > IR)'],
+    ['Resting position','~55° abduction, 30° horizontal adduction (scapular plane), neutral rotation'],
+    ['Close-packed position','Full abduction with external rotation'],
+    ['Ligaments',{ head:['Ligament','Main role'], rows:[
+      ['Superior glenohumeral (SGHL)','Inferior translation and ER with the arm at the side'],
+      ['Middle glenohumeral (MGHL)','Anterior translation and ER at ~45° abduction'],
+      ['Inferior glenohumeral complex (IGHL)','Anterior band: anterior stability at 90° abduction and ER; posterior band: posterior stability in IR'],
+      ['Coracohumeral','Inferior translation and ER with the arm at the side; part of the rotator interval'],
+      ['Coracoacromial','Not a joint ligament: forms the roof (arch) over the rotator cuff'] ]}],
+    ['Labrum',{ head:['',''], rows:[
+      ['Structure','Fibrocartilage rim around the glenoid; deepens the socket by ~50%'],
+      ['Attachments','Long head of biceps at the superior labrum; glenohumeral ligaments blend with it'],
+      ['Injuries',{ span:1, text:'SLAP (superior, front to back), Bankart (anteroinferior, with dislocation)' }] ]}],
+    ['Common conditions','Rotator cuff tendinopathy and tears, subacromial pain, adhesive capsulitis (frozen shoulder), glenohumeral instability and dislocation, labral tears (SLAP, Bankart), osteoarthritis, long head of biceps tendinopathy'],
   ],
+};
+// the other joints of the shoulder complex (clinical mode)
+const OTHER_JOINTS = [
+  ['Acromioclavicular (AC) joint',{ head:['',''], rows:[
+    ['Type','Plane synovial joint, often with a disc'],
+    ['Movements','Small gliding and rotation that let the scapula follow the arm'],
+    ['Ligaments','AC (horizontal stability); coracoclavicular: conoid and trapezoid (vertical stability)'],
+    ['Common conditions','AC sprain or separation (falls on the shoulder), AC osteoarthritis'] ]}],
+  ['Sternoclavicular (SC) joint',{ head:['',''], rows:[
+    ['Type','Saddle synovial joint with an articular disc'],
+    ['Movements','Elevation/depression, protraction/retraction and posterior rotation of the clavicle'],
+    ['Ligaments','Anterior and posterior SC, interclavicular, costoclavicular'],
+    ['Common conditions','Rare sprain or dislocation; posterior dislocation is an emergency'] ]}],
+  ['Scapulothoracic articulation',{ head:['',''], rows:[
+    ['Type','Not a true joint: the scapula glides on the chest wall'],
+    ['Movements','Elevation/depression, protraction/retraction, upward/downward rotation, tilting'],
+    ['Key muscles','Trapezius and serratus anterior (upward rotation), rhomboids and levator scapulae'],
+    ['Common conditions','Scapular dyskinesis; winging (long thoracic or accessory nerve injury)'] ]}],
+];
+const ARC_BOX = {
+  title:['Painful arc','Painful arc'],
+  text:['Some people with shoulder pain feel it only in the middle of lifting the arm out to the side, roughly between 60° and 120°, and not at the start or top. That middle part is where the tendons on top of the shoulder are most squeezed.',
+        'Pain between ~60° and 120° of active abduction suggests a subacromial source (rotator cuff tendinopathy, bursitis), as the space under the acromion narrows. Pain at the end of range (~170–180°) points more to the acromioclavicular joint.'],
 };
 const RHYTHM_BOX = {
   title:['Shoulder blade rhythm','Scapulohumeral rhythm'],
@@ -1661,6 +1716,13 @@ function updateDetailStatus(){
   box.querySelector('i').style.background = stateColorVar(m);
   box.querySelector('span').textContent = `Right now: ${m.role ? w[m.role].toLowerCase() + ', ' : ''}${statusText(m).toLowerCase()}`;
 }
+// a value is either text or a small table: { head:[...], rows:[[...]] }; a cell can be { span, text }
+function kvValue(v){
+  if (typeof v === 'string') return v;
+  const cell = (c, tag) => typeof c === 'string' ? `<${tag}>${c}</${tag}>` : `<${tag} colspan="${c.span}">${c.text}</${tag}>`;
+  const head = v.head.some(h => h) ? `<thead><tr>${v.head.map(h => `<th>${h}</th>`).join('')}</tr></thead>` : '';
+  return `<table class="kvt">${head}<tbody>${v.rows.map(r => `<tr>${r.map((c, i) => cell(c, i ? 'td' : 'th')).join('')}</tr>`).join('')}</tbody></table>`;
+}
 function renderJoint(){
   const L = state.mode === 'learner', i = L ? 1 : 0;
   $('paneJoint').innerHTML = `
@@ -1668,13 +1730,13 @@ function renderJoint(){
       <h2>The shoulder</h2>
       <p class="lede">${L ? 'A complex of four joints working together, with the glenohumeral joint at its centre.' : 'Where your arm bone meets your shoulder blade, working together with the collarbone and the shoulder blade on your ribs.'}</p>
     </div>
-    <dl class="kv">${JOINT[L ? 'learner' : 'patient'].map(([k,v]) => `<div><dt>${k}</dt><dd>${v}</dd></div>`).join('')}</dl>
+    <dl class="kv">${JOINT[L ? 'learner' : 'patient'].map(([k,v]) => `<div><dt>${k}</dt><dd>${kvValue(v)}</dd></div>`).join('')}</dl>
     <div class="special"><b>${RHYTHM_BOX.title[i]}</b><p>${RHYTHM_BOX.text[i]}</p></div>
     <div class="special"><b>${ER_BOX.title[i]}</b><p>${ER_BOX.text[i]}</p></div>
-    <div style="border-top:1px solid var(--line);padding-top:12px">
-      <h3>Coming in the next stage</h3>
-      <ul class="note" style="padding-left:18px;margin:0;display:grid;gap:3px"><li>Glenohumeral tables: ROM, end feel, capsular pattern, ligaments, labrum, common conditions</li><li>AC, SC and scapulothoracic joints; painful arc</li></ul>
-    </div>
+    <div class="special"><b>${ARC_BOX.title[i]}</b><p>${ARC_BOX.text[i]}</p></div>
+    ${L ? OTHER_JOINTS.map(([k, v]) => `
+    <div class="detail" style="display:grid;gap:6px;border-top:1px solid var(--line);padding-top:14px"><h2>${k}</h2></div>
+    <dl class="kv"><div><dd>${kvValue(v)}</dd></div></dl>`).join('') : ''}
     <p class="note">Draft content for physiotherapist review.</p>`;
 }
 
