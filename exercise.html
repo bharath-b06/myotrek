@@ -1,0 +1,1588 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Myotrek exercise</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+/* Layout: full-bleed 3D stage, floating control panel left, info panel right, live caption bottom. Clinical light-box feel. */
+:root{
+  --bg:#E9EEF1; --bg-2:#F7FAFB; --panel:rgba(255,255,255,.82); --panel-solid:#FFFFFF;
+  --line:rgba(22,44,60,.11); --fg:#16222C; --fg-2:#4C5B68; --fg-3:#7C8994;
+  --accent:#0B6B70; --accent-soft:#D6EBEB; --accent-fg:#FFFFFF;
+  --con:#D9472B; --ecc:#4F55D0; --iso:#C88A10; --rest:#C49590;
+  --bone:#ECE5D5; --skin:#E6C2AC; --shadow:0 10px 30px -12px rgba(20,40,60,.25), 0 1px 2px rgba(20,40,60,.06);
+  --font-display:"Bricolage Grotesque", ui-sans-serif, system-ui, sans-serif;
+  --font-body:"Atkinson Hyperlegible", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono:"JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#0E1318; --bg-2:#1A222B; --panel:rgba(22,29,37,.84); --panel-solid:#18202A;
+  --line:rgba(255,255,255,.09); --fg:#E6ECF1; --fg-2:#A7B3BE; --fg-3:#76838F;
+  --accent:#4FC2C3; --accent-soft:rgba(79,194,195,.15); --accent-fg:#06272A;
+  --con:#FF6A4D; --ecc:#8C90FF; --iso:#F0B43C; --rest:#A97F7B;
+  --bone:#D6CEBD; --skin:#C9A28C; --shadow:0 14px 34px -14px rgba(0,0,0,.6); color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#0E1318; --bg-2:#1A222B; --panel:rgba(22,29,37,.84); --panel-solid:#18202A;
+  --line:rgba(255,255,255,.09); --fg:#E6ECF1; --fg-2:#A7B3BE; --fg-3:#76838F;
+  --accent:#4FC2C3; --accent-soft:rgba(79,194,195,.15); --accent-fg:#06272A;
+  --con:#FF6A4D; --ecc:#8C90FF; --iso:#F0B43C; --rest:#A97F7B;
+  --bone:#D6CEBD; --skin:#C9A28C; --shadow:0 14px 34px -14px rgba(0,0,0,.6); color-scheme:dark }
+
+html,body{height:100%}
+body{background:var(--bg); color:var(--fg); font:15px/1.5 var(--font-body); overflow:hidden}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+button,input{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
+
+.app{position:relative; height:100%; background:radial-gradient(ellipse 60% 70% at 52% 46%, var(--bg-2), var(--bg) 75%)}
+#stage{position:absolute; inset:0}
+#stage canvas{display:block; width:100%; height:100%; touch-action:none}
+.labels{position:absolute; inset:0; pointer-events:none; z-index:1}   /* own stacking layer: the 3D library gives each label its own z-index */
+
+/* header */
+.top{position:absolute; top:16px; left:16px; right:16px; display:flex; align-items:center; justify-content:space-between; gap:12px; pointer-events:none; z-index:5}
+.top > *{pointer-events:auto}
+.brand{display:flex; align-items:center; gap:10px}
+.brand svg{width:30px; height:30px}
+.brand b{font:700 21px/1 var(--font-display); letter-spacing:-.01em}
+.backlink{display:inline-flex; align-items:center; gap:4px; padding:6px 11px; border-radius:999px; border:1px solid var(--line); background:var(--panel); color:var(--fg); font-weight:700; font-size:13px; text-decoration:none}
+.backlink:hover{border-color:var(--accent); color:var(--accent)}
+.crumb{color:var(--fg-3); font-size:13px; margin-left:4px}
+.crumb strong{color:var(--fg-2); font-weight:700}
+.top-right{display:flex; gap:8px; align-items:center}
+
+.seg{display:inline-flex; background:var(--panel); border:1px solid var(--line); border-radius:999px; padding:3px; backdrop-filter:blur(12px)}
+.seg button{border:0; background:transparent; padding:6px 12px; border-radius:999px; cursor:pointer; font-size:13px; color:var(--fg-2); line-height:1.2}
+.seg button[aria-pressed="true"]{background:var(--accent); color:var(--accent-fg); font-weight:700}
+.seg.block{display:flex; border-radius:10px}
+.seg.block button{flex:1; border-radius:8px; padding:7px 6px; display:flex; flex-direction:column; align-items:center; gap:1px}
+.seg.block small{font-size:11px; opacity:.8; font-weight:400}
+.iconbtn{width:36px; height:36px; display:grid; place-items:center; border-radius:999px; border:1px solid var(--line); background:var(--panel); cursor:pointer; backdrop-filter:blur(12px)}
+.iconbtn svg{width:18px; height:18px}
+
+/* panels */
+.panel{background:var(--panel); border:1px solid var(--line); border-radius:16px; box-shadow:var(--shadow); backdrop-filter:blur(16px) saturate(1.15); -webkit-backdrop-filter:blur(16px) saturate(1.15)}
+.controls{position:absolute; left:16px; top:72px; width:290px; max-height:calc(100% - 88px); overflow:auto; padding:16px; display:flex; flex-direction:column; gap:18px; z-index:4}
+.info{position:absolute; right:16px; top:72px; bottom:16px; width:350px; overflow:auto; padding:0; z-index:4; display:flex; flex-direction:column}
+h3{margin:0 0 8px; font:700 11px/1.2 var(--font-body); letter-spacing:.09em; text-transform:uppercase; color:var(--fg-3)}
+
+.readout{display:flex; align-items:baseline; gap:8px; margin-bottom:6px}
+.readout .num{font:500 40px/1 var(--font-mono); letter-spacing:-.03em; font-variant-numeric:tabular-nums}
+.readout .deg{font:500 22px/1 var(--font-mono); color:var(--fg-3); margin-left:-6px}
+.pill{display:inline-flex; align-items:center; gap:6px; padding:3px 9px; border-radius:999px; font-size:12px; font-weight:700; background:var(--accent-soft); color:var(--fg)}
+.pill i{width:8px; height:8px; border-radius:50%; background:var(--fg-3); display:block}
+
+input[type=range]{width:100%; accent-color:var(--accent); margin:6px 0 2px}
+.scale{display:flex; justify-content:space-between; font-size:11.5px; color:var(--fg-3)}
+.btnrow{display:flex; gap:6px; margin-top:10px}
+.btn{flex:1; border:1px solid var(--line); background:var(--panel-solid); padding:8px 6px; border-radius:10px; cursor:pointer; font-size:13.5px; font-weight:700; display:flex; align-items:center; justify-content:center; gap:6px}
+.btn:hover{border-color:var(--accent)}
+.btn[aria-pressed="true"]{background:var(--accent); color:var(--accent-fg); border-color:transparent}
+.btn svg{width:14px; height:14px}
+.hint{margin:8px 0 0; font-size:12.5px; color:var(--fg-3)}
+.toggles{display:flex; flex-wrap:wrap; gap:6px}
+.chk{display:inline-flex; align-items:center; gap:6px; font-size:13px; padding:5px 10px; border:1px solid var(--line); border-radius:999px; cursor:pointer; background:var(--panel-solid)}
+.chk input{accent-color:var(--accent); margin:0}
+.linkbtn{border:0; background:none; color:var(--accent); font-weight:700; cursor:pointer; padding:4px 0; font-size:13px}
+
+/* info panel */
+.tabs{display:flex; gap:4px; padding:12px 12px 0; position:sticky; top:0; background:var(--panel); backdrop-filter:blur(16px); z-index:1; border-bottom:1px solid var(--line)}
+.tabs button{border:0; background:none; padding:8px 10px 10px; cursor:pointer; color:var(--fg-3); font-weight:700; font-size:14px; border-bottom:2px solid transparent; margin-bottom:-1px}
+.tabs button[aria-selected="true"]{color:var(--fg); border-color:var(--accent)}
+.pane{padding:14px 16px 18px; display:flex; flex-direction:column; gap:14px}
+.group-h{display:flex; justify-content:space-between; align-items:baseline; margin-top:2px}
+.mlist{display:flex; flex-direction:column; gap:6px}
+.mrow{display:grid; grid-template-columns:12px 1fr auto; gap:4px 10px; align-items:center; text-align:left; padding:9px 10px; border:1px solid var(--line); border-radius:11px; background:var(--panel-solid); cursor:pointer; width:100%}
+.mrow:hover{border-color:var(--accent)}
+.mrow .dot{width:12px; height:12px; border-radius:50%; background:var(--rest); grid-row:span 2; transition:background .2s}
+.mrow .nm{font-weight:700; font-size:14px}
+.mrow .role{font-size:11.5px; color:var(--fg-2); justify-self:end; white-space:nowrap}
+.mrow .st{font-size:12.5px; color:var(--fg-2)}
+.mrow .bar{grid-column:2 / 4; height:4px; border-radius:2px; background:var(--line); overflow:hidden}
+.mrow .bar span{display:block; height:100%; width:0; background:var(--fg-3); border-radius:2px; transition:width .12s linear, background .2s}
+.legend{display:grid; grid-template-columns:1fr 1fr; gap:6px 12px; font-size:12.5px; color:var(--fg-2); padding-top:12px; border-top:1px solid var(--line)}
+.legend span{display:flex; align-items:center; gap:7px}
+.legend i{width:10px; height:10px; border-radius:50%; flex:none}
+.note{font-size:12.5px; color:var(--fg-3); margin:0}
+
+.detail h2{font:700 24px/1.15 var(--font-display); margin:0; letter-spacing:-.01em; text-wrap:balance}
+.detail .lede{margin:0; font-size:15.5px}
+.kv{display:grid; gap:10px}
+.kv div{display:grid; gap:2px}
+.kv dt{font:700 11px/1.3 var(--font-body); letter-spacing:.08em; text-transform:uppercase; color:var(--fg-3)}
+.kv dd{margin:0; font-size:14px}
+.kv ul{margin:0; padding-left:18px}
+.kv li{margin:2px 0}
+.kvt{width:100%; border-collapse:collapse; font-size:13px; margin-top:4px}
+.kvt th,.kvt td{text-align:left; vertical-align:top; padding:5px 8px 5px 0; border-bottom:1px solid var(--line)}
+.kvt thead th{font:700 10.5px/1.3 var(--font-body); color:var(--fg-3); padding-top:0}
+.kvt tbody th{font-weight:700}
+.kvt tr:last-child > *{border-bottom:0}
+.special{border:1px solid var(--accent); background:var(--accent-soft); border-radius:12px; padding:12px 14px; display:grid; gap:4px}
+.special b{font-size:13px; color:var(--accent)}
+.special p{margin:0; font-size:13.5px}
+.roots{font-family:var(--font-mono); font-size:12.5px; background:var(--accent-soft); padding:1px 6px; border-radius:6px; margin-left:4px; white-space:nowrap}
+.statusbox{display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:12px; background:var(--accent-soft); font-size:13.5px}
+.statusbox i{width:12px; height:12px; border-radius:50%; flex:none}
+.back{align-self:flex-start}
+
+/* caption */
+.caption{position:absolute; left:322px; right:382px; bottom:16px; display:flex; flex-direction:column; align-items:center; gap:8px; z-index:6; pointer-events:none}
+.caption .panel{pointer-events:auto; padding:10px 14px; display:flex; gap:14px; align-items:center; width:100%; max-width:640px; position:relative}
+.caption p{margin:0; font-size:14px; line-height:1.4; text-wrap:pretty}
+.why{font-size:12.5px!important; color:var(--fg-2)}
+.capB .headline{flex:1; font-weight:700; font-size:15px!important}
+/* caption: one fixed-size line; "More" lists every phase of the exercise and highlights the live one */
+.capB{height:52px}
+.capB .headline{flex:1; min-width:0; font-weight:700; font-size:15px!important; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+.why{font-size:12.5px!important; color:var(--fg-2)}
+.more-h{display:flex; justify-content:space-between; align-items:center}
+.phases{list-style:none; margin:0; padding:0; display:grid; gap:4px}
+.phases li{padding:6px 10px; border-radius:9px; border:1px solid transparent; font-size:13.5px; line-height:1.4}
+.phases li b{display:flex; align-items:center; gap:6px; font-size:12px; text-transform:uppercase; letter-spacing:.06em; color:var(--fg-3)}
+.phases li b i{width:8px; height:8px; border-radius:50%}
+.phases li.on{border-color:var(--accent); background:var(--accent-soft)}
+.phases li.on b{color:var(--fg)}
+.morebox{max-height:min(60vh, 460px); overflow:auto; position:absolute; left:0; right:0; bottom:calc(100% + 8px); padding:12px 14px; border-radius:14px; background:var(--panel-solid); border:1px solid var(--line); box-shadow:var(--shadow); display:grid; gap:6px}
+/* view toggles */
+.viewtools{position:absolute; left:322px; top:72px; right:440px; display:flex; flex-direction:column; align-items:flex-start; gap:8px; z-index:4; pointer-events:none}
+.viewtools > *{pointer-events:auto}
+.viewmenu{position:relative; display:flex; align-items:center; gap:6px}
+.viewmenu .iconbtn{width:40px; height:40px; box-shadow:var(--shadow)}
+.viewpop{position:absolute; left:0; top:calc(100% + 6px); padding:8px; display:grid; gap:2px; min-width:150px}
+.vrow{display:flex; align-items:center; gap:8px; font-size:13px; padding:5px 6px; border-radius:6px; cursor:pointer}
+.vrow:hover{background:var(--accent-soft)}
+.vrow input{accent-color:var(--accent); margin:0}
+.effort{flex:none; width:96px; display:grid; gap:4px}
+.effort small{font-size:11px; color:var(--fg-3); letter-spacing:.06em; text-transform:uppercase; font-weight:700}
+.effort .bar{height:6px; border-radius:3px; background:var(--line); overflow:hidden}
+.effort .bar span{display:block; height:100%; width:0; background:var(--accent); transition:width .15s}
+
+/* 3D labels */
+.tag{pointer-events:auto; cursor:pointer; border:1px solid var(--line); background:var(--panel); color:var(--fg); font:700 11.5px/1 var(--font-body); padding:5px 8px; border-radius:999px; white-space:nowrap; box-shadow:var(--shadow); backdrop-filter:blur(8px)}
+.tag:hover,.tag.on{border-color:var(--accent); color:var(--accent)}
+.tag.dim{opacity:.35}
+.tag.clash{opacity:0; pointer-events:none}
+.deglabel{font:500 12px/1 var(--font-mono); color:var(--accent); background:var(--panel); padding:3px 6px; border-radius:6px; border:1px solid var(--line)}
+.ticklabel{font:500 10.5px/1 var(--font-mono); color:var(--fg-3)}
+
+.seg.block.sub{margin-top:6px; background:transparent; border-style:dashed}
+.seg.block.sub button{font-size:12px; padding:5px 4px}
+.seg.block.sub small{font-size:10px}
+.seg.block.sub button[aria-pressed="true"]{background:var(--accent-soft); color:var(--accent)}
+.slider90{position:relative}
+.slider90 input{position:relative; z-index:1}
+/* left is set from the slider range in script (thumb ≈ 16px) */
+.mark90{position:absolute; left:calc(8px + (100% - 16px) * 90 / 135); top:100%; transform:translate(-50%, 2px); z-index:2;
+  border:1px solid var(--accent); background:var(--panel-solid); color:var(--accent); font:700 11px/1 var(--font-mono); padding:3px 6px; border-radius:999px; cursor:pointer}
+.mark90::before{content:""; position:absolute; left:50%; bottom:100%; width:1px; height:9px; background:var(--accent); transform:translateX(-50%)}
+.mark90:hover{background:var(--accent); color:var(--accent-fg)}
+.zoom{position:absolute; right:382px; top:72px; display:flex; flex-direction:column; gap:6px; z-index:4}
+.zoom .iconbtn{width:40px; height:40px; box-shadow:var(--shadow)}
+.readout.sm .num{font-size:28px}
+.readout.sm .deg{font-size:16px; margin-left:-6px}
+.echart{margin:12px 0 0; padding:10px 10px 8px; border:1px solid var(--line); border-radius:12px; background:var(--panel-solid)}
+.echart figcaption{font:700 11px/1.2 var(--font-body); letter-spacing:.08em; text-transform:uppercase; color:var(--fg-3); margin-bottom:4px}
+.echart svg{display:block; width:100%; height:auto; touch-action:none; cursor:crosshair}
+.echart .grid{stroke:var(--line); stroke-width:1}
+.echart .zero{stroke:var(--fg-3); stroke-width:1}
+.echart .tick{font:500 10px var(--font-mono); fill:var(--fg-3)}
+.echart .ser{fill:none; stroke:var(--fg-3); stroke-width:1.5; opacity:.45; stroke-linecap:round; stroke-linejoin:round}
+.echart .ser.on{stroke:var(--accent); stroke-width:2.5; opacity:1}
+.echart .lbl{font:700 10.5px var(--font-body); fill:var(--fg-3)}
+.echart .lbl.on{fill:var(--fg)}
+.echart .dot{fill:var(--accent); stroke:var(--panel-solid); stroke-width:2}
+.echart .guide{stroke:var(--fg-3); stroke-width:1; stroke-dasharray:2 3}
+.echart-key{display:flex; justify-content:space-between; gap:6px; font-size:10.5px; color:var(--fg-3); margin-top:2px}
+.echart-read{font-size:12px; line-height:1.4; color:var(--fg-2); height:2.8em; overflow:hidden; margin-top:4px}   /* always two lines tall, so the chart never resizes */
+.heads{display:grid; gap:6px; padding:8px 10px 2px 32px}
+.hrow{display:grid; grid-template-columns:1fr auto; gap:3px 8px; font-size:12px; color:var(--fg-2); align-items:center}
+.hrow .hl{font-family:var(--font-mono); font-size:11px; color:var(--fg-3)}
+.hrow .bar{grid-column:1 / 3; height:3px; border-radius:2px; background:var(--line); overflow:hidden}
+.hrow .bar span{display:block; height:100%; width:0; border-radius:2px; transition:width .12s linear}
+.rotlbl{font-size:13px; color:var(--fg-2); font-weight:700; white-space:nowrap}
+.readout{flex-wrap:wrap}
+.pill{white-space:nowrap}
+.loading{position:absolute; inset:0; display:grid; place-items:center; color:var(--fg-3); font-size:14px; pointer-events:none}
+
+@media (max-width: 900px){
+  body{overflow:auto}
+  .app{height:auto; min-height:100%}
+  #stage{position:relative; height:58vh; min-height:340px}
+  .top{position:absolute}
+  .crumb{display:none}
+  .controls,.info{position:static; width:auto; max-height:none; margin:0 16px 12px}
+  .info{overflow:visible}
+  .caption{position:static; margin:0 16px 12px}
+  .caption .panel{width:100%}
+  .zoom{right:12px; top:auto; bottom:12px}
+  .viewtools{left:12px; right:12px; top:60px}
+  .caption{gap:12px}
+}
+.backlink{white-space:nowrap}
+@media (max-width: 480px){ .brand b{display:none} }
+@media (prefers-reduced-motion: reduce){ *{transition:none!important} }
+
+.seg.block.grid2{display:grid; grid-template-columns:repeat(6, 1fr); gap:2px}
+.seg.block.grid2 button{grid-column:span 2; font-size:12.5px; padding:7px 3px; hyphens:manual}
+.seg.block.grid2 button:nth-child(n+4){grid-column:span 3}
+.seg.block button:disabled{opacity:.45; cursor:not-allowed}
+.planelbl{font:700 11px/1.2 var(--font-body); color:var(--fg-3); background:var(--panel); border:1px dashed var(--line); padding:3px 7px; border-radius:7px; white-space:nowrap; pointer-events:none}
+.planelbl.on,.planelbl.deg,.planelbl.blade{color:var(--accent); border:1px solid var(--accent)}
+.planelbl.deg{font-family:var(--font-mono); font-weight:500; padding:2px 5px}
+.tag.bladetag{border:1px dashed var(--accent); color:var(--accent)}
+.tag.bladetag.on{border-style:solid; background:var(--accent); color:var(--accent-fg)}
+.rhythm{font-size:12px; color:var(--fg-2); margin:-2px 0 4px; min-height:1.4em}
+.rhythm b{font-family:var(--font-mono); font-weight:500; color:var(--fg)}
+
+/* exercise page */
+.exhead h1{font:700 22px/1.15 var(--font-display); margin:0 0 6px; letter-spacing:-.01em; text-wrap:balance}
+.exhead p{margin:0 0 8px; font-size:14px; color:var(--fg-2)}
+.chips{display:flex; gap:6px; flex-wrap:wrap; margin-bottom:8px}
+.chip{font-size:11.5px; font-weight:700; padding:3px 9px; border-radius:999px; background:var(--accent-soft); color:var(--fg)}
+.target{font-size:12.5px; color:var(--fg-2); line-height:1.5}
+.target b{color:var(--fg)}
+.joints{display:flex; gap:14px; font-size:12px; color:var(--fg-3); margin:2px 0 4px}
+.joints b{font-family:var(--font-mono); font-weight:500; color:var(--fg)}
+.exnav{display:flex; justify-content:space-between; gap:12px; font-size:13px}
+.exnav a{max-width:48%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+.exnav a + a{text-align:right}
+.sidelink{display:inline-block; margin-top:8px}
+.exnav a{color:var(--accent); font-weight:700; text-decoration:none}
+.exnav a:hover{text-decoration:underline}
+.block h3{margin-bottom:6px}
+.block p,.block li{font-size:14px; margin:0}
+.block ol,.block ul{margin:0; padding-left:20px; display:grid; gap:4px}
+.ticks li::marker{content:"✓  "; color:var(--accent)}
+.crosses li::marker{content:"✕  "; color:var(--con)}
+.kvt small{display:block; font-weight:400; font-size:11px; color:var(--fg-3); margin-top:2px}
+.sidelink{font-size:12.5px; color:var(--accent); font-weight:700; text-decoration:none}
+</style>
+
+<div class="app">
+  <div id="stage"><div class="loading" id="loading">Loading 3D model…</div>
+    <div class="viewtools">
+      <div class="viewmenu">
+        <button class="iconbtn" id="viewMenuBtn" aria-expanded="false" aria-controls="viewMenu" title="Show / hide"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 3 2 8l10 5 10-5-10-5z"/><path d="m2 13 10 5 10-5"/></svg></button>
+        <div class="panel viewpop" id="viewMenu" hidden>
+          <label class="vrow"><input type="checkbox" data-t="labels" checked> Labels</label>
+          <label class="vrow"><input type="checkbox" data-t="bones" checked> Bones</label>
+          <label class="vrow"><input type="checkbox" data-t="body" checked> Body</label>
+        </div>
+      </div>
+    </div>
+    <div class="zoom" role="group" aria-label="Zoom">
+      <button class="iconbtn" id="zoomIn" aria-label="Zoom in" title="Zoom in (+)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
+      <button class="iconbtn" id="zoomOut" aria-label="Zoom out" title="Zoom out (−)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M5 12h14"/></svg></button>
+      <button class="iconbtn" id="resetView" aria-label="Reset view" title="Reset view"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></svg></button>
+    </div>
+  </div>
+
+  <header class="top">
+    <div class="brand">
+      <svg viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="15" fill="var(--accent)"/><path d="M11 6v10a5 5 0 0 0 5 5h9" stroke="var(--accent-fg)" stroke-width="3.2" fill="none" stroke-linecap="round"/><circle cx="11" cy="16" r="2.6" fill="var(--accent-fg)"/></svg>
+      <a class="backlink" href="exercises.html">← Library</a>
+      <b>Myotrek</b>
+      <span class="crumb">Exercises / <span id="crumbGroup"></span> / <strong id="crumbEx"></strong> <span id="sideTxt"></span></span>
+    </div>
+    <div class="top-right">
+      <button class="iconbtn" id="themeBtn" aria-label="Switch light or dark theme" title="Light / dark">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v3M12 20v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M1 12h3M20 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <aside class="controls panel" aria-label="Exercise">
+    <section class="exhead">
+      <h1 id="exName"></h1>
+      <div class="chips" id="exChips"></div>
+      <p id="exBlurb"></p>
+      <div class="target" id="exTarget"></div>
+      <a class="sidelink" id="sideLink" href="#"></a>
+    </section>
+    <section>
+      <h3>Movement</h3>
+      <div class="readout"><span class="pill" id="phasePill"><i></i><span>Resting</span></span></div>
+      <div class="joints"><span>Elbow <b id="elbowVal">0</b>°</span><span>Shoulder <b id="shVal">0</b>°</span></div>
+      <input type="range" id="progress" min="0" max="100" step="1" value="0" aria-label="Position in the movement">
+      <div class="scale"><span>Start</span><span>End of the lift</span></div>
+      <div class="btnrow">
+        <button class="btn" id="btnStart" title="Go to the start">Start</button>
+        <button class="btn" id="btnPlay" aria-pressed="true"><svg id="playIco" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg><span id="playTxt">Pause</span></button>
+        <button class="btn" id="btnEnd" title="Go to the end of the lift">End</button>
+      </div>
+      <p class="hint">Drag the slider to move through the exercise. Space plays or pauses.</p>
+    </section>
+    <section class="exnav">
+      <a id="prevEx" href="#">← <span id="prevName"></span></a>
+      <a id="nextEx" href="#"><span id="nextName"></span> →</a>
+    </section>
+  </aside>
+
+  <aside class="info panel" aria-label="Information">
+    <div class="tabs" role="tablist">
+      <button role="tab" id="tabHow" aria-selected="true">How to</button>
+      <button role="tab" id="tabMuscles" aria-selected="false">Muscles</button>
+      <button role="tab" id="tabDose" aria-selected="false">Sets &amp; reps</button>
+    </div>
+    <div class="pane" id="paneHow"></div>
+    <div class="pane" id="paneMuscles" hidden></div>
+    <div class="pane" id="paneDetail" hidden></div>
+    <div class="pane" id="paneDose" hidden></div>
+  </aside>
+
+  <div class="caption">
+    <div class="panel capB">
+      <p class="headline" id="headTxt"></p>
+      <div class="effort"><small>Effort</small><div class="bar"><span id="effortBar"></span></div></div>
+    </div>
+  </div>
+</div>
+
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+}}
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
+const V3 = THREE.Vector3, DEG = Math.PI / 180;
+const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+/* ------------------------------------------------------------------ exercise library content
+   Draft content for physiotherapist review.
+   Pose angles (degrees, trunk frame): tilt = whole body pitch (0 upright, −90 face down, +90 on the back, − leaning forward);
+   f = shoulder flexion (+) / extension (−), a = abduction, elbow = elbow flexion, hip / knee = leg angles.
+   Each pose is given at p = 0 (start, muscles long) and p = 1 (end of the lifting phase); p runs 0 → 1 while lifting.
+   load: elbow and shoulder demand, signed (+ flexors / − extensors; h + horizontal adductors). 'grav' = from the weight's position.
+   bias: extra weighting for a muscle or head ('id' or 'id.head'); extra: muscles that work alongside (scapular etc.).        */
+const DOSAGE = [
+  ['Strength','3–5 sets of 4–8 reps','2–3 min','Heavy enough that the last reps are hard'],
+  ['Muscle growth','3–4 sets of 8–12 reps','60–90 s','Moderate weight, slow lowering'],
+  ['Endurance or rehab','2–3 sets of 15–20 reps','30–60 s','Light, smooth and pain-free'],
+];
+const EXERCISES = [
+  /* ---------------- biceps */
+  { id:'curl', group:'biceps', name:'Standing dumbbell curl', equip:'Dumbbell', level:'Beginner',
+    blurb:'The classic biceps exercise: bend the elbow to lift a dumbbell, palm facing up.',
+    target:['Biceps brachii','Brachialis'], also:['Brachioradialis','Anterior deltoid (steadying)'],
+    stance:'stand', grip:'supinated', loadKind:'dumbbell', oArm:'relaxed',
+    pose:[{ tilt:0, f:2, a:4, elbow:8 }, { tilt:0, f:8, a:4, elbow:138 }],
+    load:{ elbow:'grav', shoulder:'grav' },
+    words:['Curling up','Lowering'],
+    start:'Stand tall, feet hip-width apart, a dumbbell in your hand with the arm hanging straight and the palm facing forward.',
+    steps:['Keep your upper arm still against your side.','Bend your elbow to bring the weight up toward your shoulder.','Pause briefly at the top.','Lower slowly until your arm is straight again.'],
+    breathing:'Breathe out as you lift, in as you lower.',
+    cues:['Elbow stays by your side','Lift with the arm, not the back','Take longer to lower than to lift'],
+    mistakes:['Swinging the body to throw the weight up','Letting the elbow drift forward','Dropping the weight on the way down'],
+    easier:['Lighter weight','Seated, back supported'], harder:['Slower lowering (3–4 s)','Pause halfway up'],
+    note:'Hardest when the forearm is level with the floor (elbow at 90°).' },
+  { id:'hammer', group:'biceps', name:'Hammer curl', equip:'Dumbbell', level:'Beginner',
+    blurb:'A curl with the thumb pointing up, which brings in the forearm muscle brachioradialis.',
+    target:['Brachioradialis','Brachialis'], also:['Biceps brachii'],
+    stance:'stand', grip:'neutral', loadKind:'dumbbell', oArm:'relaxed',
+    pose:[{ tilt:0, f:2, a:4, elbow:8 }, { tilt:0, f:8, a:4, elbow:135 }],
+    load:{ elbow:'grav', shoulder:'grav' }, bias:{ brachiorad:1.6, brachialis:1.1, biceps:.75 },
+    words:['Curling up','Lowering'],
+    start:'Stand tall with a dumbbell held like a hammer: palm facing your body, thumb pointing forward.',
+    steps:['Keep your upper arm still at your side.','Bend your elbow, keeping your thumb pointing up the whole time.','Pause at the top.','Lower slowly until your arm is straight.'],
+    breathing:'Breathe out as you lift, in as you lower.',
+    cues:['Thumb up throughout','Wrist straight','Elbow by your side'],
+    mistakes:['Turning the palm up as you lift','Swinging the body','Bending the wrist'],
+    easier:['Lighter weight','One arm at a time, seated'], harder:['Slower lowering','Hold at 90° for 2–3 s'],
+    note:'With the thumb up, biceps is in a weaker position, so brachioradialis and brachialis do more of the work.' },
+  { id:'preacher', group:'biceps', name:'Preacher curl', equip:'Dumbbell + preacher bench', level:'Intermediate',
+    blurb:'A seated curl with the back of the upper arm resting on an angled pad, so you cannot swing.',
+    target:['Biceps brachii','Brachialis'], also:['Brachioradialis'],
+    stance:'seat', grip:'supinated', loadKind:'dumbbell', oArm:'pad', prop:'preacher',
+    pose:[{ tilt:10, f:48, a:6, elbow:12 }, { tilt:10, f:48, a:6, elbow:125 }],
+    load:{ elbow:'grav', shoulder:0 }, bias:{ 'biceps.short':1.2 },
+    words:['Curling up','Lowering'],
+    start:'Sit at the bench with the back of your upper arm flat on the pad and your armpit snug against its top edge. Hold the dumbbell with the palm up and the elbow almost straight.',
+    steps:['Keep your upper arm pressed into the pad.','Bend your elbow to curl the weight up.','Stop just before the forearm is upright.','Lower slowly back to almost straight.'],
+    breathing:'Breathe out as you lift, in as you lower.',
+    cues:['Arm stays on the pad','Control the bottom','Don\'t lock the elbow out hard'],
+    mistakes:['Lifting the elbow off the pad','Dropping into a fully locked elbow','Going too heavy at the bottom'],
+    easier:['Lighter weight','Smaller range (stop short of straight)'], harder:['Slower lowering','Pause near the bottom'],
+    note:'Hardest near the start, with the arm almost straight; the load fades as the forearm comes upright.' },
+  { id:'incline', group:'biceps', name:'Incline dumbbell curl', equip:'Dumbbells + incline bench', level:'Intermediate',
+    blurb:'A curl lying back on an incline bench, with the arm hanging behind the body so the long head of biceps starts on stretch.',
+    target:['Biceps brachii (long head)'], also:['Brachialis','Brachioradialis'],
+    stance:'incline', grip:'supinated', loadKind:'dumbbell', oArm:'mirror', prop:'incline',
+    pose:[{ tilt:45, f:-45, a:6, elbow:6 }, { tilt:45, f:-40, a:6, elbow:130 }],
+    load:{ elbow:'grav', shoulder:'grav' }, bias:{ 'biceps.long':1.25 },
+    words:['Curling up','Lowering'],
+    start:'Sit back on a bench set at about 45°, arms hanging straight down by your sides, palms forward.',
+    steps:['Keep your upper arms hanging still.','Bend your elbows to curl the weights up.','Pause at the top.','Lower slowly until your arms hang straight.'],
+    breathing:'Breathe out as you lift, in as you lower.',
+    cues:['Head and back stay on the bench','Upper arms stay vertical','Slow and full range'],
+    mistakes:['Bringing the elbows forward','Lifting the shoulders off the bench','Using a weight you cannot control at the bottom'],
+    easier:['Bench more upright (60°)','Lighter weights'], harder:['Bench lower (30–45°)','Slower lowering'],
+    note:'With the shoulder taken back, the long head of biceps (which crosses the shoulder) is lengthened, making this a stretched-position curl.' },
+  { id:'bandcurl', group:'biceps', name:'Band curl', equip:'Resistance band', level:'Beginner',
+    blurb:'A curl with a band under the foot: easy to do at home, and the resistance builds toward the top.',
+    target:['Biceps brachii','Brachialis'], also:['Brachioradialis'],
+    stance:'stand', grip:'supinated', loadKind:'band', oArm:'relaxed', anchor:'foot',
+    pose:[{ tilt:0, f:2, a:4, elbow:8 }, { tilt:0, f:8, a:4, elbow:135 }],
+    load:{ elbow:p => .35 + .6*p, shoulder:.15 },
+    words:['Curling up','Lowering'],
+    start:'Stand on the middle of the band with the end in your hand, arm straight, palm facing forward.',
+    steps:['Keep your elbow by your side.','Curl your hand up toward your shoulder against the band.','Pause at the top.','Let the band lower your hand slowly.'],
+    breathing:'Breathe out as you lift, in as you lower.',
+    cues:['Elbow still','Smooth, no snapping back','Wrist straight'],
+    mistakes:['Letting the band snap the arm down','Leaning back','Elbow moving forward'],
+    easier:['Lighter band','Hold the band lower (more slack)'], harder:['Heavier band','Shorter band (less slack)'],
+    note:'The band stretches more as you curl, so the effort builds toward the top instead of peaking at 90°.' },
+
+  /* ---------------- triceps */
+  { id:'overhead', group:'triceps', name:'Overhead triceps extension', equip:'Dumbbell', level:'Beginner',
+    blurb:'Straighten the elbow with the arm overhead, which stretches the long head of triceps.',
+    target:['Triceps brachii (long head)'], also:['Triceps (lateral and medial heads)','Shoulder muscles (steadying)'],
+    stance:'stand', grip:'neutral', loadKind:'dumbbell', oArm:'relaxed',
+    pose:[{ tilt:0, f:168, a:6, elbow:140 }, { tilt:0, f:168, a:6, elbow:12 }],
+    load:{ elbow:'grav', shoulder:'grav' }, bias:{ 'triceps.long':1.2 },
+    words:['Straightening','Lowering behind'],
+    start:'Stand tall with the dumbbell held overhead, arm pointing straight up, elbow close to your head.',
+    steps:['Keep your upper arm still and pointing up.','Bend your elbow to lower the weight behind your head.','Pause at the bottom.','Straighten your elbow to press the weight back up.'],
+    breathing:'Breathe in as you lower, out as you press up.',
+    cues:['Elbow points to the ceiling','Ribs down, don\'t arch your back','Move only at the elbow'],
+    mistakes:['Elbow flaring out to the side','Arching the lower back','Lowering too fast'],
+    easier:['Seated with back support','Lighter weight'], harder:['Slower lowering','Pause at the bottom'],
+    note:'With the arm overhead, the long head of triceps is lengthened at the shoulder.' },
+  { id:'kickback', group:'triceps', name:'Triceps kickback', equip:'Dumbbell + bench', level:'Beginner',
+    blurb:'Bent over with the upper arm along your body, straighten the elbow to push the weight back.',
+    target:['Triceps brachii'], also:['Posterior deltoid (steadying)','Latissimus dorsi (steadying)'],
+    stance:'bent', grip:'neutral', loadKind:'dumbbell', oArm:'brace', prop:'brace',
+    pose:[{ tilt:-72, f:-18, a:6, elbow:95 }, { tilt:-72, f:-18, a:6, elbow:5 }],
+    load:{ elbow:'grav', shoulder:'grav' },
+    words:['Straightening back','Lowering'],
+    start:'Lean forward with one hand and knee on a bench, back flat. Hold the dumbbell with the upper arm pulled back level with your body and the elbow bent to 90°.',
+    steps:['Keep your upper arm still and level.','Straighten your elbow to push the weight back.','Squeeze at the top for a moment.','Bend the elbow slowly back to 90°.'],
+    breathing:'Breathe out as you straighten, in as you bend.',
+    cues:['Upper arm stays level with your body','Back flat','Move only the forearm'],
+    mistakes:['Letting the upper arm drop','Swinging the weight','Rounding the back'],
+    easier:['Lighter weight','Band instead of dumbbell'], harder:['Pause at full straightening','Slower lowering'],
+    note:'Hardest at the end, with the arm straight and the forearm level with the floor.' },
+  { id:'pushdown', group:'triceps', name:'Triceps push-down', equip:'Cable or band (anchored high)', level:'Beginner',
+    blurb:'Push a cable or band down from chest height until the arm is straight.',
+    target:['Triceps (lateral and medial heads)'], also:['Triceps (long head)','Latissimus dorsi (steadying)'],
+    stance:'stand', grip:'pronated', loadKind:'cable', oArm:'mirror', anchor:'high',
+    pose:[{ tilt:-8, f:12, a:8, elbow:100 }, { tilt:-8, f:8, a:8, elbow:5 }],
+    load:{ elbow:-.85, shoulder:-.35 },
+    words:['Pushing down','Letting it up'],
+    start:'Stand facing a high cable or band, leaning very slightly forward. Hold the handle with your elbows bent to about 90° and tucked in at your sides.',
+    steps:['Keep your elbows fixed at your sides.','Push the handle down until your arms are straight.','Pause at the bottom.','Let the handle rise slowly back to 90°.'],
+    breathing:'Breathe out as you push, in as you return.',
+    cues:['Elbows pinned to your sides','Shoulders down','Wrists straight'],
+    mistakes:['Elbows drifting forward','Leaning over the handle','Letting the weight yank the arms up'],
+    easier:['Lighter band or weight','Smaller range'], harder:['One arm at a time','Pause at the bottom'],
+    note:'With the arm at the side, the long head is relatively short, so the lateral and medial heads do more of the work.' },
+  { id:'lying', group:'triceps', name:'Lying triceps extension', equip:'EZ bar + bench', level:'Intermediate',
+    blurb:'Lying on a bench, bend the elbows to lower a bar toward your forehead, then straighten them (often called a skull crusher).',
+    target:['Triceps brachii'], also:['Shoulder muscles (steadying)'],
+    stance:'supine', grip:'pronated', loadKind:'bar', oArm:'mirror', prop:'flat',
+    pose:[{ tilt:90, f:100, a:2, elbow:125 }, { tilt:90, f:100, a:2, elbow:10 }],
+    load:{ elbow:'grav', shoulder:'grav' },
+    words:['Straightening','Lowering'],
+    start:'Lie on a flat bench, feet on the floor, holding the bar above your chest with straight arms and hands about shoulder-width apart.',
+    steps:['Tilt the arms slightly back toward your head and keep them still.','Bend your elbows to lower the bar toward your forehead.','Pause just above your head.','Straighten your elbows to press the bar back up.'],
+    breathing:'Breathe in as you lower, out as you press up.',
+    cues:['Upper arms stay still','Elbows point up, not out','Slow and controlled'],
+    mistakes:['Elbows flaring out','Moving the upper arms','Bouncing at the bottom'],
+    easier:['Dumbbells instead of a bar','Lighter weight'], harder:['Slower lowering','Pause at the bottom'],
+    note:'Hardest with the forearms level with the floor, near the bottom.' },
+
+  /* ---------------- compound */
+  { id:'pushup', group:'compound', name:'Push-up', equip:'Body weight', level:'Beginner',
+    blurb:'Lower your body to the floor and push back up: chest, front of the shoulders and triceps all work together.',
+    target:['Pectoralis major','Triceps brachii','Anterior deltoid'], also:['Serratus anterior','Rotator cuff (steadying)'],
+    stance:'plank', grip:'floor', loadKind:'body', oArm:'mirror', anchor:'hands-feet',
+    pose:[{ tilt:-80, f:-8, a:22, elbow:88 }, { tilt:-80, f:78, a:22, elbow:2 }],
+    load:{ elbow:p => -(.55 + .4*(1 - p)), shoulder:p => .5 + .45*(1 - p), h:p => .35 + .45*(1 - p) },
+    extra:[['serratus', .55]],
+    words:['Pushing up','Lowering'],
+    start:'Hands on the floor just wider than your shoulders, arms straight, body in a straight line from head to heels.',
+    steps:['Brace your stomach and keep your body straight.','Bend your elbows to lower your chest toward the floor, elbows at about 45° from your body.','Stop just above the floor.','Push back up until your arms are straight.'],
+    breathing:'Breathe in as you lower, out as you push up.',
+    cues:['Straight line head to heels','Elbows angled back, not flared out','Push the floor away at the top'],
+    mistakes:['Hips sagging or piking up','Elbows flared straight out','Half range of movement'],
+    easier:['Hands on a wall or bench (incline push-up)','Knees on the floor'], harder:['Feet raised','Slower lowering','Pause at the bottom'],
+    note:'The lowest part is hardest. Serratus anterior keeps the shoulder blades flat against the ribs.' },
+  { id:'dips', group:'compound', name:'Parallel bar dips', equip:'Dip bars', level:'Advanced',
+    blurb:'Support your body on two bars and lower yourself by bending the elbows, then push back up.',
+    target:['Triceps brachii','Pectoralis major (lower part)','Anterior deltoid'], also:['Rotator cuff (steadying)','Shoulder blade muscles'],
+    stance:'hang', grip:'bars', loadKind:'body', oArm:'mirror', anchor:'hands',
+    pose:[{ tilt:-18, f:-62, a:12, elbow:85 }, { tilt:-8, f:4, a:12, elbow:4 }],
+    load:{ elbow:p => -(.55 + .45*(1 - p)), shoulder:p => .45 + .5*(1 - p) }, bias:{ 'pec.stern':1.5 },
+    extra:[['pec.stern', .5]],
+    words:['Pushing up','Lowering'],
+    start:'Hold the bars with straight arms, body upright, shoulders pressed down away from your ears, knees bent behind you.',
+    steps:['Lean slightly forward.','Bend your elbows to lower your body until your upper arms are about level with the bars.','Pause briefly.','Push back up until your arms are straight.'],
+    breathing:'Breathe in as you lower, out as you push up.',
+    cues:['Shoulders down, chest up','Lower under control','Stop at a depth that feels comfortable for the shoulder'],
+    mistakes:['Dropping too deep','Shrugging the shoulders up','Swinging the legs'],
+    easier:['Bench dips (hands behind you on a bench)','Assisted dips (band or machine)'], harder:['Slower lowering','Added weight'],
+    note:'Going very deep puts a lot of stretch on the front of the shoulder; depth is usually limited to upper arms about level with the bars.' },
+  { id:'closegrip', group:'compound', name:'Close-grip bench press', equip:'Barbell + bench', level:'Intermediate',
+    blurb:'A bench press with the hands shoulder-width apart and the elbows close to the body, which brings in the triceps.',
+    target:['Triceps brachii','Pectoralis major','Anterior deltoid'], also:['Rotator cuff (steadying)'],
+    stance:'supine', grip:'pronated', loadKind:'bar', oArm:'mirror', prop:'flat',
+    pose:[{ tilt:90, f:6, a:12, elbow:86 }, { tilt:90, f:90, a:4, elbow:3 }],
+    load:{ elbow:p => -(.5 + .4*(1 - p)), shoulder:p => .5 + .45*(1 - p), h:.35 },
+    words:['Pressing up','Lowering'],
+    start:'Lie on a flat bench, feet on the floor, holding the bar above your chest with straight arms and hands about shoulder-width apart.',
+    steps:['Lower the bar to the lower part of your chest, keeping your elbows close to your sides.','Touch lightly, without bouncing.','Press the bar back up until your arms are straight.'],
+    breathing:'Breathe in as you lower, out as you press.',
+    cues:['Elbows tucked in','Wrists straight above the elbows','Feet planted'],
+    mistakes:['Hands too close together (strains the wrists)','Elbows flaring out','Bouncing the bar off the chest'],
+    easier:['Dumbbells, palms facing each other','Push-ups'], harder:['Pause on the chest','Slower lowering'],
+    note:'Keeping the elbows in shifts work from the chest toward the triceps compared with a wide-grip press.' },
+  { id:'chinup', group:'compound', name:'Chin-up', equip:'Pull-up bar', level:'Advanced',
+    blurb:'Hang from a bar with the palms facing you and pull your chin up over it.',
+    target:['Latissimus dorsi','Biceps brachii','Brachialis'], also:['Teres major','Lower trapezius','Rhomboids','Posterior deltoid'],
+    stance:'hang', grip:'bar-under', loadKind:'body', oArm:'mirror', anchor:'hands',
+    pose:[{ tilt:6, f:168, a:6, elbow:4 }, { tilt:12, f:40, a:6, elbow:132 }],
+    load:{ elbow:p => .65 + .3*p, shoulder:p => -(.7 + .25*(1 - p)) },
+    extra:[['trap.low', .6], ['rhomb', .5], ['tmaj', .4]],
+    words:['Pulling up','Lowering'],
+    start:'Hang from the bar with straight arms, hands shoulder-width apart, palms facing you.',
+    steps:['Pull your shoulders down and back to start.','Bend your elbows and pull your chest up toward the bar.','Bring your chin over the bar.','Lower slowly until your arms are straight.'],
+    breathing:'Breathe out as you pull up, in as you lower.',
+    cues:['Shoulders down, away from your ears','Chest to the bar','Control the way down'],
+    mistakes:['Swinging or kicking','Half reps','Dropping fast from the top'],
+    easier:['Assisted chin-up (band under the feet)','Lowering only (jump up, lower slowly)','Inverted row'], harder:['Slower lowering','Pause at the top','Added weight'],
+    note:'Palms facing you puts biceps in a strong position, so chin-ups use more biceps than wide pull-ups.' },
+  { id:'row', group:'compound', name:'One-arm dumbbell row', equip:'Dumbbell + bench', level:'Beginner',
+    blurb:'With one hand on a bench, pull a dumbbell up toward your hip, squeezing the shoulder blade back.',
+    target:['Latissimus dorsi','Rhomboids','Middle trapezius'], also:['Posterior deltoid','Teres major','Biceps brachii','Brachialis'],
+    stance:'bent', grip:'neutral', loadKind:'dumbbell', oArm:'brace', prop:'brace',
+    pose:[{ tilt:-75, f:72, a:6, elbow:5 }, { tilt:-75, f:-18, a:10, elbow:95 }],
+    load:{ elbow:.4, shoulder:p => -(.4 + .55*p) },
+    extra:[['rhomb', .7], ['trap.mid', .65], ['deltoid.post', .4]],
+    words:['Pulling up','Lowering'],
+    start:'One hand and knee on a bench, back flat, the other arm hanging straight down holding the dumbbell.',
+    steps:['Pull your shoulder blade back first.','Pull the dumbbell up toward your hip, elbow close to your body.','Squeeze at the top for a moment.','Lower slowly until your arm is straight.'],
+    breathing:'Breathe out as you pull, in as you lower.',
+    cues:['Back flat, don\'t twist','Elbow drives up and back','Lead with the shoulder blade'],
+    mistakes:['Twisting the trunk to lift','Shrugging the shoulder up','Yanking the weight'],
+    easier:['Lighter weight','Band row, seated'], harder:['Pause at the top','Slower lowering'],
+    note:'The shoulder blade muscles (rhomboids, middle trapezius) work hard to pull the blade back toward the spine.' },
+];
+const GROUPS = { biceps:['Biceps','Bending the elbow'], triceps:['Triceps','Straightening the elbow'], compound:['Compound','Several joints at once'] };
+const MUSCLES = [
+  { id:'deltoid', name:'Deltoid', short:'Deltoid', group:'gh',
+    plain:'The rounded muscle that caps your shoulder. Its three parts lift your arm forward, out to the side and back.',
+    where:'Over the top and outside of the shoulder, from the collarbone and shoulder blade down to the outside of the upper arm.',
+    everyday:'Reaching up to a shelf, lifting a bag out to the side, putting on a jacket.',
+    feel:'Lift your arm out to the side and feel the cap of your shoulder go firm.',
+    origin:['Anterior: lateral third of the clavicle','Middle: acromion','Posterior: spine of the scapula'],
+    insertion:['Deltoid tuberosity of the humerus'],
+    nerve:'Axillary nerve', roots:'C5–C6', blood:'Posterior circumflex humeral and thoraco-acromial arteries',
+    actions:['Anterior: flexion and internal rotation','Middle: abduction (the main abductor beyond the first ~15°)','Posterior: extension and external rotation','Anterior and posterior: horizontal adduction and abduction'],
+    position:'Poor leverage with the arm by the side, improving as the arm rises. It needs the rotator cuff to hold the humeral head in the glenoid.',
+    posNote:'Works best once your arm is a little way up. The rotator cuff helps it start.',
+    palpation:'Each part during resisted flexion, abduction and extension.',
+    clinical:['Axillary nerve injury (dislocation, surgical neck fracture): weak abduction and numbness over the "regimental badge" area.','A common site for intramuscular injections.'],
+    tubes:[
+      { pts:[['S',.22,.4,-.5],['A',.38,-.1,.12],['A',.27,-.8,.2],['A',.08,-1.42,.19]], r:.17, t0:.04, t1:.86, peak:.4, rt:.05, c:{ f:1, a:.4, s:.8, r:-.4, h:.8 }, head:'Anterior', headId:'ant', tag:'Anterior deltoid', lab:.45 },
+      { pts:[['S',-.02,.46,.12],['A',.02,-.12,.46],['A',.04,-.8,.33],['A',.05,-1.45,.2]], r:.19, t0:.04, t1:.86, peak:.4, rt:.05, c:{ f:.3, a:1, s:.9, h:-.3 }, head:'Middle', headId:'mid', tag:'Middle deltoid', lab:.5 },
+      { pts:[['S',-.55,.25,-.5],['A',-.38,-.1,.12],['A',-.25,-.8,.2],['A',.02,-1.42,.19]], r:.16, t0:.04, t1:.86, peak:.4, rt:.05, c:{ f:-.8, a:0, r:.5, h:-1 }, head:'Posterior', headId:'post', tag:'Posterior deltoid', lab:.45 } ],
+    label:.5 },
+  { id:'pec', name:'Pectoralis major', short:'Pec major', group:'gh',
+    plain:'The big chest muscle. It brings your arm across and down, and its upper part helps lift it forward.',
+    where:'Front of the chest, from the collarbone and breastbone to the front of the upper arm. It forms the front fold of the armpit.',
+    everyday:'Pushing a door, hugging, push-ups, pulling yourself up.',
+    feel:'Press your palms together in front of your chest and feel your chest go firm.',
+    origin:['Clavicular head: medial half of the clavicle','Sternocostal head: sternum, upper six costal cartilages, external oblique aponeurosis'],
+    insertion:['Lateral lip of the intertubercular (bicipital) groove'],
+    nerve:'Medial and lateral pectoral nerves', roots:'C5–T1', blood:'Pectoral branches of the thoraco-acromial artery',
+    actions:['Adduction and internal rotation','Clavicular head: flexion','Sternocostal head: extends the flexed arm back to neutral','Horizontal adduction'],
+    position:'The sternocostal head extends the arm only from flexion; with the arm at the side it has no extension leverage.',
+    posNote:'Its lower part pulls the arm down from overhead.',
+    palpation:'Anterior axillary fold during resisted adduction.',
+    clinical:['Tendon rupture, typically during heavy bench press.','Poland syndrome: congenital absence of the sternocostal head.'],
+    tubes:[
+      { pts:[['T',.95,.22,-1.25],['T',.85,.05,-.6],['A',.32,-.45,.02],['A',.16,-.68,.08]], r:.15, t0:.03, t1:.8, peak:.4, rt:.05, c:{ f:.7, a:-.4, s:.3, r:-.6, h:.9 }, head:'Clavicular head', headId:'clav', tag:'Pec major clavicular head', lab:.35 },
+      { pts:[['T',1.08,-1.1,-1.8],['T',.95,-.85,-.9],['A',.33,-.38,-.06],['A',.16,-.6,.08]], r:.22, t0:.03, t1:.8, peak:.4, rt:.05, c:{ f:-.5, a:-1, s:-.8, r:-.7, h:1 }, fromFlexed:true, head:'Sternocostal head', headId:'stern', tag:'Pec major sternocostal head', lab:.4 } ],
+    label:.4 },
+  { id:'lat', name:'Latissimus dorsi', short:'Lats', group:'gh',
+    plain:'The broad muscle of your back. It pulls your arm down and back.',
+    where:'From the lower back and pelvis, up across the side of the back to the front of the upper arm. It forms the back fold of the armpit.',
+    everyday:'Pulling yourself up, rowing, pushing up from a chair with your arms, swimming.',
+    feel:'Press your arm down on a table edge and feel the side of your back below the armpit.',
+    origin:['Spinous processes T7–L5 and the thoracolumbar fascia','Iliac crest, lower 3–4 ribs, often the inferior angle of the scapula'],
+    insertion:['Floor of the intertubercular groove'],
+    nerve:'Thoracodorsal nerve', roots:'C6–C8', blood:'Thoracodorsal artery',
+    actions:['Extension, adduction and internal rotation','Depresses the shoulder girdle'],
+    position:'Lengthened with the arm overhead; strongest pulling down from elevation.',
+    posNote:'Strongest when pulling down from overhead.',
+    palpation:'Posterior axillary fold, during resisted adduction.',
+    clinical:['Used as a flap in reconstructive surgery.','Tightness limits full overhead elevation.'],
+    tubes:[ { pts:[['T',-1.02,-4.3,-1.65],['T',-.95,-2.6,-1.0],['T',-.55,-1.4,-.45],['A',-.22,-.8,-.08],['A',.12,-.45,-.03]], r:.22, t0:.03, t1:.85, peak:.35, rt:.05, c:{ f:-1, a:-1, s:-1, r:-.8, h:-.3 } } ],
+    label:.35 },
+  { id:'tmaj', name:'Teres major', short:'Teres major', group:'gh',
+    plain:'A thick muscle from the lower corner of your shoulder blade to the arm. It helps the big back muscle.',
+    where:'From the lower outer corner of the shoulder blade to the front of the upper arm, just below the armpit.',
+    everyday:'The same jobs as the big back muscle: pulling, and pushing down.',
+    feel:'Feel the lower outer edge of your shoulder blade as you press your arm down.',
+    origin:['Posterior surface of the inferior angle of the scapula'], insertion:['Medial lip of the intertubercular groove'],
+    nerve:'Lower subscapular nerve', roots:'C5–C7', blood:'Circumflex scapular artery',
+    actions:['Extension, adduction and internal rotation'],
+    position:'Works with latissimus dorsi. It needs the scapula held steady (rhomboids) to pull on the arm.',
+    posNote:'Works with your big back muscle.',
+    palpation:'Lower lateral border of the scapula, during resisted adduction.',
+    clinical:['Borders the quadrangular space (axillary nerve) and the triangular interval (radial nerve).'],
+    tubes:[ { pts:[['S',-.88,-1.35,-.82],['S',-.55,-1.0,-.4],['A',-.15,-.68,-.1],['A',.1,-.48,-.04]], r:.13, t0:.04, t1:.82, peak:.45, rt:.04, c:{ f:-.7, a:-.7, s:-.7, r:-.8 } } ],
+    label:.4 },
+  { id:'cb', name:'Coracobrachialis', short:'Coracobrachialis', group:'gh',
+    plain:'A small muscle on the inner upper arm that helps lift the arm forward and bring it in.',
+    where:'High on the inner upper arm, from a hook on the shoulder blade (the coracoid) to the middle of the arm bone.',
+    everyday:'Reaching forward and across your body.',
+    feel:'Lift your arm forward and feel high on the inner arm, just below the armpit.',
+    origin:['Tip of the coracoid process'], insertion:['Medial humeral shaft, at mid-level'],
+    nerve:'Musculocutaneous nerve', roots:'C5–C7', blood:'Brachial artery',
+    actions:['Flexion and adduction','Helps hold the humeral head in the glenoid'],
+    position:'Pierced by the musculocutaneous nerve.',
+    posNote:'A small helper.',
+    palpation:'Medial arm near the axilla, during resisted flexion and adduction.',
+    clinical:['The musculocutaneous nerve passes through it and can be compressed there.'],
+    tubes:[ { pts:[['S',.32,.1,-.3],['A',.2,-.55,-.15],['A',.1,-1.45,-.13]], r:.08, t0:.05, t1:.85, peak:.5, rt:.03, c:{ f:.5, a:-.3, s:.2, h:.5 } } ],
+    label:.6 },
+  { id:'biceps', name:'Biceps brachii (long head)', short:'Biceps (long head)', group:'gh',
+    plain:'The long head of the biceps starts inside the shoulder joint. At the shoulder it helps lift the arm forward.',
+    where:'Its tendon runs over the top of the ball of the shoulder and down a groove at the front of the arm.',
+    everyday:'Lifting and carrying with the elbow bent, reaching forward.',
+    feel:'Feel the front of your shoulder as you lift your arm forward with the palm up.',
+    origin:['Supraglenoid tubercle and the superior glenoid labrum'], insertion:['Radial tuberosity and the bicipital aponeurosis'],
+    nerve:'Musculocutaneous nerve', roots:'C5–C6', blood:'Brachial artery',
+    actions:['Elbow flexion and supination (its main roles)','Weak shoulder flexion','Helps stabilise the humeral head'],
+    position:'Crosses shoulder and elbow; more effective at the shoulder with the elbow straight.',
+    posNote:'Mainly an elbow muscle; a small helper at the shoulder.',
+    palpation:'Tendon in the bicipital groove with the arm externally rotated.',
+    clinical:['Long head tendinopathy and SLAP lesions of the superior labrum.','"Popeye" deformity after long head rupture.'],
+    tubes:[ { pts:[['S',-.08,.27,-.2],['A',.1,.2,.12],['A',.27,-.25,.12],['A',.32,-1.4,.05],['A',.27,-2.55,0],['F',.1,-3.25,0]], r:.15, t0:.14, t1:.86, peak:.62, rt:.035, c:{ f:.35, a:0, s:.2 } } ],
+    label:.6 },
+  { id:'triceps', name:'Triceps brachii (long head)', short:'Triceps (long head)', group:'gh',
+    plain:'The only part of the triceps that crosses the shoulder. It helps pull the arm back and in.',
+    where:'Back of the upper arm, starting just below the shoulder socket.',
+    everyday:'Pushing up from a chair, pulling the arm back, throwing.',
+    feel:'Push your arm back against a wall and feel high on the back of the arm.',
+    origin:['Infraglenoid tubercle of the scapula'], insertion:['Olecranon of the ulna'],
+    nerve:'Radial nerve', roots:'C6–C8', blood:'Profunda brachii artery',
+    actions:['Elbow extension (its main role)','Shoulder extension and adduction'],
+    position:'Crosses shoulder and elbow; works better at the shoulder with the elbow bent.',
+    posNote:'Mainly an elbow muscle; it helps take the arm back.',
+    palpation:'Posteromedial arm just below the axilla.',
+    clinical:['Separates the quadrangular space from the triangular space and interval.'],
+    tubes:[ { pts:[['S',-.18,-.33,-.22],['A',-.3,-.75,-.08],['A',-.35,-1.8,0],['A',-.27,-2.7,0],['F',-.14,-3.08,0]], r:.16, t0:.08, t1:.85, peak:.5, rt:.04, c:{ f:-.5, a:-.3, s:-.4, h:-.3 } } ],
+    label:.45 },
+
+  { id:'supra', name:'Supraspinatus', short:'Supraspinatus', group:'cuff',
+    plain:'A rotator cuff muscle on top of the shoulder blade. It helps start lifting the arm out to the side and keeps the ball centred in the socket.',
+    where:'Above the ridge (spine) of the shoulder blade, passing under the bony roof of the shoulder (the acromion) to the top of the arm bone.',
+    everyday:'Starting to reach out or up; holding the arm away from your body.',
+    feel:'Hard to feel: it lies under the trapezius, above the ridge of the shoulder blade.',
+    origin:['Supraspinous fossa of the scapula'], insertion:['Superior facet of the greater tubercle'],
+    nerve:'Suprascapular nerve', roots:'C5–C6', blood:'Suprascapular artery',
+    actions:['Abduction, most active in the first ~15°','Compresses and stabilises the humeral head'],
+    position:'Passes through the subacromial space, which narrows between about 60° and 120° of abduction.',
+    posNote:'Most active as you start lifting your arm to the side.',
+    palpation:'Supraspinous fossa through trapezius; the tendon just in front of and below the acromion with the arm behind the back.',
+    clinical:['The most commonly torn rotator cuff tendon.','Subacromial pain and the painful arc (about 60–120°).','Empty can (Jobe) test.'],
+    tubes:[ { pts:[['S',-.88,.22,-1.12],['S',-.45,.3,-.45],['A',-.02,.24,.1],['A',.03,.08,.26]], r:.12, t0:.04, t1:.8, peak:.35, rt:.04, c:{ f:.3, a:.8, s:.9, r:.2 }, init:true, stab:true } ],
+    label:.3 },
+  { id:'infra', name:'Infraspinatus', short:'Infraspinatus', group:'cuff',
+    plain:'A rotator cuff muscle on the back of the shoulder blade. It turns your arm out and steadies the shoulder.',
+    where:'Below the ridge of the shoulder blade, to the back of the top of the arm bone.',
+    everyday:'Brushing your hair, reaching behind you, slowing the arm after a throw.',
+    feel:'Turn your arm out against resistance and feel below the ridge of your shoulder blade.',
+    origin:['Infraspinous fossa'], insertion:['Middle facet of the greater tubercle'],
+    nerve:'Suprascapular nerve', roots:'C5–C6', blood:'Suprascapular and circumflex scapular arteries',
+    actions:['External rotation','Stabilises the humeral head against upward and forward translation'],
+    position:'The main external rotator, especially with the arm by the side.',
+    posNote:'Steadies the shoulder in every movement.',
+    palpation:'Infraspinous fossa, during resisted external rotation.',
+    clinical:['Isolated wasting suggests suprascapular nerve entrapment at the spinoglenoid notch.'],
+    tubes:[ { pts:[['S',-.98,-.55,-1.0],['S',-.65,-.25,-.5],['A',-.28,0,.13],['A',-.12,-.06,.27]], r:.16, t0:.04, t1:.8, peak:.35, rt:.04, c:{ f:-.1, a:0, r:1, h:-.5 }, stab:true } ],
+    label:.3 },
+  { id:'tmin', name:'Teres minor', short:'Teres minor', group:'cuff',
+    plain:'A small rotator cuff muscle that turns the arm out and steadies the shoulder.',
+    where:'Along the outer edge of the shoulder blade, to the back of the top of the arm bone.',
+    everyday:'The same jobs as infraspinatus.',
+    feel:'Hard to separate from infraspinatus.',
+    origin:['Upper two-thirds of the lateral border of the scapula'], insertion:['Inferior facet of the greater tubercle'],
+    nerve:'Axillary nerve', roots:'C5–C6', blood:'Circumflex scapular artery',
+    actions:['External rotation','Stabilises the humeral head'],
+    position:'Contributes more to external rotation with the arm raised.',
+    posNote:'A helper for turning the arm out.',
+    palpation:'Lateral border of the scapula, above teres major.',
+    clinical:["Hornblower's sign tests teres minor."],
+    tubes:[ { pts:[['S',-.72,-.95,-.5],['S',-.5,-.55,-.28],['A',-.26,-.16,.1],['A',-.12,-.2,.25]], r:.09, t0:.05, t1:.8, peak:.4, rt:.03, c:{ r:.9, h:-.4 }, stab:true } ],
+    label:.4 },
+  { id:'subscap', name:'Subscapularis', short:'Subscapularis', group:'cuff',
+    plain:'The largest rotator cuff muscle, on the front of the shoulder blade. It turns the arm in and holds the front of the shoulder.',
+    where:'On the underside of the shoulder blade, against the ribs, to the front of the top of the arm bone.',
+    everyday:'Tucking in a shirt, reaching across your body, throwing.',
+    feel:'Too deep to feel directly.',
+    origin:['Subscapular fossa'], insertion:['Lesser tubercle of the humerus'],
+    nerve:'Upper and lower subscapular nerves', roots:'C5–C7', blood:'Subscapular artery',
+    actions:['Internal rotation','Anterior stability of the glenohumeral joint'],
+    position:'A key anterior restraint with the arm at the side and in low elevation.',
+    posNote:'Holds the front of the shoulder steady.',
+    palpation:'Only partly, in the axilla against the front of the scapula.',
+    clinical:['Lift-off and belly-press tests.','Often torn with anterior dislocation in older adults.'],
+    tubes:[ { pts:[['S',-.55,-.45,-1.05],['S',-.2,-.28,-.5],['A',.2,-.06,-.1],['A',.22,-.03,.06]], r:.16, t0:.04, t1:.8, peak:.35, rt:.04, c:{ f:.1, a:0, r:-1 }, stab:true } ],
+    label:.35 },
+
+  { id:'trap', name:'Trapezius', short:'Trapezius', group:'blade',
+    plain:'The large diamond-shaped muscle of the upper back and neck. It moves and steadies the shoulder blade.',
+    where:'From the back of the skull and the spine down to the middle of the back, out to the collarbone and shoulder blade.',
+    everyday:'Shrugging, carrying bags, reaching overhead, sitting tall.',
+    feel:'Shrug your shoulders and feel the top of your shoulder, between your neck and collarbone.',
+    origin:['Upper: external occipital protuberance, superior nuchal line, nuchal ligament','Middle: spinous processes C7–T3','Lower: spinous processes T4–T12'],
+    insertion:['Upper: lateral third of the clavicle','Middle: acromion and spine of the scapula','Lower: root of the scapular spine'],
+    nerve:'Accessory nerve (CN XI), with C3–C4 proprioceptive fibres', roots:'CN XI, C3–C4', blood:'Transverse cervical artery',
+    actions:['Upper: elevation and upward rotation','Middle: retraction','Lower: depression and upward rotation','Upper and lower parts with serratus anterior: the upward rotation force couple'],
+    position:'Lower trapezius becomes more important above about 90° of elevation.',
+    posNote:'Turns the shoulder blade so your arm can go overhead.',
+    palpation:'Upper fibres on a shrug; middle and lower fibres during prone arm lifts.',
+    clinical:['Accessory nerve injury (e.g. neck surgery): a drooping shoulder and weak elevation.','Upper trapezius over-activity with lower trapezius weakness is common in shoulder pain.'],
+    tubes:[
+      { pts:[['T',-.7,2.2,-1.9],['T',-.6,1.2,-1.45],['S',-.32,.5,-.45],['S',-.12,.46,-.12]], r:.16, t0:.04, t1:.86, peak:.4, rt:.05, up:.8, upFrom:10, head:'Upper fibres', headId:'up', tag:'Upper trapezius', lab:.4 },
+      { pts:[['T',-1.12,.35,-1.9],['S',-.98,.2,-1.2],['S',-.62,.25,-.6]], r:.14, t0:.04, t1:.86, peak:.4, rt:.05, retract:true, head:'Middle fibres', headId:'mid', tag:'Middle trapezius', lab:.45 },
+      { pts:[['T',-1.15,-2.7,-1.9],['T',-1.08,-1.3,-1.6],['S',-.97,-.02,-1.25]], r:.13, t0:.04, t1:.86, peak:.45, rt:.05, up:.6, upFrom:60, head:'Lower fibres', headId:'low', tag:'Lower trapezius', lab:.45 } ],
+    label:.4 },
+  { id:'serratus', name:'Serratus anterior', short:'Serratus anterior', group:'blade',
+    plain:'A muscle along the side of your ribs. It holds the shoulder blade against your chest and turns it upward.',
+    where:'On the side of the chest, from the upper ribs, passing under the shoulder blade to its inner edge.',
+    everyday:'Punching, pushing, reaching forward and overhead.',
+    feel:"Push against a wall and feel the side of your ribs below the armpit (the \"boxer's muscle\").",
+    origin:['Outer surfaces of ribs 1–8 or 9'], insertion:['Anterior surface of the medial border of the scapula, mostly the inferior angle'],
+    nerve:'Long thoracic nerve', roots:'C5–C7', blood:'Lateral thoracic and thoracodorsal arteries',
+    actions:['Protraction','Upward rotation (with trapezius)','Holds the scapula against the thorax'],
+    position:'The main upward rotator through elevation.',
+    posNote:'Turns the shoulder blade and holds it flat on your ribs.',
+    palpation:'Lateral chest wall between pectoralis major and latissimus dorsi, during a wall push.',
+    clinical:['Long thoracic nerve injury: medial winging of the scapula.','Weakness reduces upward rotation and overhead reach.'],
+    tubes:[ { pts:[['S',-.72,-1.25,-1.02],['T',-.3,-1.55,-.5],['T',.35,-1.85,-.45],['T',.7,-1.7,-.75]], r:.16, t0:.04, t1:.9, peak:.35, rt:.05, up:1, upFrom:10 } ],
+    label:.45 },
+  { id:'rhomb', name:'Rhomboids (major and minor)', short:'Rhomboids', group:'blade',
+    plain:'Muscles between your spine and shoulder blade. They pull the shoulder blade back and in.',
+    where:'Between the spine and the inner edge of the shoulder blade, under the trapezius.',
+    everyday:'Rowing, pulling a door open, squeezing your shoulder blades together.',
+    feel:'Squeeze your shoulder blades together and feel between them.',
+    origin:['Minor: spinous processes C7–T1','Major: spinous processes T2–T5'], insertion:['Medial border of the scapula'],
+    nerve:'Dorsal scapular nerve', roots:'C4–C5', blood:'Dorsal scapular artery',
+    actions:['Retraction','Downward rotation','Elevation of the medial border'],
+    position:'With levator scapulae and pectoralis minor, rotates the scapula downward.',
+    posNote:'Pulls the shoulder blade back and down when you pull.',
+    palpation:'Between the scapula and the spine, during retraction with the hand behind the back.',
+    clinical:['Weakness contributes to scapular dyskinesis.'],
+    tubes:[ { pts:[['T',-1.12,-.1,-1.9],['T',-1.06,-.6,-1.65],['S',-.93,-.85,-1.32]], r:.13, t0:.04, t1:.86, peak:.45, rt:.05, down:.7, retract:true } ],
+    label:.5 },
+  { id:'levator', name:'Levator scapulae', short:'Levator scapulae', group:'blade',
+    plain:'A neck muscle that lifts the shoulder blade and helps turn it downward.',
+    where:'Side and back of the neck, down to the top inner corner of the shoulder blade.',
+    everyday:'Shrugging and carrying. It often feels tight with neck strain.',
+    feel:'Shrug and feel the side of the back of your neck.',
+    origin:['Transverse processes C1–C4'], insertion:['Superior angle and upper medial border of the scapula'],
+    nerve:'Dorsal scapular nerve and C3–C4', roots:'C3–C5', blood:'Dorsal scapular and transverse cervical arteries',
+    actions:['Elevation','Downward rotation','Neck side flexion and rotation to the same side'],
+    position:'Opposes upward rotation; lengthened with the arm overhead.',
+    posNote:'Lifts the shoulder blade.',
+    palpation:'Posterior triangle of the neck, just above the superior angle.',
+    clinical:['A common source of neck and upper shoulder pain.'],
+    tubes:[ { pts:[['T',-.2,2.0,-1.55],['T',-.55,1.2,-1.45],['S',-.86,.38,-1.27]], r:.1, t0:.04, t1:.86, peak:.5, rt:.04, down:.5 } ],
+    label:.5 },
+];
+
+/* ------------------------------------------------------------------ muscles: the shoulder page's set, plus the elbow muscles */
+const byId = id => MUSCLES.find(m => m.id === id);
+{ // biceps: both heads, crossing shoulder and elbow
+  const b = byId('biceps');
+  Object.assign(b, { name:'Biceps brachii', short:'Biceps', group:'elbow',
+    plain:'The muscle at the front of your upper arm. It bends your elbow and turns your palm up, and helps lift the arm forward.',
+    where:'Front of the upper arm. The long head starts inside the shoulder joint, the short head on the coracoid (a hook on the shoulder blade); both end on the forearm just below the elbow.' });
+  Object.assign(b.tubes[0], { head:'Long head', headId:'long', tag:'Biceps long head', lab:.4 });
+  b.tubes[0].c = { ...b.tubes[0].c, e:1 };
+  b.tubes.push({ pts:[['S',.32,.1,-.3],['A',.24,-.55,-.13],['A',.33,-1.4,-.07],['A',.27,-2.55,-.02],['F',.1,-3.25,0]], r:.13, t0:.14, t1:.86, peak:.6, rt:.035,
+    c:{ f:.3, h:.3, e:1 }, head:'Short head', headId:'short', tag:'Biceps short head', lab:.45 });
+  b.label = .55;
+  // triceps: three heads; only the long head crosses the shoulder
+  const t = byId('triceps');
+  Object.assign(t, { name:'Triceps brachii', short:'Triceps', group:'elbow',
+    plain:'The muscle at the back of your upper arm. It straightens your elbow; its long head also helps pull the arm back.',
+    where:'Back of the upper arm. Three heads (long, lateral and medial) join into one tendon on the point of the elbow (the olecranon).' });
+  Object.assign(t.tubes[0], { head:'Long head', headId:'long', tag:'Triceps long head', lab:.35 });
+  t.tubes[0].c = { ...t.tubes[0].c, e:-1 };
+  t.tubes.push({ pts:[['A',-.1,-.45,.16],['A',-.32,-1.5,.14],['A',-.3,-2.5,.06],['F',-.14,-3.08,0]], r:.15, t0:.06, t1:.86, peak:.45, rt:.04,
+    c:{ e:-1 }, head:'Lateral head', headId:'lat', tag:'Triceps lateral head', lab:.4 });
+  t.tubes.push({ pts:[['A',-.12,-1.3,-.12],['A',-.27,-2.1,-.1],['A',-.25,-2.7,-.05],['F',-.14,-3.08,0]], r:.13, t0:.06, t1:.88, peak:.55, rt:.04,
+    c:{ e:-1 }, head:'Medial head', headId:'med', tag:'Triceps medial head', lab:.55 });
+  t.label = .5;
+  MUSCLES.push(
+    { id:'brachialis', name:'Brachialis', short:'Brachialis', group:'elbow',
+      plain:'A deep, strong muscle under the biceps. It bends your elbow whichever way your palm faces.',
+      where:'Front of the lower half of the upper arm, under the biceps, to the top of the ulna just below the elbow.',
+      tubes:[ { pts:[['A',.1,-1.45,.04],['A',.2,-2.2,.03],['A',.2,-2.75,0],['F',.08,-3.15,-.02]], r:.17, t0:.06, t1:.9, peak:.5, rt:.04, c:{ e:.9 } } ],
+      label:.45 },
+    { id:'brachiorad', name:'Brachioradialis', short:'Brachioradialis', group:'elbow',
+      plain:'The forearm muscle on the thumb side. It bends the elbow, most strongly with the thumb pointing up.',
+      where:'From the outer side of the lower upper arm, along the thumb side of the forearm, to the wrist.',
+      tubes:[ { pts:[['A',.02,-2.0,.24],['A',.1,-2.75,.22],['F',.16,-3.6,.18],['F',.12,-4.6,.14],['F',.07,-5.45,.1]], r:.13, t0:.04, t1:.7, peak:.3, rt:.035, c:{ e:.6 } } ],
+      label:.4 },
+  );
+}
+const GROUP_WORDS = { elbow:'Elbow muscles', gh:'Shoulder muscles', cuff:'Rotator cuff', blade:'Shoulder blade muscles' };
+const ROLE_WORDS = { prime:'Main mover', syn:'Helper', ant:'Opposite side', stab:'Steadying' };
+const TYPE_WORDS = { con:'Shortening', ecc:'Lengthening to control', iso:'Holding', rel:'Resting' };
+
+/* ------------------------------------------------------------------ which exercise */
+const params = new URLSearchParams(location.search);
+const EX = EXERCISES.find(e => e.id === params.get('e')) || EXERCISES[0];
+const SIDE = params.get('side') === 'left' ? 'left' : 'right';
+
+/* ------------------------------------------------------------------ renderer */
+const stage = document.getElementById('stage');
+const renderer = new THREE.WebGLRenderer({ antialias:true, alpha:true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+stage.appendChild(renderer.domElement);
+const labelRenderer = new CSS2DRenderer();
+labelRenderer.domElement.className = 'labels';
+stage.appendChild(labelRenderer.domElement);
+document.getElementById('loading').remove();
+const scene = new THREE.Scene();
+const mirror = new THREE.Group(); mirror.scale.z = SIDE === 'left' ? -1 : 1; scene.add(mirror);
+const zs = mirror.scale.z;
+scene.environment = new THREE.PMREMGenerator(renderer).fromScene(new RoomEnvironment(renderer), 0.04).texture;
+scene.add(new THREE.HemisphereLight(0xffffff, 0x9aa8b2, 0.9));
+const key = new THREE.DirectionalLight(0xffffff, 1.5); key.position.set(6, 10, 9 * zs); scene.add(key);
+const rim = new THREE.DirectionalLight(0xdfefff, 0.9); rim.position.set(-6, 3, -6 * zs); scene.add(rim);
+const camera = new THREE.PerspectiveCamera(32, 1, 0.1, 300);
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true; controls.dampingFactor = .08; controls.minDistance = 4; controls.maxDistance = 120;
+
+/* ------------------------------------------------------------------ materials */
+const boneMat = new THREE.MeshPhysicalMaterial({ roughness:.55, clearcoat:.15, clearcoatRoughness:.6, envMapIntensity:.6, side:THREE.DoubleSide });
+const ghostMat = new THREE.MeshPhysicalMaterial({ roughness:.6, transparent:true, opacity:.28, depthWrite:false, envMapIntensity:.5 });
+const ribMat = new THREE.MeshPhysicalMaterial({ roughness:.6, transparent:true, opacity:.4, depthWrite:false, envMapIntensity:.5 });
+const skinMat = new THREE.MeshPhysicalMaterial({ roughness:.55, transparent:true, opacity:.36, depthWrite:false, envMapIntensity:.4, sheen:.5 });
+const silMat = new THREE.MeshPhysicalMaterial({ roughness:.6, transparent:true, opacity:.18, depthWrite:false, envMapIntensity:.4 });
+const benchMat = new THREE.MeshStandardMaterial({ roughness:.8, transparent:true, opacity:.22, depthWrite:false });
+const metalMat = new THREE.MeshStandardMaterial({ color:0x3b434c, metalness:.5, roughness:.4 });
+const bandMat = new THREE.MeshStandardMaterial({ roughness:.6 });
+const C = {};
+function readTokens(){
+  const cs = getComputedStyle(document.documentElement);
+  for (const k of ['con','ecc','iso','rest','bone','skin','accent','fg-3']) C[k] = new THREE.Color(cs.getPropertyValue('--'+k).trim());
+  boneMat.color.copy(C.bone); ghostMat.color.copy(C.bone); ribMat.color.copy(C.bone); skinMat.color.copy(C.skin); silMat.color.copy(C.skin); benchMat.color.copy(C['fg-3']);
+  bandMat.color.copy(C.iso); loadArrow.setColor(C['fg-3']);
+}
+function muscleMaterial(){
+  const m = new THREE.MeshPhysicalMaterial({ roughness:.42, clearcoat:.35, clearcoatRoughness:.35, sheen:.4, envMapIntensity:.55, transparent:true });
+  m.userData.u = { uTime:{value:0}, uFlow:{value:0}, uActive:{value:0}, uStripe:{value:new THREE.Color()} };
+  m.onBeforeCompile = (sh) => {
+    Object.assign(sh.uniforms, m.userData.u);
+    sh.vertexShader = sh.vertexShader
+      .replace('#include <common>', 'attribute float along;\nvarying float vAlong;\n#include <common>')
+      .replace('#include <begin_vertex>', '#include <begin_vertex>\nvAlong = along;');
+    sh.fragmentShader = sh.fragmentShader
+      .replace('#include <common>', 'uniform float uTime; uniform float uFlow; uniform float uActive; uniform vec3 uStripe;\nvarying float vAlong;\n#include <common>')
+      .replace('#include <emissivemap_fragment>', `#include <emissivemap_fragment>
+        float dC = abs(vAlong - 0.5);
+        float stripe = smoothstep(0.35, 0.95, 0.5 + 0.5 * sin(dC * 46.0 + uTime * uFlow * 5.0));
+        float pulse = 0.5 + 0.5 * sin(uTime * 3.5);
+        float glow = (abs(uFlow) < 0.5) ? (0.18 + 0.22 * pulse) : (0.12 + 0.5 * stripe);
+        totalEmissiveRadiance += uStripe * uActive * glow;`);
+  };
+  return m;
+}
+
+/* ------------------------------------------------------------------ geometry helpers */
+function capsule(a, b, r, mat){
+  const A = new V3(...a), B = new V3(...b);
+  const m = new THREE.Mesh(new THREE.CapsuleGeometry(r, A.distanceTo(B), 8, 18), mat);
+  m.position.copy(A).add(B).multiplyScalar(.5);
+  m.quaternion.setFromUnitVectors(new V3(0,1,0), B.clone().sub(A).normalize());
+  return m;
+}
+function ellip(c, s, mat, seg=32){ const m = new THREE.Mesh(new THREE.SphereGeometry(1, seg, Math.round(seg*.75)), mat); m.position.set(...c); m.scale.set(...s); return m; }
+function longBone(a, b, prof, mat){
+  const A = new V3(...a), B = new V3(...b), L = A.distanceTo(B);
+  const m = new THREE.Mesh(new THREE.LatheGeometry([new THREE.Vector2(.001, 0), ...prof.map(([t, r]) => new THREE.Vector2(r, t*L)), new THREE.Vector2(.001, L)], 28), mat);
+  m.position.copy(A); m.quaternion.setFromUnitVectors(new V3(0,1,0), B.clone().sub(A).normalize());
+  return m;
+}
+function makeTubeGeometry(segs, radial){
+  const g = new THREE.BufferGeometry(), n = (segs+1)*(radial+1);
+  g.setAttribute('position', new THREE.BufferAttribute(new Float32Array(n*3), 3));
+  g.setAttribute('normal', new THREE.BufferAttribute(new Float32Array(n*3), 3));
+  const along = new Float32Array(n), idx = [];
+  for (let i=0;i<=segs;i++) for (let j=0;j<=radial;j++) along[i*(radial+1)+j] = i/segs;
+  for (let i=0;i<segs;i++) for (let j=0;j<radial;j++){ const a = i*(radial+1)+j, b = a+radial+1; idx.push(a,a+1,b, a+1,b+1,b); }
+  g.setAttribute('along', new THREE.BufferAttribute(along, 1)); g.setIndex(idx);
+  return g;
+}
+const _T = new V3(), _N = new V3(), _B = new V3(), _ref = new V3(0,0,1), _ref2 = new V3(1,0,0);
+function updateTube(g, curve, segs, radial, rFn){
+  const pos = g.attributes.position.array, nor = g.attributes.normal.array, pts = curve.getSpacedPoints(segs);
+  let k = 0;
+  for (let i=0;i<=segs;i++){
+    curve.getTangentAt(i/segs, _T);
+    _N.crossVectors(Math.abs(_T.z) > .9 ? _ref2 : _ref, _T); if (_N.lengthSq() < 1e-6) _N.set(1,0,0); _N.normalize();
+    _B.crossVectors(_T, _N);
+    const r = rFn(i/segs), P = pts[i];
+    for (let j=0;j<=radial;j++){
+      const a = j/radial*Math.PI*2, c = Math.cos(a), s = Math.sin(a);
+      const nx = c*_N.x+s*_B.x, ny = c*_N.y+s*_B.y, nz = c*_N.z+s*_B.z;
+      pos[k*3] = P.x+r*nx; pos[k*3+1] = P.y+r*ny; pos[k*3+2] = P.z+r*nz; nor[k*3] = nx; nor[k*3+1] = ny; nor[k*3+2] = nz; k++;
+    }
+  }
+  g.attributes.position.needsUpdate = g.attributes.normal.needsUpdate = true;
+  g.computeBoundingSphere();
+}
+function profile(u, t, belly){
+  if (u <= t.t0 || u >= t.t1) return t.rt;
+  let s = (u - t.t0) / (t.t1 - t.t0);
+  s = Math.pow(s, Math.log(.5) / Math.log(t.peak));
+  return t.rt + (belly - t.rt) * Math.pow(Math.sin(Math.PI * s), .75);
+}
+
+/* ------------------------------------------------------------------ scene graph
+   mirror → body (whole-body pitch about the shoulder, and a shift that keeps planted hands or feet in place)
+   → trunk bones, scapula (matrix mS), arm (matrix mA, forearm hinged at the elbow), the other arm and the legs (see-through). */
+const MID_Z = -1.9, SCAP_PLANE = 30;
+const body = new THREE.Group(); mirror.add(body);
+const scapG = new THREE.Group(); scapG.matrixAutoUpdate = false; body.add(scapG);
+const armG = new THREE.Group(); armG.matrixAutoUpdate = false; body.add(armG);
+const boneParts = [];
+function addBone(group, mesh){ group.add(mesh); boneParts.push(mesh); return mesh; }
+const trunkBones = new THREE.Group(); body.add(trunkBones);
+const ribMat2 = ribMat;
+[.55,.74,.86,.94,.99,1,.98,.93,.85].forEach((f, i) => {
+  const y = .05 - i*.4, pts = [];
+  for (let k = 0; k <= 24; k++){
+    const a = (k/24) * Math.PI*2 - Math.PI, cx = Math.cos(a), sz = Math.sin(a);
+    if (Math.abs(a) < .32) continue;
+    pts.push(new V3(.98*f*cx, y - .38*Math.max(0, cx), MID_Z + 1.45*f*sz));
+  }
+  for (const side of [pts.filter(p => p.z < MID_Z), pts.filter(p => p.z >= MID_Z)]) if (side.length > 2){
+    const m = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(side), 30, .045, 6, false), ribMat2); trunkBones.add(m); boneParts.push(m);
+  }
+});
+addBone(trunkBones, capsule([1.0, .12, MID_Z], [1.05, -1.95, MID_Z], .1, boneMat));
+addBone(trunkBones, capsule([-1.05, 1.9, MID_Z], [-1.1, -4.6, MID_Z], .13, ghostMat));
+for (let i = 0; i < 16; i++) addBone(trunkBones, ellip([-1.22, 1.7 - i*.4, MID_Z], [.12,.1,.08], ghostMat, 12));
+const SC = new V3(.95, .2, -1.65), AC_S = new V3(-.02, .44, -.18);
+const clavicle = new THREE.Mesh(new THREE.CapsuleGeometry(.07, 1, 6, 14), boneMat); body.add(clavicle); boneParts.push(clavicle);
+{ const sh = new THREE.Shape(), P = [[-1.3,.35],[-.45,.25],[-.32,.12],[-.32,-.18],[-1.05,-1.5],[-1.35,-.9]];
+  sh.moveTo(...P[0]); P.slice(1).forEach(p => sh.lineTo(...p)); sh.closePath();
+  const g = new THREE.ExtrudeGeometry(sh, { depth:.05, bevelEnabled:true, bevelThickness:.02, bevelSize:.03, bevelSegments:2 }), pos = g.attributes.position;
+  for (let i = 0; i < pos.count; i++){ const u = pos.getX(i), v = pos.getY(i), w = pos.getZ(i); pos.setXYZ(i, -.86 + (u + 1.35)*Math.tan(SCAP_PLANE*DEG) + w, v, u); }
+  g.computeVertexNormals(); addBone(scapG, new THREE.Mesh(g, boneMat)); }
+addBone(scapG, capsule([-.95, 0, -1.3], [-.42, .32, -.25], .07, boneMat));
+addBone(scapG, ellip([-.12, .43, .0], [.3,.06,.19], boneMat));
+addBone(scapG, capsule([-.36, .15, -.45], [.3, .12, -.28], .055, boneMat));
+addBone(scapG, ellip([-.2, -.02, -.3], [.12,.22,.1], boneMat));
+addBone(armG, ellip([0, 0, 0], [.26,.27,.26], boneMat));
+addBone(armG, ellip([.02, -.06, .24], [.13,.15,.12], boneMat));
+addBone(armG, longBone([0, -.2, .06], [0, -2.9, 0], [[0,.15],[.08,.12],[.3,.1],[.75,.1],[.92,.14],[1,.12]], boneMat));
+addBone(armG, ellip([0, -2.95, 0], [.12,.12,.3], boneMat));
+const ELBOW = new V3(0, -2.95, 0), HAND = new V3(0, -3.1, 0);
+const foreArm = new THREE.Group(); foreArm.position.copy(ELBOW); armG.add(foreArm);
+addBone(foreArm, ellip([-.13, -.05, 0], [.1,.13,.1], boneMat));
+addBone(foreArm, capsule([-.04, -.13, -.08], [0, -2.55, -.1], .065, boneMat));
+addBone(foreArm, capsule([.05, -.13, .1], [.03, -2.55, .1], .065, boneMat));
+const handSkin = ellip([0, -3.1, 0], [.14,.45,.3], skinMat); foreArm.add(handSkin);
+const armSkin = [capsule([0, -.05, .02], [0, -2.95, 0], .45, silMat), capsule([0, -.05, 0], [0, -2.65, 0], .34, silMat)];
+armG.add(armSkin[0]); foreArm.add(armSkin[1]);
+function makeDumbbell(){
+  const g = new THREE.Group();
+  g.add(new THREE.Mesh(new THREE.CylinderGeometry(.05, .05, .95, 12), metalMat));
+  for (const s of [-1, 1]){ const p = new THREE.Mesh(new THREE.CylinderGeometry(.3, .3, .16, 24), metalMat); p.position.y = .43*s; g.add(p); }
+  // bar along z (palm up / down) or along x (thumb up)
+  if (EX.grip === 'neutral') g.rotation.z = Math.PI/2; else g.rotation.x = Math.PI/2;
+  return g;
+}
+const dumbbell = makeDumbbell(); dumbbell.position.copy(HAND); foreArm.add(dumbbell);
+
+// the other arm (see-through), posed from its own angles
+const oArmG = new THREE.Group(); oArmG.matrixAutoUpdate = false; body.add(oArmG);
+oArmG.add(capsule([0, -.05, 0], [0, -2.95, 0], .4, silMat));
+const oFore = new THREE.Group(); oFore.position.copy(ELBOW); oArmG.add(oFore);
+oFore.add(capsule([0, -.05, 0], [0, -2.65, 0], .32, silMat)); oFore.add(ellip([0, -3.1, 0], [.14,.45,.3], silMat));
+const oDumbbell = makeDumbbell(); oDumbbell.position.copy(HAND); oFore.add(oDumbbell);
+
+// trunk, head and legs (see-through); legs hinge at the hip and knee
+const silhouette = new THREE.Group(); body.add(silhouette);
+silhouette.add(ellip([0, -2.0, MID_Z], [1.15, 2.95, 1.8], silMat));
+silhouette.add(capsule([-.1, .9, MID_Z], [-.1, 1.7, MID_Z], .45, silMat));
+silhouette.add(ellip([.05, 2.5, MID_Z], [.85, 1.0, .75], silMat));
+silhouette.add(ellip([0, -5.3, MID_Z], [1.0, .85, 1.45], silMat));
+const HIP_Y = -5.6, THIGH = 4.3, SHANK = 3.8;
+const legs = [MID_Z + .85, MID_Z - .85].map(z => {
+  const hip = new THREE.Group(); hip.position.set(0, HIP_Y, z); silhouette.add(hip);
+  hip.add(capsule([0, 0, 0], [0, -THIGH, 0], .6, silMat));
+  const knee = new THREE.Group(); knee.position.set(0, -THIGH, 0); hip.add(knee);
+  knee.add(capsule([0, 0, 0], [0, -SHANK, 0], .45, silMat));
+  const foot = new THREE.Group(); foot.position.set(0, -SHANK, 0); knee.add(foot);
+  foot.add(ellip([.45, -.3, 0], [1.1, .3, .42], silMat));
+  return { hip, knee, foot, z };
+});
+
+const props = new THREE.Group(); mirror.add(props);
+function slab(cx, cy, cz, sx, sy, sz, parent = props, rotZ = 0){ const m = new THREE.Mesh(new THREE.BoxGeometry(sx, sy, sz), benchMat); m.position.set(cx, cy, cz); m.rotation.z = rotZ; parent.add(m); return m; }
+function rod(a, b, r, parent = props){ const m = capsule(a, b, r, metalMat); parent.add(m); return m; }
+const bar = new THREE.Group(); mirror.add(bar);
+{ const shaft = new THREE.Mesh(new THREE.CylinderGeometry(.06, .06, 1, 12), metalMat); bar.add(shaft); bar.userData.shaft = shaft;
+  for (const s of [-1, 1]){ const p = new THREE.Mesh(new THREE.CylinderGeometry(.55, .55, .14, 28), metalMat); bar.add(p); (bar.userData.plates ||= []).push([p, s]); } }
+const band = new THREE.Mesh(new THREE.CylinderGeometry(.045, .045, 1, 10), bandMat); mirror.add(band);
+const bandKnob = new THREE.Mesh(new THREE.SphereGeometry(.2, 16, 12), metalMat); mirror.add(bandKnob);
+const loadArrow = new THREE.ArrowHelper(new V3(0,-1,0), new V3(), 1, 0x888888, .22, .14); scene.add(loadArrow);
+
+/* ------------------------------------------------------------------ kinematics */
+const DEGc = DEG, rz = a => new THREE.Matrix4().makeRotationZ(a*DEGc);
+const _m1 = new THREE.Matrix4(), _m2 = new THREE.Matrix4();
+function armRot(f, a, out = new THREE.Matrix4()){ return out.makeRotationZ(f*DEG).multiply(_m2.makeRotationX(-a*DEG)); }
+function scapUp(elev){ return elev >= 0 ? (elev < 25 ? elev*.08 : 2 + (elev - 25)*.374) : elev*.15; }
+function elevation(f, a){
+  const d = new V3(0, -1, 0).applyMatrix4(armRot(f, a, new THREE.Matrix4()));
+  const e = Math.acos(THREE.MathUtils.clamp(-d.y, -1, 1)) / DEG;
+  return f < 0 && a < 5 ? -e : e;
+}
+const PIV_U = new V3(-.8, -.15, -1.0), PIV_G = new V3(0, -.6, MID_Z);
+const lerp = THREE.MathUtils.lerp, clamp = THREE.MathUtils.clamp;
+// the pose at progress p (eased), including the legs and the other arm
+function poseAt(p){
+  const [A, B] = EX.pose, e = p, q = {};
+  for (const k of ['tilt','f','a','elbow']) q[k] = lerp(A[k] ?? 0, B[k] ?? 0, e);
+  const st = EX.stance;
+  if (st === 'stand'){ q.hip = -q.tilt; q.knee = 0; }
+  else if (st === 'seat' || st === 'incline'){ q.hip = 90 - q.tilt; q.knee = 90; }
+  else if (st === 'supine'){ q.hip = 12; q.knee = 102; }
+  else if (st === 'plank'){ q.hip = 0; q.knee = 0; }
+  else if (st === 'bent'){ q.hip = -q.tilt + 8; q.knee = 16; }
+  else if (st === 'hang'){ q.hip = -q.tilt + (EX.id === 'dips' ? 10 : 2); q.knee = EX.id === 'dips' ? 75 : 8; }
+  q.ankle = st === 'hang' ? 30 : 0;
+  const o = EX.oArm;
+  q.o = o === 'mirror' ? { f:q.f, a:q.a, elbow:q.elbow } : o === 'brace' ? { f:-q.tilt, a:4, elbow:2 } : { f:2, a:4, elbow:8 };
+  return q;
+}
+// joint positions in the trunk frame for a pose
+function frames(q){
+  const elev = elevation(q.f, q.a), u = scapUp(elev), g = .1*Math.max(0, q.f) + (EX.stance === 'plank' || EX.id === 'closegrip' ? 6*(q.f/90) : 0);
+  const mS = new THREE.Matrix4().makeTranslation(PIV_G.x, PIV_G.y, PIV_G.z).multiply(_m1.makeRotationY(g*DEG)).multiply(_m2.makeTranslation(-PIV_G.x, -PIV_G.y, -PIV_G.z));
+  mS.multiply(_m1.makeTranslation(PIV_U.x, PIV_U.y, PIV_U.z)).multiply(_m2.makeRotationX(-u*DEG)).multiply(_m1.makeTranslation(-PIV_U.x, -PIV_U.y, -PIV_U.z));
+  const gh = new V3().applyMatrix4(mS);
+  const mA = new THREE.Matrix4().makeTranslation(gh.x, gh.y, gh.z).multiply(armRot(q.f, q.a));
+  const mF = mA.clone().multiply(_m1.makeTranslation(ELBOW.x, ELBOW.y, ELBOW.z)).multiply(_m2.makeRotationZ(q.elbow*DEG)).multiply(_m1.makeTranslation(-ELBOW.x, -ELBOW.y, -ELBOW.z));
+  // the other arm: mirrored across the midline
+  const ogh = new V3(gh.x, gh.y, 2*MID_Z - gh.z);
+  const mO = new THREE.Matrix4().makeTranslation(ogh.x, ogh.y, ogh.z).multiply(new THREE.Matrix4().makeRotationZ(q.o.f*DEG)).multiply(_m2.makeRotationX(q.o.a*DEG));
+  const mOF = mO.clone().multiply(_m1.makeTranslation(ELBOW.x, ELBOW.y, ELBOW.z)).multiply(_m2.makeRotationZ(q.o.elbow*DEG)).multiply(_m1.makeTranslation(-ELBOW.x, -ELBOW.y, -ELBOW.z));
+  const elbow = ELBOW.clone().applyMatrix4(mA);
+  const handP = new V3(0, -3.1 - 2.95, 0).applyMatrix4(mF), oHand = new V3(0, -6.05, 0).applyMatrix4(mOF);
+  // legs: toes (for a plank) and soles
+  const legPts = z => {
+    const hipJ = new V3(0, HIP_Y, z), kneeP = hipJ.clone().add(new V3(0, -THIGH, 0).applyMatrix4(rz(q.hip)));
+    const ankle = kneeP.clone().add(new V3(0, -SHANK, 0).applyMatrix4(rz(q.hip - q.knee)));
+    const footR = rz(q.hip - q.knee + q.ankle);
+    return { knee:kneeP, ankle, toe:ankle.clone().add(new V3(1.5, -.3, 0).applyMatrix4(footR)), sole:ankle.clone().add(new V3(.45, -.62, 0).applyMatrix4(footR)), heel:ankle.clone().add(new V3(-.5, -.5, 0).applyMatrix4(footR)) };
+  };
+  return { mS, mA, mF, mO, mOF, gh, ogh, u, hand:handP, oHand, elbow, legs:[legPts(MID_Z + .85), legPts(MID_Z - .85)] };
+}
+// where the body sits in the world (mirror frame): planted feet, planted hands, or hands and feet (push-up)
+const FLOOR = -14.45;
+const worldOf = (v, tilt, pos) => v.clone().applyMatrix4(rz(tilt)).add(pos);
+let handTarget = null;
+function placement(q, F){
+  const R = rz(q.tilt);
+  const lowFoot = () => Math.min(...F.legs.flatMap(l => [l.sole, l.heel, l.toe].map(v => v.clone().applyMatrix4(R).y)));
+  if (EX.anchor === 'hands-feet'){
+    // hands on the floor at x = 0; turn the body about the hands until the toes touch the floor
+    const d = F.legs[0].toe.clone().sub(F.hand), r = Math.hypot(d.x, d.y), al = Math.atan2(d.y, d.x), k = clamp(-.1 / r, -1, 1);       // toes rest just below hand height
+    const t1 = (Math.asin(k) - al) / DEG, t2 = (Math.PI - Math.asin(k) - al) / DEG;
+    const wrap = t => ((t + 540) % 360) - 180;
+    q.tilt = [wrap(t1), wrap(t2)].sort((x, y) => Math.abs(x - EX.pose[0].tilt) - Math.abs(y - EX.pose[0].tilt))[0];
+    const hw = F.hand.clone().applyMatrix4(rz(q.tilt));
+    return new V3(0 - hw.x, FLOOR + .15 - hw.y, 0);
+  }
+  if (EX.anchor === 'hands'){
+    const hw = F.hand.clone().applyMatrix4(R);
+    return new V3(handTarget.x - hw.x, handTarget.y - hw.y, 0);
+  }
+  return new V3(0, FLOOR - lowFoot(), 0);
+}
+
+/* ------------------------------------------------------------------ muscle tubes */
+const SEGS = 64, RAD = 20;
+const muscleMeshes = [], TUBES = [];
+let mS = new THREE.Matrix4(), mA = new THREE.Matrix4(), mF = new THREE.Matrix4();
+function resolve(p, out){
+  out.set(p[1], p[2], p[3]);
+  if (p[0] === 'S') out.applyMatrix4(mS); else if (p[0] === 'A') out.applyMatrix4(mA); else if (p[0] === 'F') out.applyMatrix4(mF);
+  return out;
+}
+for (const m of MUSCLES){
+  m.act = 0; m.contraction = 'rel'; m.role = null; m.shown = false;
+  m.tubeObjs = m.tubes.map(t => {
+    const mat = muscleMaterial(), geo = makeTubeGeometry(SEGS, RAD), mesh = new THREE.Mesh(geo, mat);
+    mesh.userData.muscle = m; body.add(mesh); muscleMeshes.push(mesh);
+    const o = { t, m, mat, geo, mesh, pts: t.pts.map(() => new V3()), curve:null, L0:1, len:1, act:0, ctype:'rel', role:null };
+    TUBES.push(o); return o;
+  });
+  const el = document.createElement('button'); el.className = 'tag'; el.textContent = m.short;
+  el.addEventListener('click', e => { e.stopPropagation(); select(m); });
+  m.labelEl = el; m.label3d = new CSS2DObject(el); body.add(m.label3d);
+}
+// the rotator cuff shares one label
+const CUFF = MUSCLES.filter(m => m.group === 'cuff');
+const cuffEl = document.createElement('button'); cuffEl.className = 'tag'; cuffEl.textContent = 'Rotator cuff';
+cuffEl.addEventListener('click', e => { e.stopPropagation(); showTab('muscles'); });
+const cuffLabel = new CSS2DObject(cuffEl); body.add(cuffLabel);
+function setFrames(F){ mS = F.mS; mA = F.mA; mF = F.mF; }
+function updateMuscleGeometry(){
+  for (const m of MUSCLES){
+    if (!m.shown) continue;
+    for (const o of m.tubeObjs){
+      o.t.pts.forEach((p,i) => resolve(p, o.pts[i]));
+      o.curve = new THREE.CatmullRomCurve3(o.pts, false, 'centripetal');
+      const L = o.curve.getLength(); o.len = L / o.L0;
+      const belly = o.t.r * clamp(Math.pow(o.L0 / L, .8), .78, 1.45) * (1 + .16 * o.act * (o.ctype === 'rel' ? 0 : 1));
+      updateTube(o.geo, o.curve, SEGS, RAD, u => profile(u, o.t, belly));
+    }
+    m.label3d.position.copy(m.tubeObjs[0].curve.getPointAt(m.label));
+  }
+  const cs = CUFF.filter(m => m.shown);
+  if (cs.length){ const p = new V3(); cs.forEach(m => p.add(m.label3d.position)); cuffLabel.position.copy(p.divideScalar(cs.length)); }
+}
+// rest lengths: standing, arm by the side
+{ const q0 = { tilt:0, f:0, a:0, elbow:0, hip:0, knee:0, ankle:0, o:{ f:0, a:0, elbow:0 } }; setFrames(frames(q0));
+  for (const o of TUBES){ o.t.pts.forEach((p,i) => resolve(p, o.pts[i])); o.L0 = new THREE.CatmullRomCurve3(o.pts,false,'centripetal').getLength(); } }
+
+/* ------------------------------------------------------------------ physiology model (simplified, for teaching)
+   Each joint's demand (elbow, shoulder flexion, horizontal adduction) comes from the weight's position or from the exercise.
+   A muscle works in proportion to how well its leverage matches the demand; it shortens if its joint moves the way it pulls. */
+const fnOr = (v, p) => typeof v === 'function' ? v(p) : v;
+function demands(p, F, q){
+  const L = EX.load, R = rz(q.tilt);
+  const w = v => v.clone().applyMatrix4(R);
+  const hand = w(F.hand), elbowW = w(F.elbow), ghW = w(F.gh);
+  const e = L.elbow === 'grav' ? clamp((hand.x - elbowW.x) / 3.1, -1, 1) : fnOr(L.elbow, p);
+  const s = L.shoulder === 'grav' ? clamp(.85*(hand.x - ghW.x) / 6.05 + .15*(elbowW.x - ghW.x) / 2.95, -1, 1) : fnOr(L.shoulder ?? 0, p);
+  const h = fnOr(L.h ?? 0, p);
+  return { e, f:s, h };
+}
+// joints that barely move in this exercise (e.g. the shoulder in a curl): muscles working there are steadying it
+const STILL = { e:Math.abs(EX.pose[1].elbow - EX.pose[0].elbow) < 15, f:Math.abs(EX.pose[1].f - EX.pose[0].f) < 15 };
+STILL.h = STILL.f;
+const keyOf = o => o.t.headId ? `${o.m.id}.${o.t.headId}` : o.m.id;
+function biasOf(o){ const b = EX.bias || {}; return (b[keyOf(o)] ?? 1) * (b[o.m.id] ?? 1); }
+function plan(p, F, q, vel){
+  const D = demands(p, F, q), out = new Map();
+  const Dmax = Math.max(Math.abs(D.e), Math.abs(D.f), Math.abs(D.h));
+  const typeFor = (j, sign) => { const v = vel[j]; return Math.abs(v) < 4 ? 'iso' : Math.sign(v) === sign ? 'con' : 'ecc'; };
+  const pType = Math.abs(vel.p) < .02 ? 'iso' : vel.p > 0 ? 'con' : 'ecc';
+  let amax = 0;
+  for (const o of TUBES){
+    const c = { ...(o.t.c || {}) }; let act = 0, best = null, opp = null;
+    if (o.t.fromFlexed && q.f < 5) c.f = 0;                                        // sternocostal pec only extends a flexed arm
+    for (const j of ['e','f','h']){
+      const cj = c[j] || 0, x = cj * D[j];
+      if (x > 0){ act += x; if (!best || x > best.x) best = { j, x, s:Math.sign(cj) }; }
+      else if (x < 0 && Math.abs(cj) >= .5 && Math.abs(D[j]) > .12) opp = { j, s:Math.sign(cj) };
+    }
+    act *= biasOf(o);
+    // working at a joint that is held still while the exercise moves (e.g. the shoulder in a curl): steadying
+    const still = best && STILL[best.j];
+    if (best && act > .05 && still) out.set(o, [Math.min(1, act*.7), 'iso', 'stab']);
+    else if (best && act > .05){ out.set(o, [Math.min(1, act), typeFor(best.j, best.s), 'work']); amax = Math.max(amax, act); }
+    else if (opp) out.set(o, [.05 + .05*Dmax, typeFor(opp.j, opp.s), 'ant']);
+  }
+  for (const [k, wgt] of EX.extra || []){
+    for (const o of TUBES) if (keyOf(o) === k || (o.m.id === k && !k.includes('.'))){
+      const a = wgt * (.4 + .6*Dmax), cur = out.get(o);
+      if (!cur || cur[0] < a){ out.set(o, [a, pType, 'work']); amax = Math.max(amax, a); }
+    }
+  }
+  for (const [o, v] of out) if (v[2] === 'work') v[2] = v[0] >= .6*amax && v[0] > .2 ? 'prime' : 'syn';
+  // steadying: the cuff holds the humeral head; the shoulder blade muscles hold the blade when the shoulder is loaded
+  const Ds = Math.max(Math.abs(D.f), Math.abs(D.h));
+  for (const o of TUBES){
+    const cur = out.get(o);
+    if (o.t.stab && (!cur || cur[2] === 'ant')) out.set(o, [.12 + .3*Ds, 'iso', 'stab']);
+    else if (o.m.group === 'blade' && !cur && Ds > .25) out.set(o, [.08 + .2*Ds, 'iso', 'stab']);
+  }
+  return [out, Dmax, D];
+}
+
+/* ------------------------------------------------------------------ set up the exercise: anchors, props, which muscles to show */
+const state = { p:0, pv:0, playing:!reduceMotion, phaseT:0, seg:0, selected:null, hovered:null, D:{ e:0, f:0, h:0 }, demand:0, phase:'rest', q:null, pos:new V3() };
+const CYCLE = [ { to:1, dur:1.6 }, { hold:.5 }, { to:0, dur:2.3 }, { hold:.7 } ];
+const ease = x => x < .5 ? 2*x*x : 1 - Math.pow(-2*x + 2, 2)/2;
+if (EX.anchor === 'hands'){
+  handTarget = new V3(0, 0, 0);
+  let low = Infinity;
+  for (let i = 0; i <= 10; i++){ const q = poseAt(i/10), F = frames(q), pos = placement(q, F);
+    for (const l of F.legs) for (const v of [l.sole, l.toe, l.heel]) low = Math.min(low, worldOf(v, q.tilt, pos).y); }
+  handTarget.y = FLOOR + 1.2 - low;
+}
+const pose0 = poseAt(0), F0 = frames(pose0), pos0 = placement(pose0, F0);
+const W0 = v => worldOf(v, pose0.tilt, pos0);
+function buildProps(){
+  slab(0, FLOOR - .1, MID_Z, 34, .2, 18);
+  const trunkBox = (c, s, rot = 0) => { const m = slab(0, 0, 0, ...s); const w = W0(new V3(...c)); m.position.copy(w); m.rotation.z = (pose0.tilt + rot)*DEG; return m; };
+  const legTo = (x, y, z) => rod([x, y, z], [x, FLOOR, z], .07);
+  if (EX.prop === 'flat'){
+    trunkBox([-1.95, -2.9, MID_Z], [.35, 10.5, 2.6]);
+    const a = W0(new V3(-1.95, 1.8, MID_Z)), b = W0(new V3(-1.95, -7.6, MID_Z));
+    for (const p of [a, b]){ const y = p.y - .2; legTo(p.x, y, MID_Z - .9); legTo(p.x, y, MID_Z + .9); }
+  }
+  if (EX.prop === 'incline'){
+    trunkBox([-1.95, -1.6, MID_Z], [.32, 7.4, 2.6]);
+    const seatW = W0(new V3(0, -6.3, MID_Z)); slab(seatW.x + .4, seatW.y - .2, MID_Z, 3.4, .35, 2.6);
+    legTo(seatW.x - .8, seatW.y - .3, MID_Z - .9); legTo(seatW.x - .8, seatW.y - .3, MID_Z + .9); legTo(seatW.x + 1.6, seatW.y - .3, MID_Z);
+  }
+  if (EX.stance === 'seat'){
+    const seatW = W0(new V3(0, -6.3, MID_Z)); slab(seatW.x, seatW.y - .2, MID_Z, 3.2, .35, 2.8);
+    legTo(seatW.x, seatW.y - .3, MID_Z);
+  }
+  if (EX.prop === 'preacher'){
+    // a pad under the back of the upper arm, angled with it
+    const gh = W0(F0.gh), el = W0(F0.elbow), dir = el.clone().sub(gh).normalize();
+    const back = new V3(-dir.y, dir.x, 0);             // toward the back of the arm, in the plane of the movement
+    const m = slab(0, 0, 0, .3, 3.2, 1.8); m.position.copy(gh.clone().lerp(el, .55).addScaledVector(back, -.5)); m.quaternion.setFromUnitVectors(new V3(0,1,0), dir);
+    m.position.z = F0.gh.z;
+  }
+  if (EX.prop === 'brace'){
+    const h = W0(F0.oHand), k = W0(F0.legs[1].knee);
+    const x0 = Math.min(h.x, k.x) - 1, x1 = Math.max(h.x, k.x) + 1, top = h.y - .18;
+    slab((x0 + x1)/2, top - .2, h.z, x1 - x0, .4, 2.4);
+    for (const x of [x0 + .4, x1 - .4]) legTo(x, top - .4, h.z);
+  }
+  if (EX.id === 'dips'){
+    for (const z of [F0.gh.z + .1, 2*MID_Z - F0.gh.z - .1]){ const y = handTarget.y - .2; rod([-3, y, z], [3, y, z], .1); legTo(-2.6, y, z); legTo(2.6, y, z); }
+  }
+  if (EX.id === 'chinup'){
+    const y = handTarget.y + .15; rod([0, y, 2.2], [0, y, 2*MID_Z - 2.2], .09);
+    for (const z of [2.2, 2*MID_Z - 2.2]) legTo(0, y, z);
+  }
+}
+buildProps();
+const bandAnchor = EX.anchor === 'foot' ? W0(F0.legs[0].sole).add(new V3(.2, .05, 0))
+  : EX.anchor === 'high' ? W0(F0.gh).add(new V3(3.4, 4.6, 0)) : null;
+if (bandAnchor){ bandAnchor.z = F0.gh.z; bandKnob.position.copy(bandAnchor); }
+bandKnob.visible = band.visible = !!bandAnchor;
+bar.visible = EX.loadKind === 'bar';
+dumbbell.visible = EX.loadKind === 'dumbbell';
+oDumbbell.visible = EX.loadKind === 'dumbbell' && EX.oArm === 'mirror';
+
+// which muscles take part: sample the movement both ways
+{ const seen = new Map();
+  for (const dir of [1, -1]) for (let i = 0; i <= 20; i++){
+    const p = i/20, q = poseAt(p), F = frames(q); placement(q, F);
+    const [pl] = plan(p, F, q, { e:dir*50*(EX.pose[1].elbow - EX.pose[0].elbow), f:dir*50*(EX.pose[1].f - EX.pose[0].f), h:dir*50*(EX.pose[1].f - EX.pose[0].f), p:dir });
+    for (const [o, [a, , role]] of pl) if (role !== 'ant' && (role !== 'stab' || a >= .3)) seen.set(o.m, Math.max(seen.get(o.m) || 0, a));
+  }
+  for (const m of MUSCLES) m.shown = (seen.get(m) || 0) >= .12;
+  for (const m of MUSCLES) if (m.group === 'elbow' && (m.id === 'biceps' || m.id === 'triceps')) m.shown = true;
+}
+for (const m of MUSCLES) for (const o of m.tubeObjs) o.mesh.visible = m.shown;
+
+/* ------------------------------------------------------------------ per frame */
+let showBones = true, showBody = true, showLabels = true;
+const prevQ = { elbow:0, f:0 };
+function stepMotion(dt){
+  if (state.playing){
+    const s = CYCLE[state.seg];
+    state.phaseT += dt;
+    if (s.hold !== undefined){ if (state.phaseT >= s.hold){ state.seg = (state.seg + 1) % CYCLE.length; state.phaseT = 0; } }
+    else {
+      const from = s.to === 1 ? 0 : 1, x = Math.min(1, state.phaseT / s.dur);
+      state.p = from + (s.to - from) * ease(x);
+      if (x >= 1){ state.seg = (state.seg + 1) % CYCLE.length; state.phaseT = 0; }
+    }
+  }
+}
+function updateScene(dt){
+  const q = poseAt(state.p), F = frames(q), pos = placement(q, F);
+  state.q = q;
+  const vel = { e:(q.elbow - prevQ.elbow)/Math.max(dt, 1e-3), f:(q.f - prevQ.f)/Math.max(dt, 1e-3), p:(state.p - (state.pPrev ?? state.p))/Math.max(dt, 1e-3) };
+  vel.h = vel.f;
+  prevQ.elbow = q.elbow; prevQ.f = q.f; state.pPrev = state.p;
+  body.position.copy(pos); body.rotation.z = q.tilt*DEG;
+  scapG.matrix.copy(F.mS); scapG.matrixWorldNeedsUpdate = true;
+  armG.matrix.copy(F.mA); armG.matrixWorldNeedsUpdate = true; foreArm.rotation.z = q.elbow*DEG;
+  oArmG.matrix.copy(F.mO); oArmG.matrixWorldNeedsUpdate = true; oFore.rotation.z = q.o.elbow*DEG;
+  const ac = AC_S.clone().applyMatrix4(F.mS), Lc = SC.distanceTo(ac);
+  clavicle.position.copy(SC).add(ac).multiplyScalar(.5); clavicle.scale.set(1, Lc/1.14, 1);
+  clavicle.quaternion.setFromUnitVectors(new V3(0,1,0), ac.clone().sub(SC).normalize());
+  for (const l of legs){ l.hip.rotation.z = q.hip*DEG; l.knee.rotation.z = -q.knee*DEG; l.foot.rotation.z = q.ankle*DEG; }
+  setFrames(F);
+  // physiology
+  const [pl, Dmax, D] = plan(state.p, F, q, vel);
+  state.D = D; state.demand += (Dmax - state.demand) * (1 - Math.exp(-dt*8));
+  const k = 1 - Math.exp(-dt*8);
+  for (const o of TUBES){
+    const [target, type, role] = pl.get(o) || [.02, 'rel', null];
+    o.act += (target - o.act) * k; o.ctype = type; o.role = role;
+  }
+  for (const m of MUSCLES){
+    const top = m.tubeObjs.reduce((a, b) => (b.role && !a.role) || (b.role && b.act > a.act) ? b : a);
+    m.act = top.act; m.contraction = top.ctype; m.role = top.role;
+  }
+  state.phase = Math.abs(vel.p) < .02 ? (state.p > .5 ? 'top' : 'rest') : vel.p > 0 ? 'up' : 'down';
+  updateMuscleGeometry();
+  // loads
+  scene.updateMatrixWorld(true);
+  const hand = new V3(0, -6.05, 0).applyMatrix4(F.mF).applyMatrix4(body.matrix), oHand = new V3(0, -6.05, 0).applyMatrix4(F.mOF).applyMatrix4(body.matrix);
+  if (bar.visible){
+    const mid = hand.clone().add(oHand).multiplyScalar(.5), L = hand.distanceTo(oHand) + 2.4;
+    bar.position.copy(mid); bar.quaternion.setFromUnitVectors(new V3(0,1,0), hand.clone().sub(oHand).normalize());
+    bar.userData.shaft.scale.y = L; for (const [pl, s] of bar.userData.plates){ pl.position.y = s*(L/2 - .2); }
+  }
+  if (bandAnchor){
+    band.position.copy(hand).add(bandAnchor).multiplyScalar(.5); band.scale.y = hand.distanceTo(bandAnchor);
+    band.quaternion.setFromUnitVectors(new V3(0,1,0), bandAnchor.clone().sub(hand).normalize());
+  }
+  const toWorld = v => mirror.localToWorld(v.clone());
+  loadArrow.visible = true;
+  if (bandAnchor){ const d = bandAnchor.clone().sub(hand).normalize(); d.z *= zs; loadArrow.position.copy(toWorld(hand)).addScaledVector(d, .35); loadArrow.setDirection(d); loadArrow.setLength(1, .22, .14); }
+  else if (EX.loadKind === 'body'){ const c = new V3(0, -3.2, MID_Z).applyMatrix4(body.matrix); loadArrow.position.copy(toWorld(c)); loadArrow.setDirection(new V3(0,-1,0)); loadArrow.setLength(1.4 + .5*state.demand, .28, .18); }
+  else { const at = bar.visible ? bar.position : hand; loadArrow.position.copy(toWorld(at)).add(new V3(0, -.5, 0)); loadArrow.setDirection(new V3(0,-1,0)); loadArrow.setLength(.9 + .5*state.demand, .22, .14); }
+}
+const _col = new THREE.Color();
+function updateAppearance(time){
+  const sel = state.selected;
+  for (const m of MUSCLES){
+    if (!m.shown){ m.label3d.visible = false; continue; }
+    const faded = sel && sel !== m;
+    for (const o of m.tubeObjs){
+      const ct = o.ctype, sc = ct === 'rel' ? C.rest : C[ct], u = o.mat.userData.u;
+      o.mat.color.copy(_col.copy(C.rest).lerp(sc, Math.min(1, o.act*1.25) * .9));
+      u.uTime.value = reduceMotion ? 0 : time; u.uFlow.value = ct === 'con' ? 1 : ct === 'ecc' ? -1 : 0;
+      u.uActive.value = ct === 'rel' ? 0 : Math.min(1, o.act*1.2); u.uStripe.value.copy(sc);
+      o.mat.opacity = faded ? .16 : 1; o.mat.depthWrite = !faded;
+      o.mat.emissive.setScalar(state.hovered === m && !faded ? .07 : 0);
+    }
+    m.labelEl.classList.toggle('dim', !!faded); m.labelEl.classList.toggle('on', sel === m);
+    m.label3d.visible = (m.group !== 'cuff' || sel === m) && (showLabels || sel === m);
+  }
+  cuffLabel.visible = showLabels && !sel && CUFF.some(m => m.shown);
+}
+
+/* ------------------------------------------------------------------ picking */
+const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
+let down = null;
+function setRay(e){ const r = renderer.domElement.getBoundingClientRect(); ndc.set(((e.clientX - r.left)/r.width)*2 - 1, -((e.clientY - r.top)/r.height)*2 + 1); ray.setFromCamera(ndc, camera); }
+function pick(){ return ray.intersectObjects(muscleMeshes.filter(m => m.visible), false)[0] || null; }
+renderer.domElement.addEventListener('pointerdown', e => { setRay(e); down = { x:e.clientX, y:e.clientY, hit:pick() }; });
+renderer.domElement.addEventListener('pointermove', e => { if (e.buttons) return; setRay(e); const h = pick(); state.hovered = h?.object.userData.muscle || null; renderer.domElement.style.cursor = state.hovered ? 'pointer' : ''; });
+renderer.domElement.addEventListener('pointerup', e => {
+  if (!down) return; const moved = Math.hypot(e.clientX - down.x, e.clientY - down.y);
+  if (moved < 5){ const m = down.hit?.object.userData.muscle; select(m || null); }
+  down = null;
+});
+
+/* ------------------------------------------------------------------ camera: frame the whole movement */
+let tween = null, homeT = new V3(), homeD = 20;
+const homeDir = () => new V3(EX.view?.[0] ?? .32, EX.view?.[1] ?? .16, (EX.view?.[2] ?? 1)*zs).normalize();
+function computeHome(){
+  const pts = [];
+  for (const p of [0, .5, 1]){
+    const q = poseAt(p), F = frames(q), pos = placement(q, F), W = v => worldOf(v, q.tilt, pos);
+    // whole body when it moves (push-up, dips, chin-up); otherwise the upper body and the moving arm
+    pts.push(W(F.hand), W(F.gh), W(F.elbow), W(new V3(0, 3.2, MID_Z)), W(new V3(0, -4.6, MID_Z)));
+    if (EX.oArm === 'mirror') pts.push(W(F.oHand));
+    if (EX.anchor === 'hands' || EX.anchor === 'hands-feet') for (const l of F.legs) pts.push(W(l.sole), W(l.toe), W(l.knee));
+  }
+  if (bandAnchor && EX.anchor === 'high') pts.push(bandAnchor.clone());
+  const box = new THREE.Box3().setFromPoints(pts.map(v => { const w = v.clone(); w.z *= zs; return w; }));
+  box.getCenter(homeT);
+  const size = box.getSize(new V3()), wide = innerWidth > 900;
+  const vfov = camera.fov*DEG/2, need = Math.max(size.y, size.x / camera.aspect) / 2;
+  homeD = Math.max(9, need / Math.tan(vfov) * (wide ? 1.6 : 1.0) + size.z*.5);
+  if (wide) homeT.y += size.y*.04;
+}
+function flyHome(){ tween = { t:0, t0:controls.target.clone(), t1:homeT.clone(), d0:camera.position.distanceTo(controls.target), d1:homeD, dir:camera.position.clone().sub(controls.target).normalize(), dir1:homeDir() }; }
+function flyTo(target, dist){ tween = { t:0, dur:.8, t0:controls.target.clone(), t1:target.clone(), d0:camera.position.distanceTo(controls.target), d1:dist, dir:camera.position.clone().sub(controls.target).normalize() }; }
+function stepTween(dt){
+  if (!tween) return;
+  tween.t = Math.min(1, tween.t + dt/(tween.dur || .9));
+  const e = tween.t < .5 ? 4*tween.t**3 : 1 - Math.pow(-2*tween.t + 2, 3)/2;
+  controls.target.lerpVectors(tween.t0, tween.t1, e);
+  const dir = tween.dir1 ? tween.dir.clone().lerp(tween.dir1, e).normalize() : tween.dir;
+  camera.position.copy(controls.target).addScaledVector(dir, lerp(tween.d0, tween.d1, e));
+  if (tween.t >= 1) tween = null;
+}
+function zoom(f){ const d = clamp((tween ? tween.d1 : camera.position.distanceTo(controls.target)) * f, controls.minDistance, controls.maxDistance); flyTo(tween ? tween.t1 : controls.target, d); }
+
+/* ------------------------------------------------------------------ UI */
+const $ = id => document.getElementById(id);
+document.title = `${EX.name} · Myotrek`;
+$('crumbEx').textContent = EX.name; $('crumbGroup').textContent = GROUPS[EX.group][0]; $('sideTxt').textContent = `(${SIDE})`;
+$('exName').textContent = EX.name; $('exBlurb').textContent = EX.blurb;
+$('exChips').innerHTML = [EX.equip, EX.level].map(t => `<span class="chip">${t}</span>`).join('');
+$('exTarget').innerHTML = `<b>Main muscles:</b> ${EX.target.join(', ')}` + (EX.also?.length ? `<br><b>Also working:</b> ${EX.also.join(', ')}` : '');
+$('sideLink').href = `exercise.html?e=${EX.id}&side=${SIDE === 'left' ? 'right' : 'left'}`; $('sideLink').textContent = SIDE === 'left' ? 'Show right side' : 'Show left side';
+{ const list = EXERCISES, i = list.indexOf(EX), prev = list[(i - 1 + list.length) % list.length], next = list[(i + 1) % list.length];
+  $('prevEx').href = `exercise.html?e=${prev.id}`; $('prevEx').title = prev.name;
+  $('nextEx').href = `exercise.html?e=${next.id}`; $('nextEx').title = next.name; $('nextName').textContent = next.name; $('prevName').textContent = prev.name; }
+const findEx = name => EXERCISES.find(e => name.toLowerCase().includes(e.name.toLowerCase().replace(/ \(.*/, '')) || e.name.toLowerCase().includes(name.toLowerCase()));
+const li = a => a.map(x => `<li>${x}</li>`).join('');
+$('paneHow').innerHTML = `
+  <div class="block"><h3>Starting position</h3><p>${EX.start}</p></div>
+  <div class="block"><h3>The movement</h3><ol>${li(EX.steps)}</ol></div>
+  <div class="block"><h3>Breathing</h3><p>${EX.breathing}</p></div>
+  <div class="block"><h3>Cues</h3><ul class="ticks">${li(EX.cues)}</ul></div>
+  <div class="block"><h3>Common mistakes</h3><ul class="crosses">${li(EX.mistakes)}</ul></div>
+  <div class="special"><b>Where it feels hardest</b><p>${EX.note}</p></div>
+  <p class="note">Draft content for physiotherapist review.</p>`;
+$('paneDose').innerHTML = `
+  <div class="block"><h3>Sets and reps by goal</h3>
+    <table class="kvt"><thead><tr><th>Goal</th><th>Sets × reps</th><th>Rest</th></tr></thead>
+    <tbody>${DOSAGE.map(([g, sr, r, l]) => `<tr><th>${g}<small>${l}</small></th><td>${sr}</td><td>${r}</td></tr>`).join('')}</tbody></table></div>
+  ${EX.loadKind === 'body' ? '<p class="note">With body weight, change the difficulty using the easier and harder versions below rather than the weight.</p>' : ''}
+  <div class="block"><h3>Make it easier</h3><ul>${li(EX.easier)}</ul></div>
+  <div class="block"><h3>Make it harder</h3><ul>${li(EX.harder)}</ul></div>
+  <p class="note">General guidance, not a prescription. If you are recovering from an injury, follow your physiotherapist's advice. Stop if it causes sharp pain.</p>`;
+function stateColorVar(m, ct, role){ ct = ct || m.contraction; role = role === undefined ? m.role : role; return ct === 'rel' || (role === 'ant' && m.act <= .04) ? 'var(--rest)' : `var(--${ct})`; }
+function statusText(m){ if (!m.role) return TYPE_WORDS.rel; if (m.role === 'ant') return m.act > .04 ? 'Lightly on, steadying' : TYPE_WORDS.rel; return TYPE_WORDS[m.contraction]; }
+function renderMuscles(){
+  const shown = MUSCLES.filter(m => m.shown), groups = ['elbow','gh','cuff','blade'].filter(g => shown.some(m => m.group === g));
+  $('paneMuscles').innerHTML = `
+    <div><h3 style="margin-bottom:4px">Working right now</h3><p class="note">Tap a muscle to learn about it.</p></div>
+    ${groups.map(g => `<div class="group-h"><h3>${GROUP_WORDS[g]}</h3></div><div class="mlist">${shown.filter(m => m.group === g).map(m => `
+      <button class="mrow" data-id="${m.id}"><i class="dot"></i><span class="nm">${m.name}</span><span class="role"></span><span class="st"></span><span class="bar"><span></span></span></button>`).join('')}</div>`).join('')}
+    <div class="legend" aria-label="Colour key">
+      <span><i style="background:var(--con)"></i>${TYPE_WORDS.con}</span><span><i style="background:var(--ecc)"></i>${TYPE_WORDS.ecc}</span>
+      <span><i style="background:var(--iso)"></i>${TYPE_WORDS.iso}</span><span><i style="background:var(--rest)"></i>${TYPE_WORDS.rel}</span></div>
+    <p class="note">Moving stripes show the direction: inward when a muscle shortens, outward when it lengthens. Activation levels are illustrative.</p>`;
+  $('paneMuscles').querySelectorAll('.mrow').forEach(b => b.onclick = () => select(MUSCLES.find(m => m.id === b.dataset.id)));
+}
+function updateMuscleList(){
+  for (const m of MUSCLES){
+    const row = document.querySelector(`.mrow[data-id="${m.id}"]`); if (!row) continue;
+    row.querySelector('.dot').style.background = stateColorVar(m);
+    row.querySelector('.role').textContent = m.role ? ROLE_WORDS[m.role] : '';
+    row.querySelector('.st').textContent = statusText(m);
+    const b = row.querySelector('.bar span'); b.style.width = Math.round(Math.min(1, m.act)*100) + '%'; b.style.background = stateColorVar(m);
+  }
+}
+function renderDetail(){
+  const m = state.selected, pane = $('paneDetail');
+  if (!m){ pane.innerHTML = ''; return; }
+  pane.innerHTML = `<button class="linkbtn back" id="backBtn">← All muscles</button>
+    <div class="detail" style="display:grid;gap:8px"><h2>${m.name}</h2><p class="lede">${m.plain}</p></div>
+    <div class="statusbox" id="detailStatus"><i></i><span></span></div>
+    <dl class="kv"><div><dt>Where it is</dt><dd>${m.where}</dd></div>
+    ${m.tubes.length > 1 ? `<div><dt>Parts</dt><dd>${m.tubes.map(t => t.head).join(', ')}</dd></div>` : ''}</dl>
+    <p class="note">Draft content for physiotherapist review.</p>`;
+  $('backBtn').onclick = () => select(null);
+  updateDetailStatus();
+}
+function updateDetailStatus(){
+  const m = state.selected, box = $('detailStatus'); if (!m || !box) return;
+  box.querySelector('i').style.background = stateColorVar(m);
+  box.querySelector('span').textContent = `Right now: ${m.role ? ROLE_WORDS[m.role].toLowerCase() + ', ' : ''}${statusText(m).toLowerCase()}`;
+}
+let activeTab = 'how';
+function showTab(t){
+  activeTab = t;
+  for (const [id, k] of [['paneHow','how'],['paneMuscles','muscles'],['paneDetail','detail'],['paneDose','dose']]) $(id).hidden = k !== t;
+  for (const [id, k] of [['tabHow','how'],['tabMuscles','muscles'],['tabDose','dose']]) $(id).setAttribute('aria-selected', k === t || (t === 'detail' && k === 'muscles'));
+}
+$('tabHow').onclick = () => showTab('how'); $('tabMuscles').onclick = () => showTab(state.selected ? 'detail' : 'muscles'); $('tabDose').onclick = () => showTab('dose');
+function select(m){
+  state.selected = m;
+  if (m){ showTab('detail'); } else if (activeTab === 'detail') showTab('muscles');
+  renderDetail();
+}
+// labels: the main movers always show (nudged aside if they overlap); others hide when they clash
+const NUDGES = [[0,24],[0,-24],[0,48],[0,-48],[70,0],[-70,0],[70,24],[-70,24],[70,-24],[-70,-24],[0,72],[0,-72]];
+function declutterLabels(){
+  const placed = [], sel = state.selected, items = [];
+  for (const m of MUSCLES) if (m.shown) items.push({ l:m, el:m.labelEl, o:m.label3d, must:sel === m || (!sel && m.role === 'prime'), p:(m.role === 'prime' ? 10 : 0) + m.act });
+  items.push({ el:cuffEl, o:cuffLabel, must:false, p:Math.max(0, ...CUFF.map(m => m.act)) });
+  items.sort((a, b) => b.must - a.must || b.p - a.p);
+  const clashes = r => placed.some(q => r.left < q.right + 2 && r.right > q.left - 2 && r.top < q.bottom + 2 && r.bottom > q.top - 2);
+  for (const { el, o, must } of items){
+    if (!o.visible) continue;
+    el.style.marginTop = el.style.marginLeft = '';
+    let r = el.getBoundingClientRect(), hit = clashes(r);
+    if (hit && must) for (const [dx, dy] of NUDGES){ const r2 = new DOMRect(r.x + dx, r.y + dy, r.width, r.height); if (!clashes(r2)){ el.style.marginTop = dy + 'px'; el.style.marginLeft = dx + 'px'; r = r2; hit = false; break; } }
+    el.classList.toggle('clash', hit); if (!hit) placed.push(r);
+  }
+}
+const PHASE_WORDS = () => ({ up:EX.words[0], down:EX.words[1], top:'Holding', rest:'Resting' });
+function updateHUD(){
+  const ph = state.phase, w = PHASE_WORDS();
+  const prime = MUSCLES.filter(m => m.shown && m.role === 'prime').sort((a, b) => b.act - a.act).slice(0, 2);
+  const type = prime[0]?.contraction;
+  const who = prime.map(m => m.short.toLowerCase()).join(' and ');
+  $('phasePill').querySelector('span').textContent = w[ph];
+  $('phasePill').querySelector('i').style.background = !type || type === 'rel' ? 'var(--rest)' : `var(--${type})`;
+  const head = prime.length && type && type !== 'rel' ? `${w[ph]} · ${who} ${TYPE_WORDS[type].toLowerCase()}` : w[ph];
+  if ($('headTxt').textContent !== head) $('headTxt').textContent = head;
+  $('effortBar').style.width = Math.round(Math.min(1, state.demand)*100) + '%';
+  if (document.activeElement !== $('progress')) $('progress').value = Math.round(state.p*100);
+  $('elbowVal').textContent = Math.round(state.q.elbow); $('shVal').textContent = Math.round(state.q.f);
+  updateMuscleList(); updateDetailStatus(); declutterLabels();
+}
+function setPlaying(on){ state.playing = on; $('btnPlay').setAttribute('aria-pressed', on); $('playTxt').textContent = on ? 'Pause' : 'Play';
+  $('playIco').innerHTML = on ? '<path d="M7 5h4v14H7zM13 5h4v14h-4z"/>' : '<path d="M8 5v14l11-7z"/>'; }
+$('btnPlay').onclick = () => setPlaying(!state.playing);
+$('progress').addEventListener('input', e => { setPlaying(false); state.p = +e.target.value / 100; });
+$('btnStart').onclick = () => { setPlaying(false); state.p = 0; };
+$('btnEnd').onclick = () => { setPlaying(false); state.p = 1; };
+$('zoomIn').onclick = () => zoom(.8); $('zoomOut').onclick = () => zoom(1.25);
+$('resetView').onclick = () => { select(null); flyHome(); };
+addEventListener('keydown', e => { if (e.target.closest('input')) return; if (e.key === '+' || e.key === '=') zoom(.8); else if (e.key === '-' || e.key === '_') zoom(1.25); else if (e.key === ' '){ e.preventDefault(); setPlaying(!state.playing); } });
+const TOGGLES = {
+  labels: on => { showLabels = on; },
+  bones:  on => { showBones = on; boneParts.forEach(b => b.visible = on); },
+  body:   on => { showBody = on; silhouette.visible = on; armSkin.forEach(m => m.visible = on); handSkin.visible = on; oArmG.visible = on; },
+};
+document.querySelectorAll('input[data-t]').forEach(inp => inp.onchange = () => TOGGLES[inp.dataset.t](inp.checked));
+function setViewMenu(open){ $('viewMenu').hidden = !open; $('viewMenuBtn').setAttribute('aria-expanded', open); }
+$('viewMenuBtn').onclick = e => { e.stopPropagation(); setViewMenu($('viewMenu').hidden); };
+addEventListener('pointerdown', e => { if (!e.target.closest('.viewmenu')) setViewMenu(false); });
+function applyTheme(t){ document.documentElement.dataset.theme = t; try { localStorage.setItem('myotrek-theme', t); } catch {} readTokens(); }
+$('themeBtn').onclick = () => applyTheme(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark');
+let savedTheme = null; try { savedTheme = localStorage.getItem('myotrek-theme'); } catch {}
+applyTheme(savedTheme || 'light');
+
+/* ------------------------------------------------------------------ resize + loop */
+function resize(){
+  const w = stage.clientWidth, h = stage.clientHeight;
+  renderer.setSize(w, h, false); labelRenderer.setSize(w, h);
+  camera.aspect = w / h; camera.updateProjectionMatrix();
+  computeHome();
+}
+new ResizeObserver(() => { resize(); flyHome(); }).observe(stage);
+resize();
+camera.position.copy(homeT).addScaledVector(homeDir(), homeD); controls.target.copy(homeT);
+renderMuscles(); showTab('how'); setPlaying(state.playing);
+if (reduceMotion) state.p = .5;
+window.myotrek = { state, MUSCLES, TUBES, camera, controls, body, EX };
+const clock = new THREE.Clock();
+let hudT = 0;
+updateScene(.016);
+renderer.setAnimationLoop(() => {
+  const dt = Math.min(clock.getDelta(), .05), t = clock.elapsedTime;
+  stepMotion(dt);
+  updateScene(dt);
+  updateAppearance(t);
+  stepTween(dt);
+  controls.update();
+  renderer.render(scene, camera);
+  labelRenderer.render(scene, camera);
+  if ((hudT += dt) > .08){ hudT = 0; updateHUD(); }
+});
+</script>
+</body></html>

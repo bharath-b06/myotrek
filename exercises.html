@@ -1,0 +1,272 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Exercise library · Myotrek</title>
+<meta name="description" content="An interactive 3D guide to joints and muscles. Watch which muscles shorten, lengthen and hold during real exercises, in simple or clinical detail.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+/* Landing: one calm column of content; the product (live 3D or screenshots) carries the visual weight. */
+:root{
+  --bg:#EEF2F4; --bg-2:#F8FAFB; --panel:#FFFFFF; --line:rgba(22,44,60,.11); --fg:#16222C; --fg-2:#4C5B68; --fg-3:#7C8994;
+  --accent:#0B6B70; --accent-2:#0E8A90; --accent-soft:#D6EBEB; --accent-fg:#FFFFFF;
+  --con:#D9472B; --ecc:#4F55D0; --iso:#C88A10; --rest:#C49590;
+  --shadow:0 18px 40px -20px rgba(20,40,60,.35), 0 1px 2px rgba(20,40,60,.06);
+  --font-display:"Bricolage Grotesque", ui-sans-serif, system-ui, sans-serif;
+  --font-body:"Atkinson Hyperlegible", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono:"JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#0E1318; --bg-2:#151C24; --panel:#18202A; --line:rgba(255,255,255,.09); --fg:#E6ECF1; --fg-2:#A7B3BE; --fg-3:#76838F;
+  --accent:#4FC2C3; --accent-2:#6FD6D6; --accent-soft:rgba(79,194,195,.15); --accent-fg:#06272A;
+  --con:#FF6A4D; --ecc:#8C90FF; --iso:#F0B43C; --rest:#A97F7B; --shadow:0 18px 40px -20px rgba(0,0,0,.7); color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#0E1318; --bg-2:#151C24; --panel:#18202A; --line:rgba(255,255,255,.09); --fg:#E6ECF1; --fg-2:#A7B3BE; --fg-3:#76838F;
+  --accent:#4FC2C3; --accent-2:#6FD6D6; --accent-soft:rgba(79,194,195,.15); --accent-fg:#06272A;
+  --con:#FF6A4D; --ecc:#8C90FF; --iso:#F0B43C; --rest:#A97F7B; --shadow:0 18px 40px -20px rgba(0,0,0,.7); color-scheme:dark }
+
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0; background:var(--bg); color:var(--fg); font:16px/1.6 var(--font-body)}
+a{color:inherit}
+img{max-width:100%; display:block}
+:focus-visible{outline:2px solid var(--accent); outline-offset:3px; border-radius:6px}
+.wrap{max-width:1120px; margin:0 auto; padding:0 24px}
+
+/* nav */
+.nav{position:sticky; top:0; z-index:10; background:color-mix(in srgb, var(--bg) 88%, transparent); backdrop-filter:blur(10px); border-bottom:1px solid var(--line)}
+.nav .wrap{display:flex; align-items:center; gap:20px; height:64px}
+.brand{display:flex; align-items:center; gap:10px; text-decoration:none}
+.brand svg{width:30px; height:30px}
+.brand b{font:700 21px/1 var(--font-display)}
+.nav ul{display:flex; gap:22px; list-style:none; margin:0 0 0 auto; padding:0}
+.nav ul a{text-decoration:none; color:var(--fg-2); font-size:15px}
+.nav ul a:hover{color:var(--fg)}
+.btn{white-space:nowrap; display:inline-flex; align-items:center; gap:8px; padding:11px 18px; border-radius:999px; font-weight:700; text-decoration:none; border:1px solid transparent; font-size:15px; cursor:pointer}
+.btn.primary{background:var(--accent); color:var(--accent-fg)}
+.btn.primary:hover{background:var(--accent-2)}
+.btn.ghost{border-color:var(--line); background:var(--panel)}
+.btn.ghost:hover{border-color:var(--accent)}
+.btn.small{padding:8px 14px; font-size:14px}
+.iconbtn{width:38px; height:38px; display:grid; place-items:center; border-radius:999px; border:1px solid var(--line); background:var(--panel); cursor:pointer; color:inherit}
+.iconbtn svg{width:18px; height:18px}
+
+/* hero */
+.hero{position:relative; overflow:hidden; background:radial-gradient(ellipse 70% 80% at 72% 50%, var(--bg-2), var(--bg) 70%)}
+.hero .wrap{display:grid; grid-template-columns:1fr 1.05fr; gap:32px; align-items:center; min-height:min(78vh, 720px); padding-top:40px; padding-bottom:40px}
+.eyebrow{display:inline-flex; align-items:center; gap:8px; font:700 12px/1 var(--font-body); letter-spacing:.1em; text-transform:uppercase; color:var(--accent); background:var(--accent-soft); padding:7px 12px; border-radius:999px}
+h1{font:800 clamp(40px, 6vw, 72px)/1.02 var(--font-display); letter-spacing:-.025em; margin:18px 0 18px; text-wrap:balance}
+h1 em{font-style:normal; color:var(--accent)}
+.lede{font-size:clamp(17px, 1.6vw, 20px); color:var(--fg-2); max-width:34em; margin:0 0 28px; text-wrap:pretty}
+.cta{display:flex; flex-wrap:wrap; gap:12px; align-items:center}
+.levels{margin-top:22px; display:flex; flex-wrap:wrap; gap:8px; align-items:center; color:var(--fg-3); font-size:14px}
+.chip{display:inline-flex; align-items:center; gap:6px; padding:4px 10px; border-radius:999px; background:var(--panel); border:1px solid var(--line); font-size:13px; color:var(--fg-2)}
+.chip i{width:9px; height:9px; border-radius:50%}
+.stage3d{position:relative; display:block; height:min(84vh, 780px); min-height:480px; border-radius:24px}
+.stage3d .open3d{text-decoration:none; color:inherit; position:absolute; left:50%; bottom:14px; transform:translateX(-50%); display:inline-flex; align-items:center; gap:6px; padding:8px 14px; border-radius:999px; background:var(--panel); border:1px solid var(--line); box-shadow:var(--shadow); font-weight:700; font-size:14px; opacity:.85; transition:opacity .2s, transform .2s}
+.stage3d:hover .open3d,.open3d:focus-visible{opacity:1; transform:translateX(-50%) translateY(-2px); border-color:var(--accent); color:var(--accent)}
+.stage3d iframe{position:absolute; inset:0; width:100%; height:100%; border:0}
+.stage3d .draghint{position:absolute; right:14px; top:12px; font-size:12.5px; color:var(--fg-3); pointer-events:none}
+.stage3d .glow{position:absolute; inset:12% 18%; border-radius:50%; background:radial-gradient(circle, var(--accent-soft), transparent 70%); filter:blur(20px)}
+.shot{border-radius:16px; overflow:hidden; border:1px solid var(--line); box-shadow:var(--shadow); background:var(--panel)}
+.shot .bar{display:flex; gap:6px; padding:9px 12px; border-bottom:1px solid var(--line)}
+.shot .bar i{width:9px; height:9px; border-radius:50%; background:var(--line)}
+
+/* sections */
+section{padding:88px 0}
+section.alt{background:var(--bg-2); border-top:1px solid var(--line); border-bottom:1px solid var(--line)}
+.kicker{font:700 12px/1 var(--font-body); letter-spacing:.1em; text-transform:uppercase; color:var(--accent)}
+h2{font:700 clamp(28px, 3.4vw, 42px)/1.1 var(--font-display); letter-spacing:-.015em; margin:12px 0 14px; text-wrap:balance}
+.intro{color:var(--fg-2); max-width:40em; margin:0 0 40px; font-size:18px}
+.grid3{display:grid; grid-template-columns:repeat(3, 1fr); gap:18px}
+.card{background:var(--panel); border:1px solid var(--line); border-radius:16px; padding:22px; display:grid; gap:10px; align-content:start}
+.card h3{font:700 19px/1.25 var(--font-display); margin:0}
+.card p{margin:0; color:var(--fg-2); font-size:15.5px}
+.ico{width:42px; height:42px; border-radius:12px; display:grid; place-items:center; background:var(--accent-soft); color:var(--accent)}
+.ico svg{width:22px; height:22px}
+
+/* simple vs clinical */
+.compare{display:grid; grid-template-columns:1fr 1fr; gap:18px}
+.compare .card{padding:24px}
+.tag{justify-self:start; font:700 12px/1 var(--font-body); letter-spacing:.06em; text-transform:uppercase; padding:6px 10px; border-radius:999px; background:var(--accent-soft); color:var(--accent)}
+.compare .muscle{font:700 22px/1.2 var(--font-display)}
+.compare dl{margin:0; display:grid; gap:8px}
+.compare dt{font:700 11px/1.3 var(--font-body); letter-spacing:.08em; text-transform:uppercase; color:var(--fg-3)}
+.compare dd{margin:0; font-size:15px}
+
+/* steps */
+.steps{display:grid; grid-template-columns:repeat(3, 1fr); gap:18px; counter-reset:step}
+.step{padding:22px; border-radius:16px; border:1px dashed var(--line)}
+.step::before{counter-increment:step; content:counter(step); display:grid; place-items:center; width:34px; height:34px; border-radius:50%; background:var(--accent); color:var(--accent-fg); font:700 16px/1 var(--font-display); margin-bottom:12px}
+.step h3{margin:0 0 6px; font:700 18px/1.25 var(--font-display)}
+.step p{margin:0; color:var(--fg-2); font-size:15px}
+
+/* joints */
+.joints{display:flex; flex-wrap:wrap; gap:10px}
+.joint{display:inline-flex; align-items:center; gap:8px; padding:10px 14px; border-radius:12px; background:var(--panel); border:1px solid var(--line); text-decoration:none; font-weight:700}
+.joint:hover{border-color:var(--accent)}
+.joint small{font-weight:400; color:var(--fg-3); font-size:12.5px}
+.joint i{width:9px; height:9px; border-radius:50%; background:var(--fg-3)}
+.joint.deep i{background:var(--accent)}
+
+/* feature rows with screenshots (version B) */
+.row{display:grid; grid-template-columns:1fr 1.25fr; gap:40px; align-items:center; margin-bottom:72px}
+.row:last-child{margin-bottom:0}
+.row.flip{grid-template-columns:1.25fr 1fr}
+.row.flip .text{order:2}
+.row h3{font:700 clamp(24px, 2.6vw, 32px)/1.15 var(--font-display); margin:10px 0 10px}
+.row p{color:var(--fg-2); margin:0 0 12px; font-size:17px}
+.row ul{margin:0; padding-left:20px; color:var(--fg-2)}
+
+/* about + footer */
+.about{display:grid; grid-template-columns:1.2fr 1fr; gap:40px; align-items:start}
+.note{background:var(--panel); border:1px solid var(--line); border-left:4px solid var(--iso); border-radius:12px; padding:18px 20px; font-size:15px; color:var(--fg-2)}
+.note b{color:var(--fg)}
+footer{padding:36px 0 48px; color:var(--fg-3); font-size:14px; border-top:1px solid var(--line)}
+footer .wrap{display:flex; flex-wrap:wrap; gap:16px; justify-content:space-between; align-items:center}
+.switch{font-size:13.5px; color:var(--fg-3)}
+.switch a{color:var(--accent); font-weight:700}
+
+@media (max-width: 900px){
+  .nav ul{display:none}
+  .nav .btn.small{margin-left:auto}
+  .hero .wrap{grid-template-columns:1fr; min-height:0}
+  .stage3d{height:48vh; min-height:320px; order:-1}
+  .nav .wrap{gap:10px}
+  .grid3,.steps,.compare,.about,.row,.row.flip{grid-template-columns:1fr}
+  .row.flip .text{order:0}
+  section{padding:64px 0}
+}
+@media (prefers-reduced-motion: reduce){ html{scroll-behavior:auto} }
+</style>
+<style>
+.libhero{padding:48px 0 20px}
+.libhero h1{font:800 clamp(34px,5vw,52px)/1.05 var(--font-display); letter-spacing:-.02em; margin:8px 0 12px}
+.libhero p{max-width:640px; color:var(--fg-2); font-size:17px; margin:0}
+.crumbs{font-size:14px; color:var(--fg-3)} .crumbs a{color:var(--accent); text-decoration:none; font-weight:700}
+.filters{display:flex; gap:8px; flex-wrap:wrap; margin:22px 0 8px}
+.fchip{border:1px solid var(--line); background:var(--panel); color:var(--fg-2); padding:7px 14px; border-radius:999px; font:700 14px var(--font-body); cursor:pointer}
+.fchip[aria-pressed="true"]{background:var(--accent); color:var(--accent-fg); border-color:transparent}
+.regions{display:flex; gap:8px; align-items:center; font-size:14px; color:var(--fg-3); margin-top:6px}
+.regions b{color:var(--fg)}
+.exsec{padding:22px 0 10px}
+.sechead{display:flex; align-items:baseline; gap:12px; margin-bottom:14px}
+.sechead h2{font:700 26px/1.1 var(--font-display); margin:0}
+.sechead span{color:var(--fg-3); font-size:15px}
+.exgrid{display:grid; grid-template-columns:repeat(auto-fill, minmax(260px, 1fr)); gap:16px}
+.excard{display:grid; gap:8px; align-content:start; padding:18px; border-radius:16px; background:var(--panel); border:1px solid var(--line); text-decoration:none; color:var(--fg); transition:border-color .15s, transform .15s}
+.excard:hover{border-color:var(--accent); transform:translateY(-2px)}
+.excard h3{font:700 19px/1.2 var(--font-display); margin:0}
+.excard p{margin:0; color:var(--fg-2); font-size:14.5px}
+.gtag{justify-self:start; font-size:11.5px; font-weight:700; padding:3px 9px; border-radius:999px; color:#fff}
+.g-biceps{background:var(--con)} .g-triceps{background:var(--ecc)} .g-compound{background:var(--iso)}
+.mtags{display:flex; flex-wrap:wrap; gap:6px}
+.mtag{font-size:12px; padding:2px 8px; border-radius:999px; background:var(--accent-soft); color:var(--fg)}
+.meta{display:flex; justify-content:space-between; font-size:12.5px; color:var(--fg-3); border-top:1px solid var(--line); padding-top:8px; margin-top:2px}
+.libnote{margin:28px 0 48px}
+</style>
+</head>
+<body>
+<header class="nav"><div class="wrap">
+  <a class="brand" href="./"><svg viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="15" fill="var(--accent)"/><path d="M11 6v10a5 5 0 0 0 5 5h9" stroke="var(--accent-fg)" stroke-width="3.2" fill="none" stroke-linecap="round"/><circle cx="11" cy="16" r="2.6" fill="var(--accent-fg)"/></svg><b>Myotrek</b></a>
+  <ul><li><a href="exercises.html">Exercises</a></li><li><a href="./#features">Features</a></li><li><a href="./#how">How it works</a></li><li><a href="./#about">About</a></li></ul>
+  <button class="iconbtn" id="themeBtn" aria-label="Switch light or dark theme" title="Light / dark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v3M12 20v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M1 12h3M20 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/></svg></button>
+  <a class="btn primary small" href="body.html">Explore the body</a>
+</div></header>
+<main><div class="wrap">
+  <section class="libhero">
+    <div class="crumbs"><a href="./">Home</a> / Exercise library</div>
+    <h1>Exercise library</h1>
+    <p>Pick an exercise to see it in 3D: how to do it, which muscles shorten, lengthen and hold at each moment, and how many sets and reps to aim for.</p>
+    <div class="regions"><b>Arms</b> · more body parts coming</div>
+    <div class="filters" role="group" aria-label="Filter"><button class="fchip" aria-pressed="true" data-f="all">All</button><button class="fchip" aria-pressed="false" data-f="biceps">Biceps</button><button class="fchip" aria-pressed="false" data-f="triceps">Triceps</button><button class="fchip" aria-pressed="false" data-f="compound">Compound</button></div>
+  </section>
+  <section class="exsec" data-g="biceps"><div class="sechead"><h2>Biceps</h2><span>Bending the elbow</span></div>
+  <div class="exgrid"><a class="excard" href="exercise.html?e=curl" data-g="biceps">
+      <span class="gtag g-biceps">Biceps</span>
+      <h3>Standing dumbbell curl</h3><p>The classic biceps exercise: bend the elbow to lift a dumbbell, palm facing up.</p>
+      <div class="mtags"><span class="mtag">Biceps brachii</span><span class="mtag">Brachialis</span></div>
+      <div class="meta"><span>Dumbbell</span><span>Beginner</span></div></a><a class="excard" href="exercise.html?e=hammer" data-g="biceps">
+      <span class="gtag g-biceps">Biceps</span>
+      <h3>Hammer curl</h3><p>A curl with the thumb pointing up, which brings in the forearm muscle brachioradialis.</p>
+      <div class="mtags"><span class="mtag">Brachioradialis</span><span class="mtag">Brachialis</span></div>
+      <div class="meta"><span>Dumbbell</span><span>Beginner</span></div></a><a class="excard" href="exercise.html?e=preacher" data-g="biceps">
+      <span class="gtag g-biceps">Biceps</span>
+      <h3>Preacher curl</h3><p>A seated curl with the back of the upper arm resting on an angled pad, so you cannot swing.</p>
+      <div class="mtags"><span class="mtag">Biceps brachii</span><span class="mtag">Brachialis</span></div>
+      <div class="meta"><span>Dumbbell + preacher bench</span><span>Intermediate</span></div></a><a class="excard" href="exercise.html?e=incline" data-g="biceps">
+      <span class="gtag g-biceps">Biceps</span>
+      <h3>Incline dumbbell curl</h3><p>A curl lying back on an incline bench, with the arm hanging behind the body so the long head of biceps starts on stretch.</p>
+      <div class="mtags"><span class="mtag">Biceps brachii (long head)</span></div>
+      <div class="meta"><span>Dumbbells + incline bench</span><span>Intermediate</span></div></a><a class="excard" href="exercise.html?e=bandcurl" data-g="biceps">
+      <span class="gtag g-biceps">Biceps</span>
+      <h3>Band curl</h3><p>A curl with a band under the foot: easy to do at home, and the resistance builds toward the top.</p>
+      <div class="mtags"><span class="mtag">Biceps brachii</span><span class="mtag">Brachialis</span></div>
+      <div class="meta"><span>Resistance band</span><span>Beginner</span></div></a></div></section><section class="exsec" data-g="triceps"><div class="sechead"><h2>Triceps</h2><span>Straightening the elbow</span></div>
+  <div class="exgrid"><a class="excard" href="exercise.html?e=overhead" data-g="triceps">
+      <span class="gtag g-triceps">Triceps</span>
+      <h3>Overhead triceps extension</h3><p>Straighten the elbow with the arm overhead, which stretches the long head of triceps.</p>
+      <div class="mtags"><span class="mtag">Triceps brachii (long head)</span></div>
+      <div class="meta"><span>Dumbbell</span><span>Beginner</span></div></a><a class="excard" href="exercise.html?e=kickback" data-g="triceps">
+      <span class="gtag g-triceps">Triceps</span>
+      <h3>Triceps kickback</h3><p>Bent over with the upper arm along your body, straighten the elbow to push the weight back.</p>
+      <div class="mtags"><span class="mtag">Triceps brachii</span></div>
+      <div class="meta"><span>Dumbbell + bench</span><span>Beginner</span></div></a><a class="excard" href="exercise.html?e=pushdown" data-g="triceps">
+      <span class="gtag g-triceps">Triceps</span>
+      <h3>Triceps push-down</h3><p>Push a cable or band down from chest height until the arm is straight.</p>
+      <div class="mtags"><span class="mtag">Triceps (lateral and medial heads)</span></div>
+      <div class="meta"><span>Cable or band (anchored high)</span><span>Beginner</span></div></a><a class="excard" href="exercise.html?e=lying" data-g="triceps">
+      <span class="gtag g-triceps">Triceps</span>
+      <h3>Lying triceps extension</h3><p>Lying on a bench, bend the elbows to lower a bar toward your forehead, then straighten them (often called a skull crusher).</p>
+      <div class="mtags"><span class="mtag">Triceps brachii</span></div>
+      <div class="meta"><span>EZ bar + bench</span><span>Intermediate</span></div></a></div></section><section class="exsec" data-g="compound"><div class="sechead"><h2>Compound</h2><span>Several joints at once</span></div>
+  <div class="exgrid"><a class="excard" href="exercise.html?e=pushup" data-g="compound">
+      <span class="gtag g-compound">Compound</span>
+      <h3>Push-up</h3><p>Lower your body to the floor and push back up: chest, front of the shoulders and triceps all work together.</p>
+      <div class="mtags"><span class="mtag">Pectoralis major</span><span class="mtag">Triceps brachii</span><span class="mtag">Anterior deltoid</span></div>
+      <div class="meta"><span>Body weight</span><span>Beginner</span></div></a><a class="excard" href="exercise.html?e=dips" data-g="compound">
+      <span class="gtag g-compound">Compound</span>
+      <h3>Parallel bar dips</h3><p>Support your body on two bars and lower yourself by bending the elbows, then push back up.</p>
+      <div class="mtags"><span class="mtag">Triceps brachii</span><span class="mtag">Pectoralis major (lower part)</span><span class="mtag">Anterior deltoid</span></div>
+      <div class="meta"><span>Dip bars</span><span>Advanced</span></div></a><a class="excard" href="exercise.html?e=closegrip" data-g="compound">
+      <span class="gtag g-compound">Compound</span>
+      <h3>Close-grip bench press</h3><p>A bench press with the hands shoulder-width apart and the elbows close to the body, which brings in the triceps.</p>
+      <div class="mtags"><span class="mtag">Triceps brachii</span><span class="mtag">Pectoralis major</span><span class="mtag">Anterior deltoid</span></div>
+      <div class="meta"><span>Barbell + bench</span><span>Intermediate</span></div></a><a class="excard" href="exercise.html?e=chinup" data-g="compound">
+      <span class="gtag g-compound">Compound</span>
+      <h3>Chin-up</h3><p>Hang from a bar with the palms facing you and pull your chin up over it.</p>
+      <div class="mtags"><span class="mtag">Latissimus dorsi</span><span class="mtag">Biceps brachii</span><span class="mtag">Brachialis</span></div>
+      <div class="meta"><span>Pull-up bar</span><span>Advanced</span></div></a><a class="excard" href="exercise.html?e=row" data-g="compound">
+      <span class="gtag g-compound">Compound</span>
+      <h3>One-arm dumbbell row</h3><p>With one hand on a bench, pull a dumbbell up toward your hip, squeezing the shoulder blade back.</p>
+      <div class="mtags"><span class="mtag">Latissimus dorsi</span><span class="mtag">Rhomboids</span><span class="mtag">Middle trapezius</span></div>
+      <div class="meta"><span>Dumbbell + bench</span><span>Beginner</span></div></a></div></section>
+  <div class="note libnote"><b>For learning, not diagnosis.</b> Draft content for physiotherapist review. If you have pain or an injury, follow your physiotherapist's advice.</div>
+</div></main>
+<script>
+document.querySelectorAll('.fchip').forEach(b => b.onclick = () => {
+  document.querySelectorAll('.fchip').forEach(x => x.setAttribute('aria-pressed', x === b));
+  document.querySelectorAll('.exsec').forEach(s => s.hidden = b.dataset.f !== 'all' && s.dataset.g !== b.dataset.f);
+});
+</script>
+<footer><div class="wrap">
+  <span>Myotrek</span>
+</div></footer>
+<script>
+// light / dark, shared with the rest of the app
+function applyTheme(t){ document.documentElement.dataset.theme = t; try { localStorage.setItem('myotrek-theme', t); } catch {} }
+document.getElementById('themeBtn').onclick = () => {
+  applyTheme(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark');
+  const f = document.querySelector('.stage3d iframe');
+  if (f) f.contentWindow.postMessage({ theme: document.documentElement.dataset.theme }, location.origin === 'null' ? '*' : location.origin);
+};
+let saved = null; try { saved = localStorage.getItem('myotrek-theme'); } catch {}
+applyTheme(saved || 'light');
+// keep the 3D backdrop in the same theme
+const f = document.querySelector('.stage3d iframe');
+if (f) f.addEventListener('load', () => f.contentWindow.postMessage({ theme: document.documentElement.dataset.theme }, location.origin === 'null' ? '*' : location.origin));
+</script>
+</body></html>
