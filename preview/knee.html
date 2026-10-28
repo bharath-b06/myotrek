@@ -315,13 +315,6 @@ input[type=range]{width:100%; accent-color:var(--accent); margin:6px 0 2px}
         <button class="btn" id="btnRotLoop" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M4 12a8 8 0 0 1 14-5.3M20 12a8 8 0 0 1-14 5.3"/><path d="M18 3v4h-4M6 21v-4h4"/></svg>Repeat</button>
       </div>
     </section>
-    <section id="loadKnee" hidden>
-      <h3>What's the load?</h3>
-      <div class="seg block" role="group" aria-label="Load">
-        <button id="loadWeight" aria-pressed="true">Ankle weight<small data-l="Gravity">strapped on</small></button>
-        <button id="loadBand" aria-pressed="false">Band<small data-l="Elastic resistance">pulling the leg straight</small></button>
-      </div>
-    </section>
     <section id="loadRotate" hidden>
       <h3>How hard is the turn?</h3>
       <div class="seg block" role="group" aria-label="Resistance">
@@ -877,6 +870,7 @@ const POSTURES = {
 const QUADS_EX = ['ext'], HAMS_EX = ['curl'];
 const posture = () => state.move === 'rotate' ? 'ext' : state.ex;
 const isCurl = () => state.ex === 'curl' || state.ex === 'curlStand';
+// the load is always the ankle weight; the band code is kept for the future exercise library
 const loadKind = () => state.move === 'rotate' ? 'none' : POSTURES[state.ex].load === 'body' ? 'body' : isCurl() ? state.load : 'weight';
 
 // where a point ends up in the world for a posture (rotations about z only), used for camera framing and the anchor
@@ -1615,7 +1609,6 @@ function syncSections(){
   const rotate = state.move === 'rotate';
   $('exSection').hidden = rotate;
   $('rotSection').hidden = !rotate; $('loadRotate').hidden = !rotate;
-  $('loadKnee').hidden = rotate || !isCurl();
   $('kneeBtns').hidden = false;
   $('echart').hidden = rotate || state.mode !== 'learner';
   drawChart();
@@ -1649,8 +1642,6 @@ $('mvKnee').onclick = () => setMove('knee');
 $('mvRotate').onclick = () => setMove('rotate');
 $('rLight').onclick = () => { state.rload = 'light'; setPressed(['rLight','rHard'], 'rLight'); };
 $('rHard').onclick = () => { state.rload = 'hard'; setPressed(['rLight','rHard'], 'rHard'); };
-$('loadWeight').onclick = () => { state.load = 'weight'; setPressed(['loadWeight','loadBand'], 'loadWeight'); drawChart(); };
-$('loadBand').onclick = () => { state.load = 'band'; setPressed(['loadWeight','loadBand'], 'loadBand'); drawChart(); };
 $('zoomIn').onclick = () => zoom(.8);
 $('zoomOut').onclick = () => zoom(1.25);
 addEventListener('keydown', e => {
