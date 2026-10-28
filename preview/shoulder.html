@@ -637,8 +637,11 @@ const JOINT = {
     ['Common problems','Rotator cuff tendon pain and tears, frozen shoulder, dislocation, and wear and tear (arthritis).'],
   ],
   learner:[
-    ['Shoulder complex','Glenohumeral, acromioclavicular and sternoclavicular joints, plus the scapulothoracic articulation'],
-    ['Glenohumeral joint','Synovial ball-and-socket; the glenoid is about a third the size of the humeral head and is deepened by the labrum'],
+    ['The joints of the shoulder',{ head:['',''], rows:[
+      ['Glenohumeral','Ball-and-socket: humeral head on the glenoid of the scapula; the main joint of the shoulder'],
+      ['Acromioclavicular (AC)','Plane joint between the acromion and the clavicle'],
+      ['Sternoclavicular (SC)','Saddle joint between the clavicle and the sternum; the only bony link of the arm to the trunk'],
+      ['Scapulothoracic','Not a true joint: the scapula glides on the chest wall'] ]}],
     ['Normal ROM',{ head:['Movement','Range'], rows:[
       ['Flexion','0–180°'],
       ['Extension','0–50/60°'],
@@ -659,37 +662,9 @@ const JOINT = {
     ['Capsular pattern','External rotation most limited, then abduction, then internal rotation (ER > Abd > IR)'],
     ['Resting position','~55° abduction, 30° horizontal adduction (scapular plane), neutral rotation'],
     ['Close-packed position','Full abduction with external rotation'],
-    ['Ligaments',{ head:['Ligament','Main role'], rows:[
-      ['Superior glenohumeral (SGHL)','Inferior translation and ER with the arm at the side'],
-      ['Middle glenohumeral (MGHL)','Anterior translation and ER at ~45° abduction'],
-      ['Inferior glenohumeral complex (IGHL)','Anterior band: anterior stability at 90° abduction and ER; posterior band: posterior stability in IR'],
-      ['Coracohumeral','Inferior translation and ER with the arm at the side; part of the rotator interval'],
-      ['Coracoacromial','Not a joint ligament: forms the roof (arch) over the rotator cuff'] ]}],
-    ['Labrum',{ head:['',''], rows:[
-      ['Structure','Fibrocartilage rim around the glenoid; deepens the socket by ~50%'],
-      ['Attachments','Long head of biceps at the superior labrum; glenohumeral ligaments blend with it'],
-      ['Injuries',{ span:1, text:'SLAP (superior, front to back), Bankart (anteroinferior, with dislocation)' }] ]}],
     ['Common conditions','Rotator cuff tendinopathy and tears, subacromial pain, adhesive capsulitis (frozen shoulder), glenohumeral instability and dislocation, labral tears (SLAP, Bankart), osteoarthritis, long head of biceps tendinopathy'],
   ],
 };
-// the other joints of the shoulder complex (clinical mode)
-const OTHER_JOINTS = [
-  ['Acromioclavicular (AC) joint',{ head:['',''], rows:[
-    ['Type','Plane synovial joint, often with a disc'],
-    ['Movements','Small gliding and rotation that let the scapula follow the arm'],
-    ['Ligaments','AC (horizontal stability); coracoclavicular: conoid and trapezoid (vertical stability)'],
-    ['Common conditions','AC sprain or separation (falls on the shoulder), AC osteoarthritis'] ]}],
-  ['Sternoclavicular (SC) joint',{ head:['',''], rows:[
-    ['Type','Saddle synovial joint with an articular disc'],
-    ['Movements','Elevation/depression, protraction/retraction and posterior rotation of the clavicle'],
-    ['Ligaments','Anterior and posterior SC, interclavicular, costoclavicular'],
-    ['Common conditions','Rare sprain or dislocation; posterior dislocation is an emergency'] ]}],
-  ['Scapulothoracic articulation',{ head:['',''], rows:[
-    ['Type','Not a true joint: the scapula glides on the chest wall'],
-    ['Movements','Elevation/depression, protraction/retraction, upward/downward rotation, tilting'],
-    ['Key muscles','Trapezius and serratus anterior (upward rotation), rhomboids and levator scapulae'],
-    ['Common conditions','Scapular dyskinesis; winging (long thoracic or accessory nerve injury)'] ]}],
-];
 const ARC_BOX = {
   title:['Painful arc','Painful arc'],
   text:['Some people with shoulder pain feel it only in the middle of lifting the arm out to the side, roughly between 60° and 120°, and not at the start or top. That middle part is where the tendons on top of the shoulder are most squeezed.',
@@ -1734,9 +1709,6 @@ function renderJoint(){
     <div class="special"><b>${RHYTHM_BOX.title[i]}</b><p>${RHYTHM_BOX.text[i]}</p></div>
     <div class="special"><b>${ER_BOX.title[i]}</b><p>${ER_BOX.text[i]}</p></div>
     <div class="special"><b>${ARC_BOX.title[i]}</b><p>${ARC_BOX.text[i]}</p></div>
-    ${L ? OTHER_JOINTS.map(([k, v]) => `
-    <div class="detail" style="display:grid;gap:6px;border-top:1px solid var(--line);padding-top:14px"><h2>${k}</h2></div>
-    <dl class="kv"><div><dd>${kvValue(v)}</dd></div></dl>`).join('') : ''}
     <p class="note">Draft content for physiotherapist review.</p>`;
 }
 
