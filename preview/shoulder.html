@@ -1351,8 +1351,8 @@ function updateAppearance(time){
   }
   CUFF.labelEl.classList.toggle('dim', !!sel && !split);
   CUFF.label3d.visible = !split && !blade && showLabels;
-  // the tag is hidden for horizontal movement (the bone can still be tapped); it always shows in the blade view, to switch back
-  BLADE.label3d.visible = blade || plane() !== 'hor'; BLADE.labelEl.classList.toggle('on', blade);
+  // the tag is hidden for rotation and horizontal movement (the bone can still be tapped); it always shows in the blade view, to switch back
+  BLADE.label3d.visible = blade || (plane() !== 'hor' && plane() !== 'rot'); BLADE.labelEl.classList.toggle('on', blade);
   BLADE.labelEl.title = blade ? 'Tap to go back to the arm muscles' : 'Tap to see the shoulder blade muscles';
   const P = POSTURES[posture()], settled = state.settle <= 0;
   dumbbell.visible = P.load === 'db';
