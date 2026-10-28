@@ -2,11 +2,18 @@
 
 Interactive 3D explorer of joints and the muscles that move them, for patients and physiotherapy learners.
 
-**v1: the elbow and forearm.** Three exercises (biceps curl, overhead triceps extension, triceps kickback) shown on an upper-body outline, plus turning the palm up and down (supination and pronation), and watch the muscles shorten, lengthen and bulge. Muscles are coloured by contraction type (concentric, eccentric, isometric). You can switch forearm position (palm up, thumb up, palm down) and load (weight or band), and each muscle has an info card with Simple and Clinical levels.
+Pages:
+
+- `index.html`: landing page
+- `body.html`: the whole skeleton; tap a joint to open it
+- `elbow.html`, `knee.html`, `shoulder.html`: in depth (exercises, every muscle working, Simple and Clinical levels)
+- `joint.html?j=…`: first drafts of the wrist, hip, ankle, neck and lower back
+
+Add `?side=left` to a joint page for the left side.
 
 ## Run it
 
-It's a single page with no build step. Open `index.html` in a browser, or serve the folder:
+Each page is a single HTML file with no build step. Open `index.html` in a browser, or serve the folder:
 
 ```
 python3 -m http.server 8000
@@ -20,8 +27,6 @@ Clinical content is a draft and is being reviewed by a physiotherapist.
 
 ## Roadmap
 
-- MMT section (grades and test positions for elbow flexors and extensors)
-- Wrist and finger muscles
+- Exercise library (squats, leg raises, Nordics and more)
+- In-depth wrist, hip, ankle, neck and lower back
 - Quiz mode
-- Dark mode polish
-- More joints: shoulder, wrist, full body
