@@ -1776,11 +1776,14 @@ function closeMore(){ $('moreBox').hidden = true; $('moreBtn').setAttribute('ari
 $('moreBtn').onclick = () => $('moreBox').hidden ? openMore() : closeMore();
 $('moreClose').onclick = closeMore;
 
-// labels of the isolated muscle (or its heads) always show, nudged up or down if they overlap; other labels hide when they clash
+// labels of the isolated muscle (or its heads), and of the main movers of the exercise, always show, nudged aside if they overlap;
+// other labels hide when they clash
+const NUDGES = [[0,24],[0,-24],[0,48],[0,-48],[70,0],[-70,0],[70,24],[-70,24],[70,-24],[-70,-24],[0,72],[0,-72]];
 function declutterLabels(){
   const placed = [], sel = state.selected, items = [];
   for (const m of MUSCLES){
-    items.push({ l:m, must:!!sel && inSel(m), p:(inSel(m) ? 2 : 0) + m.act });
+    const main = !sel && m.role === 'prime' && m.label3d.visible;
+    items.push({ l:m, must:(!!sel && inSel(m)) || main, p:(main ? 10 : 0) + (inSel(m) ? 2 : 0) + m.act });
     for (const o of m.tubeObjs) if (o.label3d) items.push({ l:o, must:true, p:3 + o.act });
   }
   items.push({ l:BLADE, must:true, p:9 });
@@ -1789,12 +1792,12 @@ function declutterLabels(){
   const clashes = r => placed.some(q => r.left < q.right + 2 && r.right > q.left - 2 && r.top < q.bottom + 2 && r.bottom > q.top - 2);
   for (const { l, must } of items){
     const el = l.labelEl; if (!l.label3d.visible) continue;
-    el.style.marginTop = '';
+    el.style.marginTop = el.style.marginLeft = '';
     let r = el.getBoundingClientRect(), hit = clashes(r);
     if (hit && must){
-      for (const dy of [24, -24, 48, -48, 72, -72]){
-        const r2 = new DOMRect(r.x, r.y + dy, r.width, r.height);
-        if (!clashes(r2)){ el.style.marginTop = dy + 'px'; r = r2; hit = false; break; }
+      for (const [dx, dy] of NUDGES){
+        const r2 = new DOMRect(r.x + dx, r.y + dy, r.width, r.height);
+        if (!clashes(r2)){ el.style.marginTop = dy + 'px'; el.style.marginLeft = dx + 'px'; r = r2; hit = false; break; }
       }
     }
     el.classList.toggle('clash', hit);
