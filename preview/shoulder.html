@@ -981,12 +981,10 @@ const dumbbell = new THREE.Group(); dumbbell.position.set(0, -3.1, 0); foreArm.a
   for (const s of [-1, 1]){ const p = new THREE.Mesh(new THREE.CylinderGeometry(.3, .3, .16, 24), metalMat); p.position.y = .43*s; dumbbell.add(p); } }
 dumbbell.children.forEach(m => armParts.push(m));
 const band = new THREE.Mesh(new THREE.CylinderGeometry(.045, .045, 1, 10), bandMat); mirror.add(band);
-// where the band is tied: a post standing on the floor, with a knob at the tie point
-const FLOOR_Y = -14.4;
+// where the band is tied: a knob at the tie point
 const bandPost = new THREE.Group(); mirror.add(bandPost);
-const postMesh = new THREE.Mesh(new THREE.CylinderGeometry(.09, .09, 1, 12), metalMat); bandPost.add(postMesh);
 const postKnob = new THREE.Mesh(new THREE.SphereGeometry(.2, 16, 12), metalMat); bandPost.add(postKnob);
-const postFoot = new THREE.Mesh(new THREE.CylinderGeometry(.5, .5, .08, 20), metalMat); postFoot.position.y = FLOOR_Y; bandPost.add(postFoot);
+
 const loadArrow = new THREE.ArrowHelper(new V3(0,-1,0), new V3(), 1, 0x888888, .22, .14); scene.add(loadArrow);
 
 /* ------------------------------------------------------------------ the rest of the body (see-through) and what it rests on */
@@ -1358,7 +1356,6 @@ function updateAppearance(time){
     band.position.copy(hl).add(anchor).multiplyScalar(.5); band.scale.y = hl.distanceTo(anchor);
     band.quaternion.setFromUnitVectors(new V3(0,1,0), d);
     bandPost.position.set(anchor.x, 0, anchor.z); postKnob.position.y = anchor.y;
-    postMesh.position.y = (anchor.y + FLOOR_Y)/2; postMesh.scale.y = anchor.y - FLOOR_Y;
     const dw = d.clone(); dw.z *= zs;
     loadArrow.position.copy(hand).addScaledVector(dw, .3); loadArrow.setDirection(dw); loadArrow.setLength(.95, .22, .14);
   }
