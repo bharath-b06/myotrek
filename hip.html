@@ -239,6 +239,7 @@ input[type=range]{width:100%; accent-color:var(--accent); margin:6px 0 2px}
 .rhythm{font-size:12px; color:var(--fg-2); margin:-2px 0 4px; min-height:1.4em}
 .rhythm b{font-family:var(--font-mono); font-weight:500; color:var(--fg)}
 .seg.block.grid2{display:grid; grid-template-columns:1fr 1fr; gap:2px}
+.seg.block.grid3 button{padding:7px 3px; font-size:12.5px}
 .seg.block.grid2 button{grid-column:auto!important}
 </style>
 
@@ -286,8 +287,8 @@ input[type=range]{width:100%; accent-color:var(--accent); margin:6px 0 2px}
       <div class="seg block grid2" role="group" aria-label="Movement">
         <button id="mvFlex" aria-pressed="true"><span data-lt="Flexion / extension">Forward &amp; back</span><small data-l="">in front</small></button>
         <button id="mvAbd" aria-pressed="false"><span data-lt="Abduction / adduction">Out to the side</span><small data-l="">sideways</small></button>
-        <button id="mvRot" aria-pressed="false" disabled><span data-lt="Rotation">Turn the leg</span><small data-l="next part">next part</small></button>
-        <button id="mvStance" aria-pressed="false" disabled><span data-lt="Single-leg stance">Stand on one leg</span><small data-l="next part">next part</small></button>
+        <button id="mvRot" aria-pressed="false"><span data-lt="Rotation">Turn the thigh</span><small data-l="internal / external">in and out, sitting</small></button>
+        <button id="mvStance" aria-pressed="false"><span data-lt="Single-leg stance">Stand on one leg</span><small data-l="pelvis, Trendelenburg">pelvis level?</small></button>
       </div>
     </section>
     <section id="kneeSec">
@@ -295,6 +296,14 @@ input[type=range]{width:100%; accent-color:var(--accent); margin:6px 0 2px}
       <div class="seg block" role="group" aria-label="Knee position">
         <button id="kneeBent" aria-pressed="true">Bent<small data-l="Knee flexed">knee lift</small></button>
         <button id="kneeStraight" aria-pressed="false">Straight<small data-l="Knee extended, supine">leg raise, lying</small></button>
+      </div>
+    </section>
+    <section id="stanceSec" hidden>
+      <h3 id="stanceH">Side-of-hip muscles</h3>
+      <div class="seg block grid3" role="group" aria-label="Gluteus medius strength">
+        <button id="stStrong" aria-pressed="true">Strong<small data-l="Negative Trendelenburg">pelvis level</small></button>
+        <button id="stWeak" aria-pressed="false">Weak<small data-l="Positive Trendelenburg">other side drops</small></button>
+        <button id="stLean" aria-pressed="false">Weak + lean<small data-l="Compensated">body leans over</small></button>
       </div>
     </section>
     <section id="exSection">
@@ -366,7 +375,7 @@ import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer
 
 const V3 = THREE.Vector3, DEG = Math.PI / 180;
 const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
-const RANGE = { flex:[-30, 125], abd:[-30, 45] };
+const RANGE = { flex:[-30, 125], abd:[-30, 45], rot:[-40, 45], stance:[0, 45] };
 
 /* ------------------------------------------------------------------ content
    Draft clinical content, to be reviewed by a physiotherapist.
@@ -764,21 +773,75 @@ const GROUP_BTN = {
   flex:{ A:['Lifting forward','Flexors','standing knee lift','Standing hip flexion'], B:['Lifting back','Extensors','lying face down','Prone extension'] },
   abd: { A:['Lifting out','Abductors','lying on your side','Side-lying abduction'], B:['Bringing in','Adductors','bottom-leg lift','Side-lying adduction'] },
 };
+Object.assign(CAPTIONS, {
+  seatER:{
+    rest:['Sitting tall, knee bent over the edge of the seat, a band round the ankle pulling the foot outward.','Sitting, hip and knee at 90°, band anchored laterally: at rest.'],
+    pos:['Turning the thigh out against the band: your foot swings in, toward the other leg. The deep muscles at the back of the hip and the buttock shorten.','External rotation at 90° hip flexion against elastic resistance: the deep rotators (obturators, gemelli, quadratus femoris) and gluteus maximus concentric, with sartorius. The foot moves medially.'],
+    neg:['Letting the band turn the thigh back in (the foot goes out): the same muscles lengthen to control it.','Eccentric external rotators.'],
+    hold:['Holding against the band: the outward turners work without moving.','Isometric external rotators.'],
+  },
+  seatIR:{
+    rest:['Sitting tall, a band round the ankle pulling the foot inward, toward the other leg.','Sitting, hip and knee at 90°, band anchored medially: at rest.'],
+    neg:['Turning the thigh in against the band: your foot swings out, away from the other leg. The front part of the side-of-hip muscles and TFL shorten.','Internal rotation at 90° hip flexion against elastic resistance: anterior gluteus medius, gluteus minimus and TFL concentric, with the medial hamstrings. At this hip angle piriformis also helps internal rotation.'],
+    pos:['Letting the band turn the thigh back out (the foot comes in): the same muscles lengthen to control it.','Eccentric internal rotators.'],
+    hold:['Holding against the band: the inward turners work without moving.','Isometric internal rotators.'],
+  },
+  stanceStrong:{
+    rest:['Standing on both feet: your weight is shared, so the side-of-hip muscles are quiet.','Double-limb stance: little abductor demand.'],
+    pos:['Lifting the other foot: your whole body weight now sits over this hip. The side-of-hip muscles hold the pelvis level.','Single-limb stance: gluteus medius and minimus contract isometrically to keep the pelvis level against body weight (negative Trendelenburg).'],
+    neg:['Putting the foot down: the load comes off.','Returning to double-limb stance.'],
+    hold:['Standing on one leg with the pelvis level: the side of this hip works hard without moving.','Isometric hip abductors; TFL and upper gluteus maximus assist.'],
+  },
+  stanceWeak:{
+    rest:['Standing on both feet.','Double-limb stance.'],
+    pos:['Lifting the other foot: the side-of-hip muscles are too weak to hold the pelvis, so the other side drops.','Positive Trendelenburg: the abductors cannot resist body weight and lengthen as the contralateral pelvis drops (stance hip adducts).'],
+    neg:['Putting the foot down: the pelvis comes level again.','Returning to double-limb stance; the pelvis levels.'],
+    hold:['Standing on one leg with the other side dropped: the weak muscles are on stretch.','Pelvis held in contralateral drop; abductors active but insufficient.'],
+  },
+  stanceLean:{
+    rest:['Standing on both feet.','Double-limb stance.'],
+    pos:['Lifting the other foot and leaning your body over this leg: moving your weight over the hip means the weak muscles have less to hold.','Compensated Trendelenburg: lateral trunk lean over the stance limb brings the centre of mass closer to the hip, reducing the abductor moment.'],
+    neg:['Putting the foot down and straightening up.','Returning to double-limb stance.'],
+    hold:['Standing on one leg, leaning over it: the pelvis stays roughly level with less effort.','Reduced abductor moment arm; the pelvis stays near level.'],
+  },
+});
+Object.assign(WHY, {
+  seatER:['The band pulls the whole time, so the outward turners work both ways. Notice the foot moves inward when the thigh turns out.','Elastic resistance keeps an external rotation demand throughout. With the hip flexed to 90°, the deep rotators are still the main external rotators.'],
+  seatIR:['The band pulls the whole time, so the inward turners work both ways. Your foot moves outward when the thigh turns in.','Elastic resistance keeps an internal rotation demand throughout. Above about 60–90° of hip flexion piriformis switches from external to internal rotator.'],
+  stanceStrong:['When you stand on one leg, your body weight tries to tip the pelvis down on the other side. The side-of-hip muscles stop it, every step you take.','In single-limb stance the abductor moment must balance body weight acting medial to the hip; joint reaction force can reach about 2.5–3 × body weight.'],
+  stanceWeak:['If the side-of-hip muscles are weak, the pelvis drops on the side of the lifted leg. This is the Trendelenburg sign.','Positive Trendelenburg sign: contralateral pelvic drop in single-limb stance, from gluteus medius / minimus weakness, superior gluteal nerve injury or hip joint pathology.'],
+  stanceLean:['Leaning over the standing leg is a common way to cope with weak hip muscles; in walking it is seen as a side-to-side lurch.','Compensated Trendelenburg (gluteus medius lurch): ipsilateral trunk lean shifts the centre of mass over the hip and reduces the required abductor torque.'],
+});
+Object.assign(PHASE_NAMES, {
+  seatER:{ pos:['Turning out','External rotation'], neg:['Band turns it in','Internal rotation'], order:['rest','pos','hold','neg'] },
+  seatIR:{ pos:['Band turns it out','External rotation'], neg:['Turning in','Internal rotation'], order:['rest','neg','hold','pos'] },
+  stanceStrong:{ pos:['Lifting the other foot','Unloading the other leg'], neg:['Foot down','Reloading the other leg'], order:['rest','pos','hold','neg'] },
+  stanceWeak:{ pos:['Lifting the other foot','Unloading the other leg'], neg:['Foot down','Reloading the other leg'], order:['rest','pos','hold','neg'] },
+  stanceLean:{ pos:['Lifting the other foot','Unloading the other leg'], neg:['Foot down','Reloading the other leg'], order:['rest','pos','hold','neg'] },
+});
+Object.assign(EX_TITLE, {
+  seatER:['Seated turn out, band','Seated hip external rotation, band'], seatIR:['Seated turn in, band','Seated hip internal rotation, band'],
+  stanceStrong:['Standing on one leg','Single-limb stance (negative Trendelenburg)'], stanceWeak:['Standing on one leg, weak hip','Positive Trendelenburg sign'], stanceLean:['Standing on one leg, leaning over','Compensated Trendelenburg'],
+});
+GROUP_BTN.stance = { A:['',''],B:['',''] };
+GROUP_BTN.rot = { A:['Turning out','External rotators','band, sitting','Seated band ER'], B:['Turning in','Internal rotators','band, sitting','Seated band IR'] };
 const PW = {
   flex:{ grp:[['front of hip','buttock and back of thigh'],['flexors','extensors']], pos:['Forward','Flex'], neg:['Back','Extend'], lo:['30° back','30° extension'], hi:['125° forward','125° flexion'] },
   abd: { grp:[['side of hip','inner thigh'],['abductors','adductors']], pos:['Out','Abduct'], neg:['In','Adduct'], lo:['30° across','30° adduction'], hi:['45° out','45° abduction'] },
+  rot: { grp:[['outward turners','inward turners'],['external rotators','internal rotators']], pos:['Out','ER'], neg:['In','IR'], lo:['40° in','IR 40°'], hi:['45° out','ER 45°'] },
+  stance:{ grp:[['side of hip','side of hip'],['abductors','abductors']], pos:['Lift','Lift'], neg:['Down','Down'], lo:['both feet down','double stance'], hi:['other knee up','other hip 45°'] },
 };
 
 /* ------------------------------------------------------------------ state */
 const state = {
-  move:'flex', ex:'flexA', last:{ flex:'flexA', abd:'sideAbd' }, knee:'bent', mode:'patient',
+  move:'flex', ex:'flexA', last:{ flex:'flexA', abd:'sideAbd', rot:'seatER', stance:'stance' }, knee:'bent', strength:'strong', mode:'patient',
   theta:0, goal:0, vel:0, other:0, otherPlane:'abd', kneeAng:0,
   anim:null, loop:false, hold:0, loopDir:1,
   phase:'rest', demand:0, workSign:1, workType:'con', selected:null, hovered:null, backTo:null,
-  settle:0, joint:0, pelvis:0, pose:{ tilt:0, roll:0 },
+  settle:0, joint:0, pelvis:0, pose:{ tilt:0, roll:0, baseF:0, lean:0 },
 };
-const EX_OF = { flex:['flexA','proneExt'], abd:['sideAbd','sideAdd'] };
-const posture = () => state.ex === 'flexA' ? (state.knee === 'bent' ? 'kneeLift' : 'slr') : state.ex;
+const EX_OF = { flex:['flexA','proneExt'], abd:['sideAbd','sideAdd'], rot:['seatER','seatIR'], stance:['stance','stance'] };
+const posture = () => state.ex === 'flexA' ? (state.knee === 'bent' ? 'kneeLift' : 'slr') : state.ex === 'stance' ? 'stance' + { strong:'Strong', weak:'Weak', lean:'Lean' }[state.strength] : state.ex;
 const plane = () => state.move;
 const MIDZ = -.85, KNEE = new V3(0, -4.35, 0), SHANK = 4.05;
 
@@ -792,7 +855,15 @@ const POSTURES = {
   proneExt:{ plane:'flex', group:'neg', tilt:-90, roll:0, loop:[2, -26], hi:125, o:{ f:0, a:0, knee:0 }, kneeOf:() => state.knee === 'bent' ? 90 : 0, dir:[.3,.75,1], zoom:1.25, mat:true },
   sideAbd: { plane:'abd', group:'pos', tilt:0, roll:-90, loop:[2, 40], hi:45, o:{ f:0, a:0, knee:0 }, kneeOf:() => 0, dir:[1,.75,.2], zoom:1.25, mat:true },
   sideAdd: { plane:'abd', group:'neg', tilt:0, roll:90, loop:[2, -22], hi:45, o:{ f:55, a:-28, knee:80 }, kneeOf:() => 0, dir:[1,.75,-.2], zoom:1.25, mat:true },
+  // sitting, hip and knee at 90°; the angle is rotation (+ external: the foot swings in)
+  seatER:  { plane:'rot', group:'pos', tilt:0, roll:0, baseF:90, loop:[-25, 40], hi:45, o:{ f:90, a:0, knee:90 }, kneeOf:() => 90, dir:[1,.45,.35], zoom:1, seat:true, band:'out' },
+  seatIR:  { plane:'rot', group:'neg', tilt:0, roll:0, baseF:90, loop:[25, -35], hi:45, o:{ f:90, a:0, knee:90 }, kneeOf:() => 90, dir:[1,.45,.35], zoom:1, seat:true, band:'in' },
+  // standing on this leg; the angle is how far the other knee is lifted
+  stanceStrong:{ plane:'stance', group:'pos', tilt:0, roll:0, loop:[0, 40], hi:45, stand:true, drop:() => 0, lean:0, dir:[1,.3,.2], zoom:1 },
+  stanceWeak:  { plane:'stance', group:'pos', tilt:0, roll:0, loop:[0, 40], hi:45, stand:true, drop:th => 9*clamp(th/22, 0, 1), lean:0, dir:[1,.3,.2], zoom:1 },
+  stanceLean:  { plane:'stance', group:'pos', tilt:0, roll:0, loop:[0, 40], hi:45, stand:true, drop:th => 2*clamp(th/22, 0, 1), lean:10, dir:[1,.3,.2], zoom:1 },
 };
+for (const k of ['stanceStrong','stanceWeak','stanceLean']) Object.assign(POSTURES[k], { o:{ f:0, a:0, knee:0 }, kneeOf:() => 0 });
 
 /* ------------------------------------------------------------------ renderer */
 const stage = document.getElementById('stage');
@@ -1025,6 +1096,7 @@ const loadArrow = new THREE.ArrowHelper(new V3(0,-1,0), new V3(), 1, 0x888888, .
 
 // the other leg and the rest of the body (see-through)
 const silhouette = new THREE.Group(); body.add(silhouette);
+const trunkG = new THREE.Group(); trunkG.position.set(0, 1.9, MIDZ); body.add(trunkG);
 silhouette.add(ellip([0, 3.4, MIDZ], [1.0, 2.9, 1.55], silMat));
 silhouette.add(ellip([-.1, .55, MIDZ], [.95, .95, 1.5], silMat));
 silhouette.add(capsule([-.1, 6.1, MIDZ], [-.1, 6.8, MIDZ], .4, silMat));
@@ -1033,6 +1105,9 @@ for (const s of [1, -1]){
   const z = MIDZ + s*1.85;
   silhouette.add(capsule([0, 5.65, z], [0, 2.65, z], .33, silMat)); silhouette.add(capsule([0, 2.6, z], [.1, .05, z], .27, silMat)); silhouette.add(ellip([.1, -.4, z], [.16,.42,.3], silMat));
 }
+// the trunk, head and arms (and the lumbar spine) hang from L5 so they can lean together; the pelvis outline stays
+for (const m of [...silhouette.children]) if (m !== silhouette.children[1]){ m.position.sub(trunkG.position); trunkG.add(m); }
+trunkBones.position.sub(trunkG.position); trunkG.add(trunkBones);
 const oThigh = new THREE.Group(); oThigh.matrixAutoUpdate = false; body.add(oThigh);
 oThigh.add(capsule([0, -.1, -.1], [0, -4.2, 0], .62, silMat));
 const oShank = new THREE.Group(); oShank.position.copy(KNEE); oThigh.add(oShank);
@@ -1048,10 +1123,15 @@ function slab(cx, cy, cz, sx, sy, sz, parent = props){ const m = new THREE.Mesh(
 const FLOOR = -9.1;
 slab(0, FLOOR - .1, MIDZ, 40, .2, 24);
 const mat = slab(0, FLOOR + .06, MIDZ, 18, .12, 7); mat.visible = false;
+const seat = new THREE.Group(); mirror.add(seat); slab(-.6, 0, MIDZ, 3.4, .35, 4.2, seat); for (const [x, z] of [[-2,-2.7],[-2,1],[.8,-2.7],[.8,1]]) slab(x, 0, z, .18, 1, .18, seat); seat.visible = false;
+const bandAnkle = new THREE.Mesh(new THREE.CylinderGeometry(.05, .05, 1, 10), new THREE.MeshStandardMaterial({ roughness:.6 })); mirror.add(bandAnkle); bandAnkle.visible = false;
+const bandKnob = new THREE.Mesh(new THREE.SphereGeometry(.2, 16, 12), metalMat); mirror.add(bandKnob); bandKnob.visible = false;
 
 /* ------------------------------------------------------------------ kinematics */
 const _m1 = new THREE.Matrix4(), _m2 = new THREE.Matrix4(), _m3 = new THREE.Matrix4();
-const legRot = (f, a, out = new THREE.Matrix4()) => out.makeRotationZ(f*DEG).multiply(_m3.makeRotationX(-a*DEG));
+const _m4 = new THREE.Matrix4();
+// r > 0 external rotation: with the knee bent, the foot swings medially
+const legRot = (f, a, out = new THREE.Matrix4(), r = 0) => out.makeRotationZ(f*DEG).multiply(_m3.makeRotationX(-a*DEG)).multiply(_m4.makeRotationY(-r*DEG));
 // lumbopelvic rhythm: the pelvis tilts near the ends of the range (+ = posterior tilt / hiking this side)
 function pelvicTilt(f, a, kneeStraight){
   const on = kneeStraight ? 40 : 60, k = kneeStraight ? .45 : .35;
@@ -1061,23 +1141,26 @@ function pelvicTilt(f, a, kneeStraight){
 }
 const angleIn = pl => plane() === pl ? state.theta : state.otherPlane === pl ? state.other : 0;
 let mP = new THREE.Matrix4(), mA = new THREE.Matrix4(), mF = new THREE.Matrix4();
-function legMatrices(f, a, knee){
-  const A = legRot(f, a, new THREE.Matrix4());
+function legMatrices(f, a, knee, r = 0){
+  const A = legRot(f, a, new THREE.Matrix4(), r);
   const F = A.clone().multiply(_m1.makeTranslation(KNEE.x, KNEE.y, KNEE.z)).multiply(_m2.makeRotationZ(-knee*DEG)).multiply(_m1.makeTranslation(-KNEE.x, -KNEE.y, -KNEE.z));
   return { A, F };
 }
 function updateKinematics(){
-  const f = angleIn('flex'), a = angleIn('abd'), P = POSTURES[posture()];
+  const P = POSTURES[posture()], f = angleIn('flex') + state.pose.baseF, a = angleIn('abd'), r = angleIn('rot'), lift = angleIn('stance');
   const knee = state.kneeAng;
-  const { pt, hk } = pelvicTilt(f, a, P.plane === 'flex' && state.knee === 'straight' && P.group === 'pos');
-  state.pelvis = plane() === 'flex' ? pt : hk; state.joint = state.theta - state.pelvis;
+  let { pt, hk } = pelvicTilt(angleIn('flex'), a, P.plane === 'flex' && state.knee === 'straight' && P.group === 'pos');
+  if (P.stand) hk = P.drop(lift);                                                  // single-leg stance: the other side of the pelvis drops
+  state.pelvis = plane() === 'flex' ? pt : hk; state.joint = plane() === 'stance' ? -hk : state.theta - state.pelvis;
   mP = new THREE.Matrix4().makeRotationZ(pt*DEG).multiply(_m1.makeRotationX(-hk*DEG));
-  ({ A:mA, F:mF } = legMatrices(f, a, knee));
+  ({ A:mA, F:mF } = legMatrices(f, a, knee, r));
+  trunkG.rotation.x = state.pose.lean*DEG;
   pelvisG.matrix.copy(mP); pelvisG.matrixWorldNeedsUpdate = true;
   thighG.matrix.copy(mA); thighG.matrixWorldNeedsUpdate = true; shankG.rotation.z = -knee*DEG;
   const o = P.o;
-  oThigh.matrix.makeTranslation(0, 0, 2*MIDZ).multiply(_m1.makeRotationZ(o.f*DEG)).multiply(_m2.makeRotationX(o.a*DEG)); oThigh.matrixWorldNeedsUpdate = true;
-  oShank.rotation.z = -o.knee*DEG;
+  const of = P.stand ? lift : o.f, ok = P.stand ? Math.min(95, lift*2.2) : o.knee;   // standing: the other knee lifts
+  oThigh.matrix.copy(P.stand ? mP : _m3.identity()).multiply(_m1.makeTranslation(0, 0, 2*MIDZ)).multiply(_m2.makeRotationZ(of*DEG)).multiply(_m4.makeRotationX(o.a*DEG)); oThigh.matrixWorldNeedsUpdate = true;
+  oShank.rotation.z = -ok*DEG;
   body.rotation.set(state.pose.roll*DEG, 0, state.pose.tilt*DEG);
 }
 
@@ -1154,12 +1237,12 @@ function planeMesh(color){
 const tiltPlane = planeMesh(); pelvisG.add(tiltPlane);
 const neutralPlane = planeMesh(); body.add(neutralPlane);
 function updateGauge(){
-  const on = pelvisOpen(); gauge.visible = on;
+  const on = pelvisOpen() || plane() === 'stance'; gauge.visible = on;
   tiltPlane.visible = neutralPlane.visible = on;
   tiltPlane.material.color.copy(C.accent); tiltPlane.userData.edge.material.color.copy(C.accent);
   neutralPlane.material.color.copy(C['fg-3']); neutralPlane.userData.edge.material.color.copy(C['fg-3']); neutralPlane.material.opacity = .08; gTagEls.forEach(t => t.o.visible = on); gLabel.visible = on;
   if (!on) return;
-  const L = state.mode === 'learner', fl = plane() === 'flex';
+  const L = state.mode === 'learner', fl = plane() === 'flex', st = plane() === 'stance';
   // the two landmarks in body coordinates (they move with the pelvis), and where they would be with the pelvis neutral
   const A0 = fl ? new V3(.92, 1.0, .9) : new V3(.92, 1.0, .5), B0 = fl ? new V3(-1.3, 1.45, .9) : new V3(.92, 1.0, 2*MIDZ - .5);
   const A = A0.clone().applyMatrix4(mP), B = B0.clone().applyMatrix4(mP);
@@ -1174,6 +1257,7 @@ function updateGauge(){
   gWedge.geometry.dispose(); gWedge.geometry = new THREE.BufferGeometry().setFromPoints(pts.slice(0, 48));
   const deg = Math.round(state.pelvis), tx = Math.abs(deg) < 1 ? (L ? 'Neutral' : 'Level') :
     fl ? (L ? `${deg > 0 ? 'Posterior' : 'Anterior'} tilt ${Math.abs(deg)}°` : `Tipped ${deg > 0 ? 'back' : 'forward'} ${Math.abs(deg)}°`)
+       : st ? (L ? `Contralateral drop ${Math.abs(deg)}°` : `Other side dropped ${Math.abs(deg)}°`)
        : (L ? `${deg > 0 ? 'Hiked' : 'Dropped'} ${Math.abs(deg)}°` : `This side ${deg > 0 ? 'up' : 'down'} ${Math.abs(deg)}°`);
   gEl.textContent = tx; gLabel.position.copy(d0.clone().lerp(d, .5).normalize().multiplyScalar(r + .5).add(c));
   const names = fl ? [L ? 'ASIS' : 'Front of pelvis', L ? 'PSIS' : 'Back of pelvis'] : [L ? 'ASIS (this side)' : 'This side', L ? 'ASIS (other side)' : 'Other side'];
@@ -1214,12 +1298,20 @@ function demandAt(key, th){
   for (const [p, m, seg] of MASSES) tau.add(p.clone().applyMatrix4(seg === 'A' ? A : F).cross(g).multiplyScalar(m));
   return { f:-tau.z/NORM, a:tau.x/NORM };
 }
-const exLoad = (key, th) => { const d = demandAt(key, th); return POSTURES[key].plane === 'flex' ? d.f : d.a; };
+// abductor demand in single-leg stance: grows as weight comes onto this leg; leaning over the hip roughly halves it
+const stanceLoad = (key, th) => clamp(th/22, 0, 1) * (key === 'stanceLean' ? .5 : 1);
+const exLoad = (key, th) => {
+  const P = POSTURES[key];
+  if (P.plane === 'rot') return P.band === 'out' ? .85 : -.85;                     // band: constant, simplified
+  if (P.plane === 'stance') return stanceLoad(key, th);
+  const d = demandAt(key, th); return P.plane === 'flex' ? d.f : d.a;
+};
 const better = (p, q) => !p || (q && q[0] > p[0]) ? q : p;
 function hipPlan(){
   const key = posture(), th = state.theta, v = state.vel, moving = Math.abs(v) > 4, P = POSTURES[key];
   let phase = moving ? (v > 0 ? 'pos' : 'neg') : 'hold';
-  const D = demandAt(key, th), tau = P.plane === 'flex' ? D.f : D.a, s = tau >= 0 ? 1 : -1;
+  if (P.plane === 'stance') return stancePlan(key, th, v);
+  const tau = exLoad(key, th), s = tau >= 0 ? 1 : -1;
   if (phase === 'hold' && (Math.abs(tau) < .1 || (P.mat && P.group === 'pos' && P.plane === 'flex' && th < 3))) phase = 'rest';   // leg resting on the mat
   state.phase = phase; state.workSign = s;
   const plan = new Map();
@@ -1229,16 +1321,43 @@ function hipPlan(){
   let demand = .18 + .82*Math.min(1, Math.abs(tau));
   if (type === 'ecc') demand *= .72;
   const coact = .06 + .06*Math.min(1, Math.abs(v)/150) + .04*demand;
-  const ck = P.plane === 'flex' ? 'f' : 'a';
+  const ck = { flex:'f', abd:'a', rot:'r' }[P.plane];
   const kneeBent = state.kneeAng > 45;
   for (const o of TUBES){
     const t = o.t; let c = (t.c && t.c[ck]) || 0, p = null;
     if (t.ham && kneeBent && ck === 'f') c *= .45;                                // hamstrings slack with the knee bent
     if (o.m.id === 'iliopsoas' && ck === 'f' && th > 90) c *= 1.15;               // iliopsoas takes over high in the range
     if (o.m.id === 'rectus' && ck === 'f' && kneeBent && th > 70) c *= .75;
+    if (ck === 'r'){                                                              // seated, hip flexed to 90°
+      if (o.m.id === 'piriformis') c = -.35;                                      // piriformis becomes an internal rotator in flexion
+      if (o.m.id === 'gmed' && t.headId === 'ant') c = -.8;
+      if (o.m.id === 'gmin') c = -.75;
+      if (o.m.id === 'tfl' && !t.band) c = -.6;
+    }
     if (c*s > 0 && Math.abs(c) >= .15) p = [demand*Math.abs(c), type, Math.abs(c) >= .75 ? 'prime' : 'syn'];
     else if (c*s < 0 && Math.abs(c) >= .5) p = [coact, OPPOSITE[type], 'ant'];
     if (t.stab) p = better(p, [.12 + .25*demand, 'iso', 'stab']);
+    if (p) plan.set(o, p);
+  }
+  return [plan, demand];
+}
+function stancePlan(key, th, v){
+  const moving = Math.abs(v) > 4, load = stanceLoad(key, th), weak = key === 'stanceWeak', lean = key === 'stanceLean';
+  let phase = moving ? (v > 0 ? 'pos' : 'neg') : th < 3 ? 'rest' : 'hold';
+  state.phase = phase; state.workSign = 1;
+  const plan = new Map(); if (phase === 'rest' || load < .02) return [plan, 0];
+  // strong: isometric hold; weak: the pelvis drops, so the abductors lengthen as the foot lifts (and shorten as it comes down)
+  const type = weak && moving ? (v > 0 ? 'ecc' : 'con') : 'iso';
+  state.workType = type;
+  const demand = .2 + .8*load, cap = weak ? .45 : 1;
+  for (const o of TUBES){
+    const id = o.m.id, h = o.t.headId; let p = null;
+    if (id === 'gmed') p = [Math.min(cap, demand), type, 'prime'];
+    else if (id === 'gmin') p = [Math.min(cap, demand*.85), type, 'prime'];
+    else if (id === 'tfl' && !o.t.band) p = [demand*.5, type, 'syn'];
+    else if (id === 'gmax' && h === 'up') p = [demand*.45, type, 'syn'];
+    else if (o.m.group === 'adductors') p = [.06, 'iso', 'ant'];
+    else if (o.t.stab) p = [.12 + .25*demand, 'iso', 'stab'];
     if (p) plan.set(o, p);
   }
   return [plan, demand];
@@ -1283,8 +1402,10 @@ function buildArc(){
     const o = new CSS2DObject(el); o.position.copy(d.multiplyScalar(ARC_R + .36)); o.visible = showArc; arcStatic.add(o);
   }
   // flexion arc beside the thigh (outside); abduction arc in front of it, facing forward
-  arcGroup.rotation.set(0, plane() === 'abd' ? -Math.PI/2 : 0, 0);
-  arcStatic.position.z = sector.position.z = degLabel.position.z = plane() === 'flex' ? 1.0 : -1.2;
+  arcGroup.rotation.set(0, plane() === 'abd' ? -Math.PI/2 : plane() === 'rot' ? Math.PI/2 : 0, 0);
+  arcGroup.position.set(plane() === 'rot' ? 4.35 : 0, plane() === 'rot' ? -.05 : 0, 0);
+  arcStatic.position.z = sector.position.z = degLabel.position.z = plane() === 'flex' ? 1.0 : plane() === 'rot' ? 0 : -1.2;
+  const arcOn = showArc && plane() !== 'stance'; arcGroup.traverse(o => { if (o === arcGroup || o.isCSS2DObject) o.visible = arcOn; });
 }
 function updateArc(){
   if (arcKey !== plane() + posture()) buildArc();
@@ -1321,8 +1442,19 @@ function updateAppearance(time){
   updateGauge();
   const P = POSTURES[posture()], settled = state.settle <= 0;
   mat.visible = showBody && settled && !!P.mat;
+  seat.visible = showBody && settled && !!P.seat; seat.position.y = body.position.y - 1.15;
+  bandAnkle.visible = bandKnob.visible = settled && !!P.band;
+  if (P.band){
+    const ank = mirror.worldToLocal(body.localToWorld(new V3(0, -7.6, 0).applyMatrix4(mF)));
+    const anchor = new V3(ank.x + (P.band === 'out' ? .4 : 1.6), ank.y + .3, P.band === 'out' ? 3.2 : -3.6);   // tied beside the foot (inside: in front of the other leg)
+    bandKnob.position.copy(anchor);
+    bandAnkle.position.copy(ank).add(anchor).multiplyScalar(.5); bandAnkle.scale.y = ank.distanceTo(anchor);
+    bandAnkle.quaternion.setFromUnitVectors(new V3(0,1,0), anchor.clone().sub(ank).normalize());
+    bandAnkle.material.color.copy(C.iso);
+  }
+  cuff.visible = !P.band && !P.stand;
   scene.updateMatrixWorld(true);
-  loadArrow.visible = settled;
+  loadArrow.visible = settled && !P.band && !P.stand;
   const at = new V3(); cuff.getWorldPosition(at);
   loadArrow.position.copy(at).add(new V3(0, -.6, 0)); loadArrow.setDirection(new V3(0,-1,0)); loadArrow.setLength(1 + .6*state.demand, .24, .15);
 }
@@ -1349,6 +1481,7 @@ function stepMotion(dt){
   state.settle = Math.max(0, state.settle - dt);
   const kp = 1 - Math.exp(-dt*(state.settle > 0 ? 3.2 : 20));
   state.pose.tilt += (P.tilt - state.pose.tilt) * kp; state.pose.roll += (P.roll - state.pose.roll) * kp;
+  state.pose.baseF += ((P.baseF || 0) - state.pose.baseF) * kp; state.pose.lean += ((P.stand ? P.lean*clamp(state.theta/22, 0, 1) : 0) - state.pose.lean) * kp;
   // keep the body resting on the floor (or standing on the other foot)
   body.position.y += (restHeight(P) - body.position.y) * kp;
 }
@@ -1357,7 +1490,7 @@ function restHeight(P){
   const R = new THREE.Matrix4().makeRotationFromEuler(new THREE.Euler(P.roll*DEG, 0, P.tilt*DEG));
   const o = P.o, oA = new THREE.Matrix4().makeTranslation(0, 0, 2*MIDZ).multiply(new THREE.Matrix4().makeRotationZ(o.f*DEG)).multiply(new THREE.Matrix4().makeRotationX(o.a*DEG));
   const oF = oA.clone().multiply(new THREE.Matrix4().makeTranslation(0, -4.35, 0)).multiply(new THREE.Matrix4().makeRotationZ(-o.knee*DEG));
-  const pts = [new V3(.45, -4.35, 0).applyMatrix4(oF), new V3(1.5, -4.35, 0).applyMatrix4(oF), new V3(-.3, -4.4, 0).applyMatrix4(oF)];
+  const pts = P.stand ? [new V3(0, -8.95, 0)] : [new V3(.45, -4.35, 0).applyMatrix4(oF), new V3(1.5, -4.35, 0).applyMatrix4(oF), new V3(-.3, -4.4, 0).applyMatrix4(oF)];
   if (P.tilt || P.roll){
     for (const [x, y, z] of [[1.0,3.4,0],[-1.0,3.4,0],[0,3.4,1.55],[0,3.4,-1.55],[.95,.55,0],[-.95,.55,0],[0,.55,1.5],[0,.55,-1.5],[.85,7.65,0],[0,7.65,.75],[0,7.65,-.75],[0,2.6,2.2],[0,2.6,-2.2]]) pts.push(new V3(x, y, MIDZ + z));
     for (const [x, y] of [[0,-4.35],[0,-8.4],[.6,-4.3],[-.6,-4.3],[0,-2],[.62,-2],[-.62,-2]]) pts.push(new V3(x, y, 0), new V3(x, y, .62), new V3(x, y, -.62));
@@ -1381,12 +1514,14 @@ function onLeg(hit){
 }
 function dragPlane(){
   const n = (plane() === 'flex' ? new V3(0,0,1) : new V3(1,0,0)).transformDirection(body.matrixWorld);
-  return new THREE.Plane().setFromNormalAndCoplanarPoint(n, new V3().applyMatrix4(body.matrixWorld));
+  return new THREE.Plane().setFromNormalAndCoplanarPoint(n, (plane() === 'rot' ? new V3(4.35, 0, 0) : new V3()).applyMatrix4(body.matrixWorld));
 }
 function angleFromRay(){
   const p = new V3(); if (!ray.ray.intersectPlane(dragPlane(), p)) return null;
   body.worldToLocal(p);
   const [lo, hi] = rangeOf();
+  if (plane() === 'stance') return null;
+  if (plane() === 'rot') return clamp(Math.atan2(-p.z, -p.y) / DEG, lo, hi);       // foot swinging in = external rotation
   let a = Math.atan2(plane() === 'flex' ? p.x : p.z, -p.y) / DEG;
   if (a < lo - 20) a = a < -120 ? hi : lo;
   return clamp(a, lo, hi);
@@ -1424,9 +1559,10 @@ function computeHome(){
   const R = new THREE.Matrix4().makeRotationFromEuler(new THREE.Euler(P.roll*DEG, 0, P.tilt*DEG));
   const y = restHeight(P);
   for (const th of P.loop){
-    const f = P.plane === 'flex' ? th : 0, a = P.plane === 'abd' ? th : 0, { A, F } = legMatrices(f, a, P.kneeOf(f));
+    const f = (P.plane === 'flex' ? th : 0) + (P.baseF || 0), a = P.plane === 'abd' ? th : 0, { A, F } = legMatrices(f, a, P.kneeOf(f), P.plane === 'rot' ? th : 0);
     pts.push(KNEE.clone().applyMatrix4(A), new V3(0, -8.4, 0).applyMatrix4(F));
   }
+  if (P.stand){ pts.length = 0; pts.push(new V3(0, 4.2, MIDZ), new V3(0, -3.6, 0), new V3(0, 0, 2*MIDZ - 1), new V3(0, 0, 1)); }   // frame the pelvis, trunk and thighs
   pts.push(new V3(0, 0, 0), new V3(0, 3.6, MIDZ), new V3(0, -1, MIDZ));
   if (P.tilt || P.roll) pts.push(new V3(0, 7.6, MIDZ), new V3(0, 5.6, MIDZ));             // lying: frame the whole body
   const box = new THREE.Box3().setFromPoints(pts.map(v => { const w = v.applyMatrix4(R); w.y += y; w.z *= zs; return w; }));
@@ -1577,7 +1713,7 @@ function renderJoint(){
     <dl class="kv">${JOINT[L ? 'learner' : 'patient'].map(([k,v]) => `<div><dt>${k}</dt><dd>${v}</dd></div>`).join('')}</dl>
     <div class="special"><b>${RHYTHM_BOX.title[i]}</b><p>${RHYTHM_BOX.text[i]}</p></div>
     <div style="border-top:1px solid var(--line);padding-top:12px"><h3>Coming in the next parts</h3>
-      <ul class="note" style="padding-left:18px;margin:0;display:grid;gap:3px"><li>Rotation, and standing on one leg (pelvis view)</li><li>Tables: ROM, end feel, capsular pattern, common conditions</li><li>Trendelenburg sign and two-joint muscles</li></ul></div>
+      <ul class="note" style="padding-left:18px;margin:0;display:grid;gap:3px"><li>Tables: ROM, end feel, capsular pattern, common conditions</li><li>Trendelenburg sign and two-joint muscles</li></ul></div>
     <p class="note">Draft content for physiotherapist review.</p>`;
 }
 
@@ -1585,8 +1721,8 @@ function renderJoint(){
 const CH = { w:258, h:132, l:8, r:8, t:16, b:22 };
 const cx = th => { const [lo, hi] = rangeOf(); return CH.l + (th - lo) / (hi - lo) * (CH.w - CH.l - CH.r); };
 const cy = v => CH.t + (1 - clamp(v, -1, 1)) / 2 * (CH.h - CH.t - CH.b);
-const chartKeys = () => plane() === 'flex' ? [state.knee === 'bent' ? 'kneeLift' : 'slr', 'proneExt'] : ['sideAbd','sideAdd'];
-const CHART_NAME = { kneeLift:'Knee lift', slr:'Straight leg raise', proneExt:'Prone extension', sideAbd:'Side-lying abduction', sideAdd:'Side-lying adduction' };
+const chartKeys = () => ({ flex:[state.knee === 'bent' ? 'kneeLift' : 'slr', 'proneExt'], abd:['sideAbd','sideAdd'], rot:['seatER','seatIR'], stance:['stanceStrong','stanceLean'] })[plane()];
+const CHART_NAME = { kneeLift:'Knee lift', slr:'Straight leg raise', proneExt:'Prone extension', sideAbd:'Side-lying abduction', sideAdd:'Side-lying adduction', seatER:'Band ER', seatIR:'Band IR', stanceStrong:'Standing on one leg', stanceWeak:'Standing on one leg', stanceLean:'Leaning over' };
 function drawChart(){
   const svg = $('echartSvg'); if (!svg || $('echart').hidden) return;
   const [lo, hi] = rangeOf(), cur = posture();
@@ -1624,7 +1760,7 @@ $('echartSvg').addEventListener('pointerleave', () => { chartHover = false; $('c
 /* ------------------------------------------------------------------ caption: short live headline + "More" with every phase */
 function phaseList(){
   const L = L1(), w = words(), key = posture(), N = PHASE_NAMES[key], grp = POSTURES[key].group;
-  const typeFor = ph => ph === 'hold' ? 'iso' : ph === grp ? 'con' : 'ecc';
+  const typeFor = ph => ph === 'hold' || key === 'stanceStrong' || key === 'stanceLean' ? 'iso' : key === 'stanceWeak' ? (ph === 'pos' ? 'ecc' : 'con') : ph === grp ? 'con' : 'ecc';
   return N.order.map(k => ({ k, t: k === 'rest' ? w.rest : k === 'hold' ? w.hold : N[k][L], type: k === 'rest' ? 'rel' : typeFor(k), text:CAPTIONS[key][k][L] }));
 }
 function liveKey(){ const g = POSTURES[posture()].group === 'pos' ? 1 : -1; return state.phase !== 'rest' && state.workSign !== g ? 'takeover' : state.phase; }
@@ -1685,7 +1821,12 @@ function updateHUD(){
   pill.querySelector('span').textContent = state.phase === 'pos' || state.phase === 'neg' ? N[state.phase][L1()] : w[state.phase] || w.rest;
   const j = Math.round(state.joint), pv = Math.round(state.pelvis), fl = plane() === 'flex';
   const pTxt = Math.abs(pv) < 1 ? '' : L ? ` · ${fl ? (pv > 0 ? 'posterior' : 'anterior') + ' pelvic tilt' : (pv > 0 ? 'pelvic hike' : 'pelvic drop')} <b>${Math.abs(pv)}°</b>` : ` + pelvis <b>${Math.abs(pv)}°</b>`;
-  $('rhythm').innerHTML = `${L ? 'Hip joint' : 'Hip joint'} <b>${j}°</b>${pTxt}`;
+  const r = Math.round(state.theta);
+  if (plane() === 'rot') $('rhythm').innerHTML = Math.abs(r) < 2 ? (L ? 'Neutral rotation · hip and knee 90°' : 'Pointing straight · sitting')
+    : L ? `${r > 0 ? 'External' : 'Internal'} rotation <b>${Math.abs(r)}°</b> · foot moves ${r > 0 ? 'medially' : 'laterally'}` : `Thigh turned ${r > 0 ? 'out' : 'in'} <b>${Math.abs(r)}°</b> · foot moves ${r > 0 ? 'in' : 'out'}`;
+  else if (plane() === 'stance') $('rhythm').innerHTML = Math.abs(pv) < 1 ? (L ? 'Pelvis level' : 'Pelvis level') : L ? `Contralateral pelvic drop <b>${Math.abs(pv)}°</b> · stance hip adduction <b>${Math.abs(pv)}°</b>` : `Other side of the pelvis dropped <b>${Math.abs(pv)}°</b>`;
+  else $('rhythm').innerHTML = `${L ? 'Hip joint' : 'Hip joint'} <b>${j}°</b>${pTxt}`;
+  if (plane() === 'rot') $('angleVal').textContent = Math.abs(r);
   syncExPickers(); updateCaption();
   $('effortBar').style.width = Math.round(Math.min(1, state.demand) * 100) + '%';
   updateMuscleList(); updateDetailStatus(); declutterLabels(); updateChartDot();
@@ -1705,20 +1846,22 @@ function setMove(mv){
   if (mv === state.move) return;
   state.otherPlane = state.move; state.other = state.theta;
   state.move = mv; state.theta = state.goal = 0; state.vel = 0;
-  setPressed(['mvFlex','mvAbd'], mv === 'flex' ? 'mvFlex' : 'mvAbd');
+  setPressed(['mvFlex','mvAbd','mvRot','mvStance'], { flex:'mvFlex', abd:'mvAbd', rot:'mvRot', stance:'mvStance' }[mv]);
   setExercise(state.last[mv]);
 }
 function syncSections(){
   const [lo, hi] = rangeOf(), L = state.mode === 'learner', i = L ? 1 : 0, W = PW[plane()];
   $('angle').min = lo; $('angle').max = hi;
   $('go90').hidden = hi < 100; $('go90').style.left = `calc(8px + (100% - 16px) * ${(90 - lo) / (hi - lo)})`;
-  $('scaleL').textContent = W.lo[i]; $('scaleR').textContent = hi === 125 || plane() === 'abd' ? W.hi[i] : (L ? `${hi}° flexion` : `${hi}° forward`);
+  $('scaleL').textContent = W.lo[i]; $('scaleR').textContent = plane() !== 'flex' || hi === 125 ? W.hi[i] : (L ? `${hi}° flexion` : `${hi}° forward`);
   $('posTxt').textContent = W.pos[i]; $('negTxt').textContent = W.neg[i];
-  $('angleH').textContent = L ? 'Hip angle' : 'Leg angle';
+  $('angleH').textContent = plane() === 'rot' ? (L ? 'Rotation' : 'How far the thigh turns') : plane() === 'stance' ? (L ? 'Other hip flexion' : 'Other knee lifted') : L ? 'Hip angle' : 'Leg angle';
   const G = GROUP_BTN[plane()];
   $('grpAName').textContent = G.A[i]; $('grpASub').textContent = state.ex === 'flexA' || plane() === 'flex' ? (state.knee === 'bent' ? G.A[2 + i] : (L ? 'Supine SLR' : 'lying on your back')) : G.A[2 + i];
   $('grpBName').textContent = G.B[i]; $('grpBSub').textContent = G.B[2 + i];
   $('kneeSec').hidden = plane() !== 'flex';
+  $('stanceSec').hidden = plane() !== 'stance'; $('exSection').hidden = plane() === 'stance';
+  $('stanceH').textContent = L ? 'Gluteus medius' : 'Side-of-hip muscles';
   $('echart').hidden = state.mode !== 'learner';
   drawChart();
 }
@@ -1732,6 +1875,10 @@ $('grpA').onclick = () => { const ex = EX_OF[plane()][0]; if (state.ex !== ex) s
 $('grpB').onclick = () => { const ex = EX_OF[plane()][1]; if (state.ex !== ex) setExercise(ex); };
 $('mvFlex').onclick = () => setMove('flex');
 $('mvAbd').onclick = () => setMove('abd');
+$('mvRot').onclick = () => setMove('rot');
+$('mvStance').onclick = () => setMove('stance');
+function setStrength(k){ if (state.strength === k) return; state.strength = k; setPressed(['stStrong','stWeak','stLean'], { strong:'stStrong', weak:'stWeak', lean:'stLean' }[k]); setExercise('stance'); }
+$('stStrong').onclick = () => setStrength('strong'); $('stWeak').onclick = () => setStrength('weak'); $('stLean').onclick = () => setStrength('lean');
 function setKnee(k){ if (state.knee === k) return; state.knee = k; setPressed(['kneeBent','kneeStraight'], k === 'bent' ? 'kneeBent' : 'kneeStraight'); state.theta = state.goal = Math.min(state.goal, rangeOf()[1]); setExercise(state.ex); }
 $('kneeBent').onclick = () => setKnee('bent');
 $('kneeStraight').onclick = () => setKnee('straight');
