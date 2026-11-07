@@ -291,7 +291,7 @@ input[type=range]{width:100%; accent-color:var(--accent); margin:6px 0 2px}
       <h3>Knee</h3>
       <div class="seg block" role="group" aria-label="Knee position">
         <button id="kneeBent" aria-pressed="true">Bent<small data-l="Knee flexed">knee lift</small></button>
-        <button id="kneeStraight" aria-pressed="false">Straight<small data-l="Knee extended">straight leg</small></button>
+        <button id="kneeStraight" aria-pressed="false">Straight<small data-l="Knee extended, supine">leg raise, lying</small></button>
       </div>
     </section>
     <section id="exSection">
@@ -707,10 +707,10 @@ const CAPTIONS = {
     hold:['Holding the knee up: the front of your hip works without moving. It is hardest with the thigh level.','Isometric hip flexors; torque peaks with the thigh horizontal.'],
   },
   slr:{
-    rest:['Standing on the other leg with a weight round this ankle, the leg straight.','Standing, hip neutral, knee extended: no torque.'],
-    pos:['Lifting the straight leg forward: the front of your hip shortens, and the front of your thigh keeps the knee straight. The back of your thigh stops the leg going much higher.','Hip flexion with the knee extended: iliopsoas and rectus femoris concentric; the vasti hold the knee. Range is limited by hamstring length.'],
+    rest:['Lying on your back, the other knee bent with the foot flat. This leg rests straight on the mat with a weight round the ankle.','Supine, hip neutral, knee extended, leg supported: at rest.'],
+    pos:['Lifting the straight leg up off the mat: the front of your hip shortens, and the front of your thigh keeps the knee straight. The back of your thigh stops the leg going much higher.','Hip flexion with the knee extended: iliopsoas and rectus femoris concentric; the vasti hold the knee. Range is limited by hamstring length.'],
     neg:['Lowering slowly: the front of your hip lengthens to control the leg.','Eccentric hip flexors.'],
-    hold:['Holding the straight leg up: the hip flexors work without moving.','Isometric hip flexors; the long lever makes this harder than a bent-knee lift.'],
+    hold:['Holding the straight leg up: the hip flexors work without moving. It is hardest just off the mat.','Isometric hip flexors; lying supine, torque is greatest with the leg just off the mat and falls as it rises.'],
   },
   proneExt:{
     rest:['Lying face down with your leg relaxed on the mat.','Prone, hip neutral: at rest.'],
@@ -734,7 +734,7 @@ const CAPTIONS = {
 };
 const WHY = {
   kneeLift:['Hardest with the thigh level with the floor. Above that, iliopsoas does most of the work, as the other hip flexors are short. Bending the knee keeps the lever short and lets the hip go higher.','Torque peaks at 90°. Above ~90° iliopsoas dominates. With the knee flexed the hamstrings are slack, so flexion range is greater than in a straight leg raise.'],
-  slr:['With the knee straight the leg is a long lever, so the hip works harder, and the back of the thigh limits how high it goes.','The extended knee lengthens the moment arm of the load and puts the hamstrings on stretch, limiting flexion to about 70–90°.'],
+  slr:['Lying on your back, the leg is heaviest to hold just off the mat and gets easier as it rises. The knee stays straight, so the back of the thigh limits how high it goes. Bending the other knee keeps the lower back steady.','The extended knee lengthens the moment arm of the load and puts the hamstrings on stretch, limiting flexion to about 70–90°.'],
   proneExt:['With the knee bent, the back of the thigh is slack, so the buttock does more of the work. With the knee straight, the hamstrings help more.','Knee flexion puts the hamstrings in active insufficiency, biasing gluteus maximus; with the knee extended the hamstrings contribute more to hip extension.'],
   sideAbd:['Hardest at the start, with the leg level. Keep the toes pointing forward so the side of the hip, not the front, does the work.','Torque is greatest with the limb horizontal. Hip flexion or external rotation during the lift shifts work to TFL and the hip flexors.'],
   sideAdd:['A short movement: the inner thigh lifts the bottom leg only a little way.','Adduction range from neutral is small (~20–30°); torque is greatest at the start.'],
@@ -747,7 +747,7 @@ const PHASE_NAMES = {
   sideAdd: { pos:['Lowering','Abduction'], neg:['Lifting','Adduction'], order:['rest','neg','hold','pos'] },
 };
 const EX_TITLE = {
-  kneeLift:['Standing knee lift','Standing hip flexion, knee bent'], slr:['Standing straight leg raise','Standing hip flexion, knee extended'],
+  kneeLift:['Standing knee lift','Standing hip flexion, knee bent'], slr:['Straight leg raise, lying on your back','Supine straight leg raise (SLR)'],
   proneExt:['Leg lift, face down','Prone hip extension'], sideAbd:['Side-lying leg lift','Side-lying hip abduction'], sideAdd:['Bottom-leg lift, side-lying','Side-lying hip adduction'],
 };
 const GROUP_BTN = {
@@ -777,7 +777,8 @@ const MIDZ = -.85, KNEE = new V3(0, -4.35, 0), SHANK = 4.05;
    o: the other leg. kneeOf(f): knee bend for the moving leg.                                                                    */
 const POSTURES = {
   kneeLift:{ plane:'flex', group:'pos', tilt:0, roll:0, loop:[4, 115], hi:125, o:{ f:0, a:0, knee:0 }, kneeOf:f => clamp(f*.95, 0, 95), dir:[.32,.14,1], zoom:1 },
-  slr:     { plane:'flex', group:'pos', tilt:0, roll:0, loop:[4, 75], hi:90, o:{ f:0, a:0, knee:0 }, kneeOf:() => 0, dir:[.32,.14,1], zoom:1 },
+  // supine straight leg raise: lying on the back, the other knee bent with the foot flat
+  slr:     { plane:'flex', group:'pos', tilt:90, roll:0, loop:[2, 75], hi:90, o:{ f:45, a:0, knee:90 }, kneeOf:() => 0, dir:[.15,.4,1], zoom:1.05, mat:true },
   proneExt:{ plane:'flex', group:'neg', tilt:-90, roll:0, loop:[2, -26], hi:125, o:{ f:0, a:0, knee:0 }, kneeOf:() => state.knee === 'bent' ? 90 : 0, dir:[.3,.75,1], zoom:1.25, mat:true },
   sideAbd: { plane:'abd', group:'pos', tilt:0, roll:-90, loop:[2, 40], hi:45, o:{ f:0, a:0, knee:0 }, kneeOf:() => 0, dir:[1,.75,.2], zoom:1.25, mat:true },
   sideAdd: { plane:'abd', group:'neg', tilt:0, roll:90, loop:[2, -22], hi:45, o:{ f:55, a:-28, knee:80 }, kneeOf:() => 0, dir:[1,.75,-.2], zoom:1.25, mat:true },
@@ -1079,7 +1080,7 @@ function hipPlan(){
   const key = posture(), th = state.theta, v = state.vel, moving = Math.abs(v) > 4, P = POSTURES[key];
   let phase = moving ? (v > 0 ? 'pos' : 'neg') : 'hold';
   const D = demandAt(key, th), tau = P.plane === 'flex' ? D.f : D.a, s = tau >= 0 ? 1 : -1;
-  if (phase === 'hold' && Math.abs(tau) < .1) phase = 'rest';
+  if (phase === 'hold' && (Math.abs(tau) < .1 || (P.mat && P.group === 'pos' && P.plane === 'flex' && th < 3))) phase = 'rest';   // leg resting on the mat
   state.phase = phase; state.workSign = s;
   const plan = new Map();
   if (phase === 'rest') return [plan, 0];
@@ -1542,7 +1543,7 @@ function syncSections(){
   $('posTxt').textContent = W.pos[i]; $('negTxt').textContent = W.neg[i];
   $('angleH').textContent = L ? 'Hip angle' : 'Leg angle';
   const G = GROUP_BTN[plane()];
-  $('grpAName').textContent = G.A[i]; $('grpASub').textContent = state.ex === 'flexA' || plane() === 'flex' ? (state.knee === 'bent' ? G.A[2 + i] : (L ? 'Standing SLR' : 'straight leg raise')) : G.A[2 + i];
+  $('grpAName').textContent = G.A[i]; $('grpASub').textContent = state.ex === 'flexA' || plane() === 'flex' ? (state.knee === 'bent' ? G.A[2 + i] : (L ? 'Supine SLR' : 'lying on your back')) : G.A[2 + i];
   $('grpBName').textContent = G.B[i]; $('grpBSub').textContent = G.B[2 + i];
   $('kneeSec').hidden = plane() !== 'flex';
   $('echart').hidden = state.mode !== 'learner';
