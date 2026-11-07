@@ -233,6 +233,9 @@ input[type=range]{width:100%; accent-color:var(--accent); margin:6px 0 2px}
 .planelbl.deg{font-family:var(--font-mono); font-weight:500; padding:2px 5px}
 .tag.bladetag{border:1px dashed var(--accent); color:var(--accent)}
 .tag.bladetag.on{border-style:solid; background:var(--accent); color:var(--accent-fg)}
+.tag.pelvistag{border:1px dashed var(--accent); color:var(--accent)}
+.tag.pelvistag.on{border-style:solid; background:var(--accent); color:var(--accent-fg)}
+.planelbl{font:700 11px/1.2 var(--font-body); color:var(--accent); background:var(--panel); border:1px solid var(--accent); padding:3px 7px; border-radius:7px; white-space:nowrap; pointer-events:none}
 .rhythm{font-size:12px; color:var(--fg-2); margin:-2px 0 4px; min-height:1.4em}
 .rhythm b{font-family:var(--font-mono); font-weight:500; color:var(--fg)}
 .seg.block.grid2{display:grid; grid-template-columns:1fr 1fr; gap:2px}
@@ -321,7 +324,7 @@ input[type=range]{width:100%; accent-color:var(--accent); margin:6px 0 2px}
         <button class="btn" id="btnNeg"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 20l-7-9h5V4h4v7h5z"/></svg><span id="negTxt"></span></button>
         <button class="btn" id="btnLoop" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M4 12a8 8 0 0 1 14-5.3M20 12a8 8 0 0 1-14 5.3"/><path d="M18 3v4h-4M6 21v-4h4"/></svg>Repeat</button>
       </div>
-      <p class="hint" id="hint">You can also drag the leg in the 3D view.</p>
+      <p class="hint" id="hint">You can also drag the leg in the 3D view. Tap the pelvis to see how it tilts.</p>
     </section>
   </aside>
 
@@ -682,6 +685,13 @@ const JOINT = {
     ['Stability','Mainly bony (deep acetabulum), with strong capsular ligaments (iliofemoral, pubofemoral, ischiofemoral) and the deep rotators'],
   ],
 };
+const PELVIS_TEXT = {
+  lede:['The ring of bone your legs and spine attach to. When you move your leg near the end of its range, the pelvis tips or tilts to add to the movement.',
+        'Two hip bones (ilium, ischium, pubis) and the sacrum. Near end range the pelvis moves on the lumbar spine and the other hip: posterior tilt in hip flexion, anterior tilt in extension; hiking and dropping in the frontal plane.'],
+  box:[['Why the pelvis moves','Lumbopelvic rhythm'],
+       ['Your hip joint can only go so far. To lift your knee higher, the pelvis tips back and your lower back rounds; to take your leg further back, it tips forward and your back arches. Tight muscles at the hip make the pelvis move sooner.',
+        'Pelvic and lumbar motion add to femoral motion near end range. Tight hamstrings bring on posterior tilt earlier in hip flexion (especially with the knee extended); tight hip flexors bring on anterior tilt and lumbar extension earlier in hip extension.']],
+};
 const RHYTHM_BOX = {
   title:['Hip and pelvis working together','Lumbopelvic rhythm'],
   text:['Lifting your knee very high, part of the movement comes from your pelvis tipping back and your lower back rounding. Taking your leg far back, the pelvis tips forward and the lower back arches. Watch the pelvis on the model near the ends of the range.',
@@ -902,46 +912,112 @@ const pelvisG = new THREE.Group(); pelvisG.matrixAutoUpdate = false; body.add(pe
 const thighG = new THREE.Group(); thighG.matrixAutoUpdate = false; body.add(thighG);
 const boneParts = [], legParts = [];
 function addBone(group, mesh, onLeg){ group.add(mesh); boneParts.push(mesh); if (onLeg) legParts.push(mesh); return mesh; }
-// lumbar spine and lower ribs (fixed to the trunk)
+// lumbar spine and lower ribs (fixed to the trunk): bodies, discs, pedicles, transverse and spinous processes
 const trunkBones = new THREE.Group(); body.add(trunkBones);
-for (let i = 0; i < 5; i++) addBone(trunkBones, ellip([-1.05, 2.15 + i*.55, MIDZ], [.42,.22,.4], ghostMat, 16));
-for (let i = 0; i < 3; i++){ const y = 4.9 + i*.42;
-  for (const s of [1, -1]) addBone(trunkBones, longBone([-1.0, y, MIDZ + s*.35], [.55, y - .6, MIDZ + s*1.25], [[0,.04],[1,.04]], ghostMat)); }
-// pelvis: this side solid, the other side ghosted; sacrum in the middle (all tilt together)
-function pelvisHalf(s, mat){                                     // s = +1 this side, −1 the other (mirrored across the midline)
-  const z = v => MIDZ + s*(v - MIDZ), parts = [];
-  const blade = ellip([-.25, 1.25, z(.42)], [1.05,.78,.1], mat); blade.rotation.y = s*.55; blade.rotation.z = .12; parts.push(blade);
-  parts.push(ellip([.92, .95, z(.42)], [.1,.1,.1], mat));                                 // ASIS
-  parts.push(ellip([.72, .5, z(.22)], [.08,.08,.08], mat));                               // AIIS
-  parts.push(ellip([0, 0, z(.0)], [.36,.36,.3], mat));                                    // acetabulum
-  parts.push(capsule([-.2, -.25, z(-.15)], [-.58, -.82, z(-.35)], .13, mat));             // ischium
-  parts.push(ellip([-.6, -.86, z(-.35)], [.16,.13,.14], mat));                            // ischial tuberosity
-  parts.push(capsule([.3, -.15, z(-.2)], [.62, -.25, z(-.8)], .09, mat));                 // superior pubic ramus
-  parts.push(capsule([.6, -.42, z(-.8)], [-.35, -.82, z(-.48)], .08, mat));               // inferior ramus
-  parts.push(capsule([-1.25, 1.55, z(-.45)], [-.9, 1.95, z(.35)], .09, mat));             // posterior crest
-  parts.push(capsule([-.9, 1.95, z(.35)], [.9, 1.0, z(.45)], .08, mat));                  // iliac crest
+const discMat = ghostMat;
+for (let i = 0; i < 5; i++){
+  const y = 2.25 + i*.62, g = new THREE.Group(); g.position.set(-.95, y, MIDZ); trunkBones.add(g);
+  const vb = new THREE.Mesh(new THREE.CylinderGeometry(1, 1, .42, 24), boneMat); vb.scale.set(.36, 1, .44); addBone(g, vb);
+  const disc = new THREE.Mesh(new THREE.CylinderGeometry(1, 1, .16, 24), discMat); disc.scale.set(.34, 1, .42); disc.position.y = -.31; addBone(g, disc);
+  for (const sz of [1, -1]){
+    addBone(g, capsule([-.25, .02, sz*.22], [-.48, .02, sz*.26], .07, boneMat));                 // pedicle
+    addBone(g, capsule([-.45, .05, sz*.25], [-.55, .02, sz*(.72 - i*.02)], .06, boneMat));       // transverse process
+    addBone(g, capsule([-.5, .15, sz*.18], [-.62, .32, sz*.17], .05, boneMat));                 // superior articular process
+  }
+  addBone(g, capsule([-.5, .05, 0], [-.95, -.05, 0], .08, boneMat));                             // spinous process (lamina to tip)
+  const tip = new THREE.Mesh(new THREE.BoxGeometry(.18, .34, .1), boneMat); tip.position.set(-.98, -.05, 0); addBone(g, tip);
+}
+for (let i = 0; i < 3; i++){ const y = 5.5 + i*.45;
+  for (const sz of [1, -1]) addBone(trunkBones, longBone([-1.1, y, MIDZ + sz*.4], [.55, y - .7, MIDZ + sz*1.3], [[0,.045],[1,.04]], ghostMat)); }
+
+// pelvis: two hip bones (ilium, ischium, pubis) and the sacrum, all tilting together. This side solid, the other a little lighter.
+// a curved surface from a grid: f(u, v) → point; used for the iliac wings
+function surface(f, nu = 18, nv = 10, mat){
+  const pos = [], idx = [];
+  for (let j = 0; j <= nv; j++) for (let i = 0; i <= nu; i++){ const p = f(i/nu, j/nv); pos.push(p.x, p.y, p.z); }
+  for (let j = 0; j < nv; j++) for (let i = 0; i < nu; i++){ const a = j*(nu+1) + i, b = a + nu + 1; idx.push(a, b, a+1, a+1, b, b+1); }
+  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setIndex(idx); g.computeVertexNormals();
+  return new THREE.Mesh(g, mat);
+}
+const pelvicLight = new THREE.MeshPhysicalMaterial({ roughness:.55, clearcoat:.15, clearcoatRoughness:.6, envMapIntensity:.6, side:THREE.DoubleSide, transparent:true, opacity:.75 });
+const LM = {};                                                    // landmarks (this side), in pelvis coordinates
+function hipBone(sd, mat){                                       // sd = +1 this side, −1 the other (mirrored across the midline)
+  const z = v => MIDZ + sd*(v - MIDZ), P = (x, y, zz) => new V3(x, y, z(zz)), parts = [];
+  // crest from the posterior superior iliac spine (PSIS) over the top to the anterior superior iliac spine (ASIS)
+  const crest = new THREE.CatmullRomCurve3([P(-1.3,1.45,-.42), P(-1.05,1.95,.02), P(-.4,2.2,.42), P(.35,1.85,.6), P(.92,1.0,.5)]);
+  // base of the wing: from the sacroiliac joint, over the greater sciatic notch, to above the acetabulum and the AIIS
+  const base = new THREE.CatmullRomCurve3([P(-1.2,.85,-.42), P(-.75,.4,-.2), P(-.3,.35,.05), P(.25,.32,.12), P(.72,.5,.25)]);
+  parts.push(surface((u, v) => { const a = base.getPoint(u), b = crest.getPoint(u), q = a.lerp(b, v);
+    q.z += sd*(-.16*Math.sin(Math.PI*v)*Math.sin(Math.PI*u));                            // the wing bowls inward (iliac fossa)
+    return q; }, 22, 10, mat));
+  parts.push(new THREE.Mesh(new THREE.TubeGeometry(crest, 40, .075, 8, false), mat));     // thickened crest
+  parts.push(new THREE.Mesh(new THREE.TubeGeometry(base, 30, .06, 8, false), mat));
+  parts.push(ellip([.92, 1.0, z(.5)], [.1,.1,.1], mat), ellip([.72, .5, z(.25)], [.08,.09,.08], mat), ellip([-1.3, 1.45, z(-.42)], [.1,.1,.1], mat));
+  // acetabulum: a cup opening outward, forward and a little down, with its rim
+  const cupG = new THREE.Group(); cupG.lookAt(new V3(.35, -.3, sd*1)); cupG.position.set(0, 0, z(0) - MIDZ*0 - z(0) + z(0)); parts.push(cupG);
+  cupG.add(new THREE.Mesh(new THREE.SphereGeometry(.34, 24, 12, 0, Math.PI*2, Math.PI/2, Math.PI/2), mat));
+  const rim = new THREE.Mesh(new THREE.TorusGeometry(.34, .05, 8, 28), mat); cupG.add(rim);
+  cupG.position.set(0, 0, sd > 0 ? 0 : 2*MIDZ);
+  // body of the ischium down to the ischial tuberosity, then the ischial ramus; pubis: superior ramus to the symphysis, inferior ramus back
+  parts.push(longBone([-.12, -.2, z(-.08)], [-.55, -.85, z(-.32)], [[0,.17],[.5,.14],[1,.15]], mat));
+  parts.push(ellip([-.6, -.9, z(-.32)], [.18,.15,.14], mat));                              // ischial tuberosity
+  parts.push(ellip([-.55, -.15, z(-.38)], [.06,.08,.06], mat));                            // ischial spine
+  parts.push(capsule([-.55, -.92, z(-.36)], [.15, -.85, z(-.6)], .07, mat));               // ischial ramus
+  parts.push(capsule([.22, -.12, z(-.12)], [.62, -.32, z(-.7)], .09, mat));               // superior pubic ramus
+  parts.push(capsule([.15, -.85, z(-.6)], [.62, -.55, z(-.74)], .07, mat));               // inferior pubic ramus
+  parts.push(ellip([.64, -.42, z(-.73)], [.1,.17,.08], mat));                              // pubic body at the symphysis
+  parts.push(ellip([.7, -.2, z(-.48)], [.05,.05,.05], mat));                               // pubic tubercle
+  if (sd > 0) Object.assign(LM, { asis:new V3(.92, 1.0, .5), psis:new V3(-1.3, 1.45, -.42), crestTop:new V3(-.4, 2.2, .42) });
   return parts;
 }
-pelvisHalf(1, boneMat).forEach(m => addBone(pelvisG, m));
-pelvisHalf(-1, ghostMat).forEach(m => addBone(pelvisG, m));
-addBone(pelvisG, ellip([-1.4, .85, MIDZ], [.32,.8,.55], boneMat));                        // sacrum
-addBone(pelvisG, capsule([-1.5, .1, MIDZ], [-1.35, -.35, MIDZ], .08, boneMat));          // coccyx
-// femur, then the lower leg hinged at the knee
-addBone(thighG, ellip([0, 0, 0], [.26,.26,.26], boneMat), true);                          // head
-addBone(thighG, capsule([0, -.04, .06], [-.04, -.22, .5], .15, boneMat), true);          // neck
-addBone(thighG, ellip([-.06, -.14, .62], [.18,.26,.16], boneMat), true);                  // greater trochanter
-addBone(thighG, ellip([-.03, -.6, -.1], [.1,.1,.09], boneMat), true);                     // lesser trochanter
-addBone(thighG, longBone([-.02, -.25, .5], [0, -4.1, .03], [[0,.17],[.08,.15],[.3,.13],[.8,.13],[.95,.18],[1,.2]], boneMat), true);
-addBone(thighG, ellip([0, -4.32, .22], [.26,.24,.16], boneMat), true);                    // lateral condyle
-addBone(thighG, ellip([0, -4.32, -.24], [.27,.25,.18], boneMat), true);                   // medial condyle
+const pelvisParts = [];
+for (const [sd, m] of [[1, boneMat], [-1, pelvicLight]]) hipBone(sd, m).forEach(x => { addBone(pelvisG, x); pelvisParts.push(x); });
+addBone(pelvisG, ellip([.66, -.45, MIDZ], [.06,.16,.06], ghostMat));                                // symphysis disc
+{ // sacrum: a curved wedge, broad at the top (promontory) and narrowing to the coccyx
+  const sh = new THREE.Shape(); sh.moveTo(-.62, 0); sh.lineTo(.62, 0); sh.lineTo(.22, -1.35); sh.lineTo(-.22, -1.35); sh.closePath();
+  const g = new THREE.ExtrudeGeometry(sh, { depth:.3, bevelEnabled:true, bevelThickness:.06, bevelSize:.05, bevelSegments:2, curveSegments:4 });
+  const pos = g.attributes.position;
+  for (let i = 0; i < pos.count; i++){ const w = pos.getX(i), h = pos.getY(i), d = pos.getZ(i), t = -h/1.35;
+    pos.setXYZ(i, -1.2 - d - .55*t + .25*t*t, 1.45 + h*.92, MIDZ + w); }               // tilted forward at the top, curving back below
+  g.computeVertexNormals(); const sac = new THREE.Mesh(g, boneMat); addBone(pelvisG, sac); pelvisParts.push(sac);
+  for (let i = 0; i < 3; i++){ const c = ellip([-1.62 + i*.07, .02 - i*.17, MIDZ], [.08 - i*.015, .07, .1 - i*.02], boneMat); addBone(pelvisG, c); pelvisParts.push(c); }   // coccyx
+}
+// femur: head, neck (about 125° to the shaft, slightly forward), trochanters, shaft with a gentle forward bow, condyles
+const femurParts = [];
+const fb = (m) => { addBone(thighG, m, true); femurParts.push(m); return m; };
+fb(ellip([0, 0, 0], [.27,.27,.27], boneMat));
+fb(longBone([.04, -.02, .04], [-.02, -.33, .48], [[0,.17],[.5,.13],[1,.17]], boneMat));
+fb(ellip([-.08, -.16, .6], [.2,.3,.17], boneMat));                                         // greater trochanter
+fb(capsule([-.18, -.35, .48], [-.16, -.6, .1], .06, boneMat));                            // intertrochanteric crest
+fb(ellip([-.06, -.62, -.08], [.11,.12,.1], boneMat));                                      // lesser trochanter
+fb(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3([new V3(-.04, -.3, .5), new V3(.06, -1.6, .33), new V3(.08, -3.0, .16), new V3(0, -4.0, .03)]), 40, .155, 14, false), boneMat));
+fb(capsule([-.17, -1.3, .3], [-.17, -3.2, .12], .05, boneMat));                           // linea aspera
+fb(ellip([-.04, -4.28, .2], [.3,.26,.17], boneMat));                                       // lateral condyle
+fb(ellip([-.04, -4.28, -.22], [.31,.27,.19], boneMat));                                    // medial condyle
+fb(ellip([.2, -4.05, 0], [.12,.18,.24], boneMat));                                         // patellar surface
 const shankG = new THREE.Group(); shankG.position.copy(KNEE); thighG.add(shankG);
-addBone(shankG, ellip([.48, .1, 0], [.11,.22,.2], boneMat), true);                       // patella (rides with the tibia; simplified)
-addBone(shankG, ellip([0, -.18, 0], [.3,.1,.32], boneMat), true);                        // tibial plateau
-addBone(shankG, longBone([0, -.28, -.02], [0, -3.92, -.06], [[0,.2],[.06,.15],[.2,.12],[.8,.09],[.95,.13],[1,.12]], boneMat), true);
-addBone(shankG, longBone([-.1, -.4, .34], [-.06, -3.98, .3], [[0,.08],[.06,.055],[.9,.045],[1,.07]], boneMat), true);
+addBone(shankG, ellip([.5, .12, 0], [.11,.22,.2], boneMat), true);                       // patella (rides with the tibia; simplified)
+// tibia: two condyles, the tuberosity, a triangular shaft and the medial malleolus; fibula: head, shaft, lateral malleolus
+addBone(shankG, ellip([-.02, -.2, .2], [.28,.11,.2], boneMat), true);
+addBone(shankG, ellip([-.02, -.2, -.2], [.3,.11,.22], boneMat), true);
+addBone(shankG, ellip([.22, -.6, 0], [.1,.15,.11], boneMat), true);                     // tibial tuberosity
+addBone(shankG, longBone([0, -.28, -.02], [.02, -3.88, -.06], [[0,.24],[.08,.16],[.25,.13],[.8,.1],[.95,.14],[1,.13]], boneMat), true);
+addBone(shankG, ellip([.02, -4.0, -.24], [.08,.15,.08], boneMat), true);               // medial malleolus
+addBone(shankG, ellip([-.14, -.42, .34], [.1,.1,.1], boneMat), true);                  // fibular head
+addBone(shankG, longBone([-.14, -.48, .34], [-.08, -3.98, .3], [[0,.06],[.06,.05],[.9,.045],[1,.06]], boneMat), true);
+addBone(shankG, ellip([-.08, -4.08, .3], [.07,.15,.08], boneMat), true);               // lateral malleolus
 const footG = new THREE.Group(); footG.position.set(0, -SHANK, 0); shankG.add(footG);
-[[0, -.1, 0, .17,.13,.2],[-.42, -.3, 0, .24,.18,.17],[.45, -.28, .02, .25,.1,.22]].forEach(([x,y,z,a,b,c]) => addBone(footG, ellip([x,y,z],[a,b,c], boneMat), true));
-const footSkin = ellip([.45, -.25, 0], [1.15,.32,.42], skinMat); footG.add(footSkin); legParts.push(footSkin);
+// foot: talus, calcaneus, navicular, cuboid, cuneiforms, five metatarsals and toes (toes point forward, +x)
+addBone(footG, ellip([0, -.12, 0], [.2,.14,.17], boneMat), true);                       // talus
+addBone(footG, ellip([-.38, -.32, .03], [.3,.18,.16], boneMat), true);                  // calcaneus
+addBone(footG, ellip([.26, -.2, -.12], [.08,.11,.12], boneMat), true);                  // navicular
+addBone(footG, ellip([.22, -.32, .14], [.12,.09,.09], boneMat), true);                  // cuboid
+[-.22,-.1,.02].forEach(z => addBone(footG, ellip([.42, -.27, z], [.1,.08,.055], boneMat), true));   // cuneiforms
+[-.24,-.12,0,.12,.23].forEach((z, i) => {
+  addBone(footG, capsule([.5, -.32, z*.9], [1.08 - i*.04, -.45, z*1.1], i ? .045 : .06, boneMat), true);
+  addBone(footG, capsule([1.13 - i*.04, -.46, z*1.12], [1.38 - i*.07, -.48, z*1.15], i ? .033 : .045, boneMat), true);
+});
+const footSkin = ellip([.45, -.28, 0], [1.15,.32,.42], skinMat); footG.add(footSkin); legParts.push(footSkin);
 const legSkin = [capsule([0, -.1, .1], [0, -4.2, 0], .62, silMat), capsule([0, -.1, -.02], [0, -3.95, 0], .45, silMat)];
 thighG.add(legSkin[0]); shankG.add(legSkin[1]); legSkin.forEach(m => legParts.push(m));
 const cuff = new THREE.Mesh(new THREE.TorusGeometry(.5, .16, 12, 28), metalMat); cuff.rotation.x = Math.PI/2; cuff.position.set(0, -3.5, 0); shankG.add(cuff); legParts.push(cuff);
@@ -962,6 +1038,11 @@ oThigh.add(capsule([0, -.1, -.1], [0, -4.2, 0], .62, silMat));
 const oShank = new THREE.Group(); oShank.position.copy(KNEE); oThigh.add(oShank);
 oShank.add(capsule([0, -.1, 0], [0, -3.95, 0], .45, silMat));
 const oFoot = new THREE.Group(); oFoot.position.set(0, -SHANK, 0); oShank.add(oFoot); oFoot.add(ellip([.45, -.25, 0], [1.15,.32,.42], silMat));
+// the other leg's bones, faint
+for (const m of [ellip([0,0,0],[.26,.26,.26], ghostMat), longBone([.02,-.02,-.04],[-.02,-.33,-.48],[[0,.15],[1,.15]], ghostMat), ellip([-.08,-.16,-.6],[.19,.28,.16], ghostMat),
+  longBone([-.04,-.3,-.5],[0,-4.1,-.03],[[0,.15],[.5,.13],[1,.2]], ghostMat), ellip([-.04,-4.28,.2],[.28,.24,.16], ghostMat), ellip([-.04,-4.28,-.2],[.28,.24,.16], ghostMat)]) { oThigh.add(m); boneParts.push(m); }
+for (const m of [longBone([0,-.2,0],[.02,-3.88,.06],[[0,.24],[.1,.14],[.8,.1],[1,.13]], ghostMat), longBone([-.14,-.48,-.34],[-.08,-3.98,-.3],[[0,.06],[1,.05]], ghostMat)]) { oShank.add(m); boneParts.push(m); }
+for (const m of [ellip([0,-.12,0],[.2,.14,.17], ghostMat), ellip([-.38,-.32,0],[.3,.18,.16], ghostMat), capsule([.3,-.3,0],[1.3,-.47,0],.14, ghostMat)]) { oFoot.add(m); boneParts.push(m); }
 const props = new THREE.Group(); mirror.add(props);
 function slab(cx, cy, cz, sx, sy, sz, parent = props){ const m = new THREE.Mesh(new THREE.BoxGeometry(sx, sy, sz), benchMat); m.position.set(cx, cy, cz); parent.add(m); return m; }
 const FLOOR = -9.1;
@@ -1040,6 +1121,49 @@ const groupOpen = G => state.selected === G || G.members.includes(state.selected
 function labelPoint(s){
   if (s.isGroup){ const p = new V3(); s.members.forEach(m => p.add(labelPoint(m))); return p.divideScalar(s.members.length); }
   return s.tubeObjs[0].curve.getPointAt(s.label);
+}
+/* ------------------------------------------------------------------ pelvis view: tap the pelvis to focus on its tilt (hip muscles fade) */
+const PELVIS = { isPelvis:true, id:'pelvis', name:'Pelvis' };
+const pelvisOpen = () => state.selected === PELVIS;
+{ const el = document.createElement('button'); el.className = 'tag pelvistag'; el.textContent = 'Pelvis';
+  el.addEventListener('click', e => { e.stopPropagation(); select(pelvisOpen() ? null : PELVIS); });
+  PELVIS.labelEl = el; PELVIS.label3d = new CSS2DObject(el); PELVIS.label3d.position.set(-.35, 2.45, .55); pelvisG.add(PELVIS.label3d); }
+// tilt gauge: a line through the ASIS and PSIS that tilts with the pelvis, a dashed neutral line, and the angle between them.
+// In the frontal view (abduction) the line joins the two ASIS instead, to show hike and drop.
+const gaugeMat = new THREE.LineBasicMaterial({ transparent:true, opacity:.95, depthTest:false });
+const neutralMat = new THREE.LineDashedMaterial({ dashSize:.14, gapSize:.09, transparent:true, opacity:.7, depthTest:false });
+const gaugeFill = new THREE.MeshBasicMaterial({ transparent:true, opacity:.22, side:THREE.DoubleSide, depthWrite:false, depthTest:false });
+const gauge = new THREE.Group(); body.add(gauge); gauge.visible = false; gauge.renderOrder = 10;
+const gLine = new THREE.Line(new THREE.BufferGeometry().setFromPoints([new V3(), new V3()]), gaugeMat); gauge.add(gLine);
+const gNeutral = new THREE.Line(new THREE.BufferGeometry().setFromPoints([new V3(), new V3()]), neutralMat); gauge.add(gNeutral);
+const gWedge = new THREE.Mesh(new THREE.BufferGeometry(), gaugeFill); gauge.add(gWedge);
+const gDots = [0, 1].map(() => { const m = new THREE.Mesh(new THREE.SphereGeometry(.09, 12, 8), new THREE.MeshBasicMaterial({ depthTest:false })); gauge.add(m); return m; });
+const gEl = document.createElement('div'); gEl.className = 'deglabel'; const gLabel = new CSS2DObject(gEl); gauge.add(gLabel);
+const gTagEls = [0, 1].map(() => { const el = document.createElement('div'); el.className = 'planelbl'; const o = new CSS2DObject(el); gauge.add(o); return { el, o }; });
+function updateGauge(){
+  const on = pelvisOpen(); gauge.visible = on; gTagEls.forEach(t => t.o.visible = on); gLabel.visible = on;
+  if (!on) return;
+  const L = state.mode === 'learner', fl = plane() === 'flex';
+  // the two landmarks in body coordinates (they move with the pelvis), and where they would be with the pelvis neutral
+  const A0 = fl ? new V3(.92, 1.0, .9) : new V3(.92, 1.0, .5), B0 = fl ? new V3(-1.3, 1.45, .9) : new V3(.92, 1.0, 2*MIDZ - .5);
+  const A = A0.clone().applyMatrix4(mP), B = B0.clone().applyMatrix4(mP);
+  const ext = (a, b, k) => a.clone().add(a.clone().sub(b).multiplyScalar(k));
+  gLine.geometry.setFromPoints([ext(B, A, .35), ext(A, B, .35)]);
+  gNeutral.geometry.setFromPoints([ext(B0, A0, .35), ext(A0, B0, .35)]); gNeutral.computeLineDistances();
+  gDots[0].position.copy(A); gDots[1].position.copy(B);
+  // wedge between the neutral and the tilted line, pivoting at the midpoint
+  const c0 = A0.clone().add(B0).multiplyScalar(.5), c = A.clone().add(B).multiplyScalar(.5), r = A0.distanceTo(B0)*.5 + .3;
+  const d0 = A0.clone().sub(c0).normalize(), d = A.clone().sub(c).normalize(), pts = [];
+  for (let i = 0; i <= 16; i++) pts.push(c, d0.clone().lerp(d, i/16).normalize().multiplyScalar(r).add(c), d0.clone().lerp(d, (i+1)/16).normalize().multiplyScalar(r).add(c));
+  gWedge.geometry.dispose(); gWedge.geometry = new THREE.BufferGeometry().setFromPoints(pts.slice(0, 48));
+  const deg = Math.round(state.pelvis), tx = Math.abs(deg) < 1 ? (L ? 'Neutral' : 'Level') :
+    fl ? (L ? `${deg > 0 ? 'Posterior' : 'Anterior'} tilt ${Math.abs(deg)}°` : `Tipped ${deg > 0 ? 'back' : 'forward'} ${Math.abs(deg)}°`)
+       : (L ? `${deg > 0 ? 'Hiked' : 'Dropped'} ${Math.abs(deg)}°` : `This side ${deg > 0 ? 'up' : 'down'} ${Math.abs(deg)}°`);
+  gEl.textContent = tx; gLabel.position.copy(d0.clone().lerp(d, .5).normalize().multiplyScalar(r + .5).add(c));
+  const names = fl ? [L ? 'ASIS' : 'Front of pelvis', L ? 'PSIS' : 'Back of pelvis'] : [L ? 'ASIS (this side)' : 'This side', L ? 'ASIS (other side)' : 'Other side'];
+  gTagEls[0].el.textContent = names[0]; gTagEls[0].o.position.copy(ext(A, B, .45));
+  gTagEls[1].el.textContent = names[1]; gTagEls[1].o.position.copy(ext(B, A, .45));
+  gaugeMat.color.copy(C.accent); neutralMat.color.copy(C['fg-3']); gaugeFill.color.copy(C.accent); gDots.forEach(m => m.material.color.copy(C.accent));
 }
 function updateMuscleGeometry(){
   for (const m of MUSCLES){
@@ -1162,7 +1286,7 @@ let showBones = true, showBody = true, showLabels = true;
 function updateAppearance(time){
   const sel = state.selected;
   for (const m of MUSCLES){
-    const faded = !inSel(m), G = groupOf(m), split = !G || groupOpen(G);
+    const pv = pelvisOpen(), faded = !inSel(m) || pv, G = groupOf(m), split = !G || groupOpen(G);
     for (const o of m.tubeObjs){
       const ct = o.ctype, sc = ct === 'rel' ? C.rest : C[ct], u = o.mat.userData.u;
       o.mat.color.copy(_col.copy(C.rest).lerp(sc, Math.min(1, o.act*1.25) * .9));
@@ -1173,10 +1297,12 @@ function updateAppearance(time){
     }
     const heads = sel === m && m.tubeObjs.some(o => o.label3d);
     m.labelEl.classList.toggle('dim', faded); m.labelEl.classList.toggle('on', sel === m);
-    m.label3d.visible = !heads && split && (showLabels || (!faded && !!sel));
+    m.label3d.visible = !pv && !heads && split && (showLabels || (!faded && !!sel));
     for (const o of m.tubeObjs) if (o.label3d) o.label3d.visible = heads;
   }
-  for (const G of GROUPS){ const open = groupOpen(G); G.labelEl.classList.toggle('dim', !!sel && !open); G.label3d.visible = !open && showLabels; }
+  for (const G of GROUPS){ const open = groupOpen(G); G.labelEl.classList.toggle('dim', !!sel && !open); G.label3d.visible = !open && showLabels && !pelvisOpen(); }
+  PELVIS.labelEl.classList.toggle('on', pelvisOpen()); PELVIS.labelEl.title = pelvisOpen() ? 'Tap to go back to the hip muscles' : 'Tap to see how the pelvis tilts';
+  updateGauge();
   const P = POSTURES[posture()], settled = state.settle <= 0;
   mat.visible = showBody && settled && !!P.mat;
   scene.updateMatrixWorld(true);
@@ -1228,7 +1354,7 @@ const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
 let dragging = false, down = null;
 function setRay(e){ const r = renderer.domElement.getBoundingClientRect(); ndc.set(((e.clientX - r.left)/r.width)*2 - 1, -((e.clientY - r.top)/r.height)*2 + 1); ray.setFromCamera(ndc, camera); }
 function pick(){
-  const objs = [...muscleMeshes.filter(o => inSel(o.userData.muscle)), ...(showBones ? boneParts : []), ...legParts];
+  const objs = [...(pelvisOpen() ? [] : muscleMeshes.filter(o => inSel(o.userData.muscle))), ...(showBones ? boneParts : []), ...legParts];
   return ray.intersectObjects(objs.filter(o => o.visible), false)[0] || null;
 }
 function onLeg(hit){
@@ -1260,13 +1386,15 @@ renderer.domElement.addEventListener('pointermove', e => {
   if (dragging){ const a = angleFromRay(); if (a !== null) state.goal = a; return; }
   if (e.buttons) return;
   const hit = pick(), m = hit?.object.userData.muscle || null;
-  state.hovered = m; renderer.domElement.style.cursor = onLeg(hit) ? 'grab' : m ? 'pointer' : '';
+  state.hovered = m; renderer.domElement.style.cursor = onLeg(hit) ? 'grab' : m || (hit && pelvisParts.includes(hit.object)) ? 'pointer' : '';
 });
 renderer.domElement.addEventListener('pointerup', e => {
   const moved = down ? Math.hypot(e.clientX - down.x, e.clientY - down.y) : 99;
   if (moved < 5 && down && !dragging){
     const m = down.hit?.object.userData.muscle, G = m && groupOf(m);
-    if (m) select(G && !groupOpen(G) ? G : m); else if (!down.hit) select(null);
+    if (m && !pelvisOpen()) select(G && !groupOpen(G) ? G : m);
+    else if (down.hit && pelvisParts.includes(down.hit.object)) select(pelvisOpen() ? null : PELVIS);
+    else if (!down.hit || pelvisOpen()) select(null);
   }
   if (dragging){ dragging = false; controls.enabled = true; renderer.domElement.style.cursor = ''; }
   down = null;
@@ -1312,11 +1440,19 @@ function select(m){
   const prev = state.selected;
   state.backTo = prev && prev.isGroup && prev.members.includes(m) ? prev : null;
   state.selected = m;
-  if (m){
+  if (m === PELVIS){
+    const fl = plane() === 'flex', t = body.localToWorld(new V3(-.2, .7, fl ? -.3 : MIDZ));
+    tween = { t:0, dur:1, t0:controls.target.clone(), t1:t, dir:camera.position.clone().sub(controls.target).normalize(),
+              dir1:(fl ? new V3(.12, .2, 1*zs) : new V3(1, .2, .12*zs)).transformDirection(body.matrixWorld).normalize(), d0:camera.position.distanceTo(controls.target), d1:17 };
+    showTab('detail');
+  } else if (m){
     const p = body.localToWorld(labelPoint(m));
     flyTo(p.lerp(homeT, .45), Math.min(camera.position.distanceTo(controls.target), 18));
     showTab('detail');
-  } else if (activeTab === 'detail') showTab('muscles');
+  } else {
+    if (activeTab === 'detail') showTab('muscles');
+    if (prev === PELVIS) flyHome();                                                // back from the pelvis view
+  }
   renderDetail();
 }
 let activeTab = 'muscles';
@@ -1364,6 +1500,16 @@ function renderDetail(){
   const m = state.selected, pane = $('paneDetail');
   if (!m){ pane.innerHTML = ''; return; }
   const L = state.mode === 'learner';
+  if (m === PELVIS){
+    pane.innerHTML = `<button class="linkbtn back" id="backBtn">← Hip muscles</button>
+      <div class="detail" style="display:grid;gap:8px"><h2>Pelvis</h2><p class="lede">${PELVIS_TEXT.lede[L ? 1 : 0]}</p></div>
+      <div class="statusbox" id="pelvisStatus"><i style="background:var(--accent)"></i><span></span></div>
+      <dl class="kv" id="pelvisSplit"></dl>
+      <div class="special"><b>${PELVIS_TEXT.box[0][L ? 1 : 0]}</b><p>${PELVIS_TEXT.box[1][L ? 1 : 0]}</p></div>
+      <p class="note">${L ? 'The teal line joins the ASIS and PSIS (in the frontal view, the two ASIS); the dashed line is neutral.' : 'The teal line follows the pelvis; the dashed line shows where it starts.'} Tap the pelvis or its tag to go back.</p>
+      <p class="note">Draft content for physiotherapist review.</p>`;
+    $('backBtn').onclick = () => select(null); updateDetailStatus(); return;
+  }
   if (m.isGroup){
     pane.innerHTML = `<button class="linkbtn back" id="backBtn">← All muscles</button>
       <div class="detail" style="display:grid;gap:8px"><h2>${m.name}</h2><p class="lede">${m.text[L ? 'learner' : 'patient']}</p></div>
@@ -1388,6 +1534,16 @@ function renderDetail(){
 }
 function updateDetailStatus(){
   const m = state.selected, w = words();
+  if (m === PELVIS){
+    const L = state.mode === 'learner', fl = plane() === 'flex', pv = Math.round(state.pelvis), j = Math.round(state.joint);
+    if (!$('pelvisStatus')) return;
+    $('pelvisStatus').querySelector('span').textContent = Math.abs(pv) < 1 ? (L ? 'Right now: pelvis in neutral' : 'Right now: the pelvis is not moving')
+      : fl ? (L ? `Right now: ${pv > 0 ? 'posterior' : 'anterior'} pelvic tilt ${Math.abs(pv)}°` : `Right now: tipped ${pv > 0 ? 'back' : 'forward'} ${Math.abs(pv)}°`)
+           : (L ? `Right now: pelvis ${pv > 0 ? 'hiked' : 'dropped'} ${Math.abs(pv)}° on this side` : `Right now: this side of the pelvis ${pv > 0 ? 'up' : 'down'} ${Math.abs(pv)}°`);
+    $('pelvisSplit').innerHTML = `<div><dt>${L ? 'Leg angle (total)' : 'Leg angle'}</dt><dd>${Math.round(state.theta)}°</dd></div>
+      <div><dt>${L ? 'At the hip joint' : 'From the hip joint'}</dt><dd>${j}°</dd></div><div><dt>${L ? 'From the pelvis' : 'From the pelvis'}</dt><dd>${pv}°</dd></div>`;
+    return;
+  }
   if (m && m.isGroup){
     for (const x of m.members){ const row = $('paneDetail').querySelector(`[data-sub="${x.id}"]`); if (!row) continue;
       row.querySelector('.dot').style.background = stateColorVar(x); row.querySelector('.role').textContent = x.role ? w[x.role] : ''; row.querySelector('.st').textContent = statusText(x); }
@@ -1492,6 +1648,7 @@ function declutterLabels(){
     for (const o of m.tubeObjs) if (o.label3d) items.push({ l:o, must:true, p:3 + o.act });
   }
   for (const G of GROUPS) items.push({ l:G, must:!sel && G.members.some(m => m.role === 'prime'), p:(sel ? 0 : 6) + Math.max(...G.members.map(m => m.act)) });
+  items.push({ l:PELVIS, must:true, p:20 });
   items.sort((a, b) => b.must - a.must || b.p - a.p);
   const clashes = r => placed.some(q => r.left < q.right + 2 && r.right > q.left - 2 && r.top < q.bottom + 2 && r.bottom > q.top - 2);
   for (const { l, must } of items){
@@ -1603,7 +1760,7 @@ body.position.y = restHeight(POSTURES[posture()]);
 computeHome(); camera.position.copy(homeT).addScaledVector(homeDir(), homeD); controls.target.copy(homeT);
 setMode('patient'); syncExPickers();
 if (reduceMotion){ state.goal = state.theta = 60; } else startExercise();
-window.myotrek = { state, MUSCLES, TUBES, camera, controls, body };
+window.myotrek = { state, MUSCLES, TUBES, camera, controls, body, PELVIS };
 const clock = new THREE.Clock();
 let hudT = 0;
 renderer.setAnimationLoop(() => {
