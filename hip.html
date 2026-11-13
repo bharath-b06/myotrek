@@ -687,19 +687,41 @@ const GROUP_DEFS = [
 const JOINT = {
   patient:[
     ['A deep ball and socket','The top of your thigh bone is a ball that sits deep in a cup-shaped socket in the pelvis. That makes the hip very stable, but it moves less than the shoulder.'],
+    ['How far it moves','Most people can lift the knee to the chest (about 120°), take the leg back about 20–30°, out to the side about 45°, and turn the thigh in and out about 35–45° each way.'],
     ['It works with the pelvis','When you lift your knee high or take your leg far back, your pelvis and lower back tilt to add to the movement.'],
+    ['Common problems','Wear and tear (osteoarthritis), pain on the outside of the hip from the buttock tendons, groin strains, and problems with the cartilage rim of the socket.'],
   ],
   learner:[
     ['Type','Synovial ball-and-socket: femoral head in the acetabulum, deepened by the labrum'],
-    ['Stability','Mainly bony (deep acetabulum), with strong capsular ligaments (iliofemoral, pubofemoral, ischiofemoral) and the deep rotators'],
+    ['Normal ROM',{ head:['Movement','Range'], rows:[
+      ['Flexion','0–120° (knee flexed); ~80–90° with the knee extended'],
+      ['Extension','0–20/30°'],
+      ['Abduction','0–45°'],
+      ['Adduction','0–20/30°'],
+      ['Internal rotation','0–35/40°'],
+      ['External rotation','0–45°'] ]}],
+    ['End feel',{ head:['Movement','End feel','Why'], rows:[
+      ['Flexion','Soft or firm','Soft-tissue approximation (knee flexed); hamstring stretch (knee extended)'],
+      ['Extension','Firm','Anterior capsule, iliofemoral ligament, hip flexors'],
+      ['Abduction','Firm','Inferior capsule, pubofemoral ligament, adductors'],
+      ['Adduction','Soft or firm','Contact with the other thigh; lateral capsule, IT band'],
+      ['Internal rotation','Firm','Posterior capsule, ischiofemoral ligament'],
+      ['External rotation','Firm','Anterior capsule, iliofemoral and pubofemoral ligaments'] ]}],
+    ['Capsular pattern','Flexion, abduction and internal rotation most limited (order varies); extension slightly limited; external rotation least'],
+    ['Resting position','~30° flexion, 30° abduction, slight external rotation'],
+    ['Close-packed position','Full extension with internal rotation and abduction'],
+    ['Common conditions','Osteoarthritis, femoroacetabular impingement (FAI), labral tears, greater trochanteric pain syndrome (gluteal tendinopathy), adductor-related groin pain, hip flexor strain, fractured neck of femur (older adults), Perthes disease and slipped capital femoral epiphysis (children and adolescents)'],
   ],
 };
-const PELVIS_TEXT = {
-  lede:['The ring of bone your legs and spine attach to. When you move your leg near the end of its range, the pelvis tips or tilts to add to the movement.',
-        'Two hip bones (ilium, ischium, pubis) and the sacrum. Near end range the pelvis moves on the lumbar spine and the other hip: posterior tilt in hip flexion, anterior tilt in extension; hiking and dropping in the frontal plane.'],
-  box:[['Why the pelvis moves','Lumbopelvic rhythm'],
-       ['Your hip joint can only go so far. To lift your knee higher, the pelvis tips back and your lower back rounds; to take your leg further back, it tips forward and your back arches. Tight muscles at the hip make the pelvis move sooner.',
-        'Pelvic and lumbar motion add to femoral motion near end range. Tight hamstrings bring on posterior tilt earlier in hip flexion (especially with the knee extended); tight hip flexors bring on anterior tilt and lumbar extension earlier in hip extension.']],
+const TREND_BOX = {
+  title:['Standing on one leg (Trendelenburg sign)','Trendelenburg sign'],
+  text:['When you stand on one leg, the side-of-hip muscles on that leg keep your pelvis level. If they are weak, the pelvis drops on the other side. Some people lean their body over the standing leg to make up for it; in walking this shows as a side-to-side sway.',
+        'Single-limb stance: gluteus medius and minimus hold the pelvis level. Positive sign: contralateral pelvic drop (weak abductors, superior gluteal nerve lesion, hip pathology). Compensated: ipsilateral trunk lean shifts the centre of mass over the hip, reducing the abductor moment (gluteus medius lurch in gait).'],
+};
+const TWOJOINT_BOX = {
+  title:['Why knee position changes hip movement','Two-joint muscles'],
+  text:['Some thigh muscles cross both the hip and the knee. With the knee straight, the back of the thigh is stretched, so the leg cannot lift as high; with the knee bent, it can. Taking the leg back, a bent knee stretches the front of the thigh and limits the movement.',
+        'The hamstrings and rectus femoris cross hip and knee. Knee extension puts the hamstrings on stretch, limiting hip flexion (passive insufficiency, e.g. SLR ~80–90° vs ~120° with the knee flexed); knee flexion slackens them, so they extend the hip less well (active insufficiency, favouring gluteus maximus). Knee flexion tensions rectus femoris, limiting hip extension (modified Thomas, Ely\'s test).'],
 };
 const RHYTHM_BOX = {
   title:['Hip and pelvis working together','Lumbopelvic rhythm'],
@@ -1705,15 +1727,19 @@ function updateDetailStatus(){
   box.querySelector('i').style.background = stateColorVar(m);
   box.querySelector('span').textContent = `Right now: ${m.role ? w[m.role].toLowerCase() + ', ' : ''}${statusText(m).toLowerCase()}`;
 }
+// a value is either text or a small table: { head:[...], rows:[[...]] }
+function kvValue(v){
+  if (typeof v === 'string') return v;
+  return `<table class="kvt"><thead><tr>${v.head.map(h => `<th>${h}</th>`).join('')}</tr></thead>
+    <tbody>${v.rows.map(r => `<tr>${r.map((c, i) => i ? `<td>${c}</td>` : `<th>${c}</th>`).join('')}</tr>`).join('')}</tbody></table>`;
+}
 function renderJoint(){
-  const L = state.mode === 'learner', i = L ? 1 : 0;
+  const L = state.mode === 'learner', i = L ? 1 : 0, box = B => `<div class="special"><b>${B.title[i]}</b><p>${B.text[i]}</p></div>`;
   $('paneJoint').innerHTML = `
     <div class="detail" style="display:grid;gap:6px"><h2>The hip</h2>
       <p class="lede">${L ? 'The articulation of the femoral head with the acetabulum of the pelvis.' : 'Where the ball at the top of your thigh bone sits in the socket of your pelvis.'}</p></div>
-    <dl class="kv">${JOINT[L ? 'learner' : 'patient'].map(([k,v]) => `<div><dt>${k}</dt><dd>${v}</dd></div>`).join('')}</dl>
-    <div class="special"><b>${RHYTHM_BOX.title[i]}</b><p>${RHYTHM_BOX.text[i]}</p></div>
-    <div style="border-top:1px solid var(--line);padding-top:12px"><h3>Coming in the next parts</h3>
-      <ul class="note" style="padding-left:18px;margin:0;display:grid;gap:3px"><li>Tables: ROM, end feel, capsular pattern, common conditions</li><li>Trendelenburg sign and two-joint muscles</li></ul></div>
+    <dl class="kv">${JOINT[L ? 'learner' : 'patient'].map(([k,v]) => `<div><dt>${k}</dt><dd>${kvValue(v)}</dd></div>`).join('')}</dl>
+    ${box(RHYTHM_BOX)}${box(TWOJOINT_BOX)}${box(TREND_BOX)}
     <p class="note">Draft content for physiotherapist review.</p>`;
 }
 
