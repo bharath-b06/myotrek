@@ -1391,6 +1391,8 @@ function updatePhysiology(dt){
     const real = m.tubeObjs.filter(o => !o.t.band);
     const top = real.reduce((a, b) => (b.role && !a.role) || (b.role && b.act > a.act) ? b : a);
     m.act = top.act; m.contraction = top.ctype; m.role = top.role;
+    const working = m.role === 'prime' || m.role === 'syn' ? m.act : 0;          // label hold: rises at once, fades over ~4 s
+    m.peak = Math.max(working, (m.peak || 0) * Math.exp(-dt/4));
     for (const o of real) if (o.role && ROLE_RANK[o.role] > ROLE_RANK[m.role] && o.act > .08) m.role = o.role;
     for (const o of m.tubeObjs) if (o.t.band){ o.act = top.act*.6; o.ctype = top.ctype; }
   }
@@ -1451,10 +1453,13 @@ function updateAppearance(time){
     }
     const heads = sel === m && m.tubeObjs.some(o => o.label3d);
     m.labelEl.classList.toggle('dim', faded); m.labelEl.classList.toggle('on', sel === m);
-    m.label3d.visible = !pv && !heads && split && (showLabels || (!faded && !!sel));
+    // with nothing selected, only muscles that work in this exercise get a label (main movers and helpers, held for a few seconds)
+    const busy = (m.peak || 0) > .18;
+    m.label3d.visible = !pv && !heads && split && (sel ? (showLabels || !faded) : showLabels && busy);
     for (const o of m.tubeObjs) if (o.label3d) o.label3d.visible = heads;
   }
-  for (const G of GROUPS){ const open = groupOpen(G); G.labelEl.classList.toggle('dim', !!sel && !open); G.label3d.visible = !open && showLabels && !pelvisOpen(); }
+  for (const G of GROUPS){ const open = groupOpen(G); G.labelEl.classList.toggle('dim', !!sel && !open);
+    G.label3d.visible = !open && showLabels && !pelvisOpen() && (!!sel || G.members.some(m => (m.peak || 0) > .18)); }
   PELVIS.labelEl.classList.toggle('on', pelvisOpen()); PELVIS.labelEl.title = pelvisOpen() ? 'Tap to go back to the hip muscles' : 'Tap to see how the pelvis tilts';
   updateGauge();
   const P = POSTURES[posture()], settled = state.settle <= 0;
@@ -1890,6 +1895,7 @@ function syncExPickers(){ setPressed(['grpA','grpB'], EX_OF[plane()][0] === stat
 function startExercise(){ const P = POSTURES[posture()]; state.loop = true; state.loopDir = 1; playTo(P.loop[1]); syncButtons(); }
 function setExercise(ex){
   state.ex = ex; state.last[plane()] = ex; state.settle = 1.4;
+  for (const m of MUSCLES) m.peak = 0;                                            // labels follow the new exercise
   select(null); syncSections(); startExercise(); flyHome(); syncExPickers();
 }
 $('grpA').onclick = () => { const ex = EX_OF[plane()][0]; if (state.ex !== ex) setExercise(ex); };
