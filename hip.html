@@ -1821,8 +1821,8 @@ const NUDGES = [[0,24],[0,-24],[0,48],[0,-48],[70,0],[-70,0],[70,24],[-70,24],[7
 function declutterLabels(){
   const placed = [], sel = state.selected, items = [];
   for (const m of MUSCLES){
-    const main = !sel && m.role === 'prime' && m.label3d.visible;
-    items.push({ l:m, must:(!!sel && inSel(m)) || main, p:(main ? 10 : 0) + (inSel(m) ? 2 : 0) + m.act });
+    const main = !sel && (m.peak || 0) > .18 && m.label3d.visible;            // every labelled (working) muscle is nudged aside, never hidden
+    items.push({ l:m, must:(!!sel && inSel(m)) || main, p:(main ? 10 : 0) + (m.role === 'prime' ? 5 : 0) + (inSel(m) ? 2 : 0) + m.act });
     for (const o of m.tubeObjs) if (o.label3d) items.push({ l:o, must:true, p:3 + o.act });
   }
   for (const G of GROUPS) items.push({ l:G, must:!sel && G.members.some(m => m.role === 'prime'), p:(sel ? 0 : 6) + Math.max(...G.members.map(m => m.act)) });
