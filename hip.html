@@ -241,6 +241,7 @@ input[type=range]{width:100%; accent-color:var(--accent); margin:6px 0 2px}
 .seg.block.grid2{display:grid; grid-template-columns:1fr 1fr; gap:2px}
 .seg.block.grid3 button{padding:7px 3px; font-size:12.5px}
 .seg.block.grid2 button{grid-column:auto!important}
+.seg.block.grid2 button:last-child:nth-child(odd){grid-column:1 / -1!important}
 </style>
 
 <div class="app">
@@ -288,7 +289,6 @@ input[type=range]{width:100%; accent-color:var(--accent); margin:6px 0 2px}
         <button id="mvFlex" aria-pressed="true"><span data-lt="Flexion / extension">Forward &amp; back</span><small data-l="">in front</small></button>
         <button id="mvAbd" aria-pressed="false"><span data-lt="Abduction / adduction">Out to the side</span><small data-l="">sideways</small></button>
         <button id="mvRot" aria-pressed="false"><span data-lt="Rotation">Turn the thigh</span><small data-l="internal / external">in and out, sitting</small></button>
-        <button id="mvStance" aria-pressed="false"><span data-lt="Single-leg stance">Stand on one leg</span><small data-l="pelvis, Trendelenburg">pelvis level?</small></button>
       </div>
     </section>
     <section id="kneeSec">
@@ -1846,7 +1846,7 @@ function setMove(mv){
   if (mv === state.move) return;
   state.otherPlane = state.move; state.other = state.theta;
   state.move = mv; state.theta = state.goal = 0; state.vel = 0;
-  setPressed(['mvFlex','mvAbd','mvRot','mvStance'], { flex:'mvFlex', abd:'mvAbd', rot:'mvRot', stance:'mvStance' }[mv]);
+  setPressed(['mvFlex','mvAbd','mvRot'], { flex:'mvFlex', abd:'mvAbd', rot:'mvRot', stance:'mvStance' }[mv]);
   setExercise(state.last[mv]);
 }
 function syncSections(){
@@ -1876,7 +1876,7 @@ $('grpB').onclick = () => { const ex = EX_OF[plane()][1]; if (state.ex !== ex) s
 $('mvFlex').onclick = () => setMove('flex');
 $('mvAbd').onclick = () => setMove('abd');
 $('mvRot').onclick = () => setMove('rot');
-$('mvStance').onclick = () => setMove('stance');
+// single-leg stance is kept in the code (POSTURES.stance*) but not offered as a movement
 function setStrength(k){ if (state.strength === k) return; state.strength = k; setPressed(['stStrong','stWeak','stLean'], { strong:'stStrong', weak:'stWeak', lean:'stLean' }[k]); setExercise('stance'); }
 $('stStrong').onclick = () => setStrength('strong'); $('stWeak').onclick = () => setStrength('weak'); $('stLean').onclick = () => setStrength('lean');
 function setKnee(k){ if (state.knee === k) return; state.knee = k; setPressed(['kneeBent','kneeStraight'], k === 'bent' ? 'kneeBent' : 'kneeStraight'); state.theta = state.goal = Math.min(state.goal, rangeOf()[1]); setExercise(state.ex); }
