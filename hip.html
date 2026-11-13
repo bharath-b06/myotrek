@@ -713,11 +713,6 @@ const JOINT = {
     ['Common conditions','Osteoarthritis, femoroacetabular impingement (FAI), labral tears, greater trochanteric pain syndrome (gluteal tendinopathy), adductor-related groin pain, hip flexor strain, fractured neck of femur (older adults), Perthes disease and slipped capital femoral epiphysis (children and adolescents)'],
   ],
 };
-const TREND_BOX = {
-  title:['Standing on one leg (Trendelenburg sign)','Trendelenburg sign'],
-  text:['When you stand on one leg, the side-of-hip muscles on that leg keep your pelvis level. If they are weak, the pelvis drops on the other side. Some people lean their body over the standing leg to make up for it; in walking this shows as a side-to-side sway.',
-        'Single-limb stance: gluteus medius and minimus hold the pelvis level. Positive sign: contralateral pelvic drop (weak abductors, superior gluteal nerve lesion, hip pathology). Compensated: ipsilateral trunk lean shifts the centre of mass over the hip, reducing the abductor moment (gluteus medius lurch in gait).'],
-};
 const TWOJOINT_BOX = {
   title:['Why knee position changes hip movement','Two-joint muscles'],
   text:['Some thigh muscles cross both the hip and the knee. With the knee straight, the back of the thigh is stretched, so the leg cannot lift as high; with the knee bent, it can. Taking the leg back, a bent knee stretches the front of the thigh and limits the movement.',
@@ -1739,7 +1734,7 @@ function renderJoint(){
     <div class="detail" style="display:grid;gap:6px"><h2>The hip</h2>
       <p class="lede">${L ? 'The articulation of the femoral head with the acetabulum of the pelvis.' : 'Where the ball at the top of your thigh bone sits in the socket of your pelvis.'}</p></div>
     <dl class="kv">${JOINT[L ? 'learner' : 'patient'].map(([k,v]) => `<div><dt>${k}</dt><dd>${kvValue(v)}</dd></div>`).join('')}</dl>
-    ${box(RHYTHM_BOX)}${box(TWOJOINT_BOX)}${box(TREND_BOX)}
+    ${box(RHYTHM_BOX)}${box(TWOJOINT_BOX)}
     <p class="note">Draft content for physiotherapist review.</p>`;
 }
 
